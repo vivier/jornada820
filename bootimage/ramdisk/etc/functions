@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.15 2004/06/29 01:00:17 fare Exp $
+# $Id: functions,v 1.16 2004/06/29 07:12:36 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -182,12 +182,10 @@ my_linuxrc () {
     LOG "Fallback plan: running busybox on the initial ramdisk."
     sysinit
     LOG_C "This is a single-user shell with PID=$$.
-If using the bootimage standalone, let busybox manage your consoles with:
-	exec /linuxrc
-You may use our predefined shell functions with:
-	. /etc/functions
-Once you have setup and fixed your rootfs on CF, umount -a and invoke function:
-	try_pivot_root
+If using the bootimage standalone, have busybox manage your consoles with:
+	standalone
+Otherwise, you may setup your rootfs on CF, then invoke function:
+	rootfs
 "
     exec_sh
   }
@@ -196,7 +194,12 @@ Once you have setup and fixed your rootfs on CF, umount -a and invoke function:
 
   ABORT "Abnormal return from try_pivot_root."
 }
-
+standalone () {
+  exec /linuxrc
+}
+rootfs () {
+  try_pivot_root
+}
 lisp () {
   clisp -E iso-8859-1 -repl -ansi /mnt/linux/foo.lisp $@
 }
@@ -257,7 +260,7 @@ change_root () {
 }
 
 exec_sh () {
-    exec /bin/sh < dev/console > dev/console 2>&1 $@
+    exec /bin/busybox -sh < dev/vc/1 > dev/vc/1 2>&1 $@
 }
 
 no_noautomount_p () {
@@ -387,6 +390,7 @@ try_pivot_root () {
 
   LOG "Let's pivot_root if we can."
   DO_T cd /
+  DO_T umount -a -n
   ensure_tmp ; ensure_proc ; ensure_dev # necessary for many things
   LOG "Checking for a CF memory card..."
   CHECK 'dd if=/dev/hda count=1 of=/dev/null 2> /dev/null' \
@@ -470,10 +474,14 @@ peek_halfword () {
   dd if=/dev/mem bs=1 skip=$1 count=2 2> /dev/null | od -i | cut -c9-
 }
 windate () {
+  # busybox can't seek to over 2GB because it cannot use 64-bit llseek (???)
   ENCTIME=$(dd if=/dev/mem bs=16 skip=$((0xc004fe0)) count=1 | od -i)
   YEAR=$(  echo $ENCTIME | cut -c 28-34)
-  #MONTH=$(peek_halfword $((0xc004fe06)) )
-  #DAY=$( peek_halfword $((0xc004fe0a)) )
+  #YEAR=$(   peek_halfword $((0xc004fe04)) )
+  #MONTH=$(  peek_halfword $((0xc004fe06)) )
+  #DAY=$(    peek_halfword $((0xc004fe0a)) )
+  #HOUR=$(   peek_byte     $((0xc004fe0c)) ) ???
+  #MINUTE=$( peek_byte     $((0xc004fe0d)) ) ???
   HOUR=$(date +%H)
   MINUTE=$(date +%M)
   SECOND=0
@@ -484,4 +492,13 @@ getdate () {
   DATE="$(date +"YEAR=%Y MONTH=%m DAY=%d HOUR=%H MINUTE=%M SECOND=%S TZ=$TZ")"
   echo "$DATE"
   eval "$DATE"
+}
+mnt1 () {
+  mount /dev/hda1 /mnt
+}
+getk () {
+  wget -O j820 http://samaris.tunes.org/tmp/j820
+}
+getk26 () {
+  wget -O j820-26 http://samaris.tunes.org/tmp/j820-26
 }
