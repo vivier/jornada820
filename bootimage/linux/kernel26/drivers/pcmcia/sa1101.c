@@ -8,7 +8,7 @@
  *
  * George Almasi (galmasi@optonline.net), 2004/1/24
  * Based on the sa1111_generic.c file.
- * $Id: sa1101.c,v 1.4 2004/07/06 14:39:26 oleg820 Exp $
+ * $Id: sa1101.c,v 1.5 2004/07/10 19:41:13 fare Exp $
  */
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -214,7 +214,9 @@ struct pcmcia_low_level sa1101_pcmcia_ops = {
 
 static int pcmcia_probe(struct sa1101_dev *dev)
 {
+	struct sa1101_dev *sadev = SA1101_DEV(dev);
 	printk("sa1101 pcmcia: probe...\n"); // DEBUG
+	if(sadev->devid != SA1101_DEVID_PCMCIA) return -1;
 	return sa11xx_drv_pcmcia_probe(&dev->dev, &sa1101_pcmcia_ops, 0, 2);
 }
 static int __devexit pcmcia_remove(struct sa1101_dev *dev)

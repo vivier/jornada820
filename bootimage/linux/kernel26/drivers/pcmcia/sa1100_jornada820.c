@@ -3,7 +3,7 @@
  *
  * Jornada820 PCMCIA specific routines
  *
- * $Id: sa1100_jornada820.c,v 1.7 2004/07/08 02:44:23 fare Exp $
+ * $Id: sa1100_jornada820.c,v 1.8 2004/07/10 19:41:13 fare Exp $
  */
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -13,7 +13,7 @@
 
 #include <linux/interrupt.h>
 #include <asm/mach/irq.h>
-#include <asm/arch/irq.h>
+#include <asm/arch/irqs.h>
 
 #include <asm/hardware.h>
 #include <asm/mach-types.h>

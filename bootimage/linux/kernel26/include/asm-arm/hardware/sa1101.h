@@ -1,6 +1,6 @@
 /*
  * File created for Jornada 820... (?)
- * $Id: sa1101.h,v 1.7 2004/07/10 18:58:19 fare Exp $
+ * $Id: sa1101.h,v 1.8 2004/07/10 19:41:13 fare Exp $
  */
 #ifndef _ASM_ARCH_SA1101
 #define _ASM_ARCH_SA1101
@@ -11,15 +11,6 @@
 #define SA1101_IRQMASK_HI(x)	(1 << (x - IRQ_SA1101_START - 32))
 
 #ifndef __ASSEMBLY__
-
-struct sa1101_dev {
-	struct device	dev;
-	unsigned int	devid;
-	struct resource	res;
-	void		*mapbase;
-	unsigned int	skpcr_mask;
-	unsigned int	irq[6];
-};
 
 /* TODO: driver interface */
 /*------------------------*/
@@ -54,6 +45,15 @@ extern int sa1101_vga_shutdown(void);
 #define SA1101_DEVID_INT	7
 #define SA1101_DEVID_PCMCIA	8
 #define SA1101_DEVID_KEYPAD	9
+
+struct sa1101_dev {
+	struct device	dev;
+	unsigned int	devid;
+	struct resource	res;
+	void		*mapbase;
+	unsigned int	skpcr_mask;
+	unsigned int	irq[6];
+};
 
 #define SA1101_DEV(_d)	container_of((_d), struct sa1101_dev, dev)
 

@@ -8,7 +8,7 @@
  *
  * George Almasi (galmasi@optonline.net), 2004/1/24
  * Based on the sa1111_generic.c file.
- * $Id: sa1101_generic.c,v 1.1 2004/07/07 16:56:39 oleg820 Exp $
+ * $Id: sa1101_generic.c,v 1.2 2004/07/10 19:41:13 fare Exp $
  */
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -18,7 +18,7 @@
 
 #include <linux/interrupt.h>
 #include <asm/mach/irq.h>
-#include <asm/arch/irq.h>
+#include <asm/arch/irqs.h>
 
 #include <asm/hardware.h>
 #include <asm/mach-types.h>

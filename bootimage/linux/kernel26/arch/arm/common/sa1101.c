@@ -12,7 +12,7 @@
  *
  * Created for the Jornada820 port.
  *
- * $Id: sa1101.c,v 1.11 2004/07/10 18:58:19 fare Exp $
+ * $Id: sa1101.c,v 1.12 2004/07/10 19:41:12 fare Exp $
  */
 
 #include <linux/module.h>
@@ -63,11 +63,10 @@ struct sa1101_dev_info {
 };
 
 static struct sa1101_dev_info sa1101_devices[] = {
-#if 0
 	{
-		.offset		= SA1111_USB,
-		.skpcr_mask	= SKPCR_UCLKEN,
-		.devid		= SA1111_DEVID_USB,
+		.offset		= SA1101_USB,
+		.skpcr_mask	= SKPCR_UCLKEn,
+		.devid		= SA1101_DEVID_USB,
 		.irq = {
 			IRQ_USBPWR,
 			IRQ_HCIM,
@@ -77,6 +76,7 @@ static struct sa1101_dev_info sa1101_devices[] = {
 			IRQ_USB_PORT_RESUME
 		},
 	},
+#if 0
 	{
 		.offset		= 0x0600,
 		.skpcr_mask	= SKPCR_I2SCLKEN | SKPCR_L3CLKEN,
@@ -113,7 +113,7 @@ static struct sa1101_dev_info sa1101_devices[] = {
 	},
 #endif
 	{
-		.offset		= 0x1e0000,
+		.offset		= SA1101_PCMCIA,
 		.skpcr_mask	= 0,
 		.devid		= SA1101_DEVID_PCMCIA,
 		.irq = {
@@ -164,7 +164,7 @@ sa1101_init_one_child(struct device *parent, struct resource *parent_res,
 	dev->mapbase     = (u8 *)0xf4000000 + info->offset;
 	dev->skpcr_mask  = info->skpcr_mask;
 	memmove(dev->irq, info->irq, sizeof(dev->irq));
-#if 0
+#if 1
 	ret = request_resource(parent_res, &dev->res);
 	if (ret) {
 		printk("SA1101: failed to allocate resource for %s\n",
@@ -194,6 +194,7 @@ static struct resource sa1101_resource = {
 
 int sa1101_probe(struct device * _dev)
 {
+	struct platform_device *pdev = to_platform_device(_dev);
 	struct sa1101_dev *dev = SA1101_DEV(_dev);
 	/* should check */
 	int i;
@@ -206,7 +207,7 @@ int sa1101_probe(struct device * _dev)
 
 	for (i = 0; i < ARRAY_SIZE(sa1101_devices); i++)
 		if (has_devs & (1 << i))
-			sa1101_init_one_child(&dev->dev, &dev->res, &sa1101_devices[i]);
+			sa1101_init_one_child(&dev->dev, &pdev->resource[0], &sa1101_devices[i]);
 
 	return 0;
 }
@@ -233,13 +234,12 @@ static void
 sa1101_irq_handler(unsigned int irq, struct irqdesc *desc, struct pt_regs *regs)
 {
 	unsigned int stat0, stat1, i;
-//	printk("Got sa1101 interrupt (%d).\n", irq); // DEBUG
 
 	stat0 = INTSTATCLR0;
 	stat1 = INTSTATCLR1;
 	INTSTATCLR0 = stat0;
 	INTSTATCLR1 = stat1;
-
+	desc->chip->mask(irq);
 	desc->chip->ack(irq);
 
 	if (stat0 == 0 && stat1 == 0) {
@@ -247,6 +247,7 @@ sa1101_irq_handler(unsigned int irq, struct irqdesc *desc, struct pt_regs *regs)
 		return;
 	}
 
+	do {
 	for (i = IRQ_SA1101_START; stat0; i++, stat0 >>= 1)
 		if (stat0 & 1)
 			do_edge_IRQ(i, irq_desc + i, regs);
@@ -255,8 +256,15 @@ sa1101_irq_handler(unsigned int irq, struct irqdesc *desc, struct pt_regs *regs)
 		if (stat1 & 1)
 			do_edge_IRQ(i, irq_desc + i, regs);
 
+		stat0 = INTSTATCLR0;
+		stat1 = INTSTATCLR1;	
+		INTSTATCLR0 = stat0;
+		INTSTATCLR1 = stat1;
+	} while (stat0 | stat1); 
+
 	/* For level-based interrupts */
 	desc->chip->unmask(irq);
+
 }
 
 static void sa1101_ack_irq(unsigned int irq)
@@ -390,7 +398,7 @@ void sa1101_init_irq(int sa1101_irq)
 	unsigned int irq;
 
 	alloc_irq_space(64); /* XXX - still needed??? */
-	request_mem_region(_INTTEST0, 512, "irqs-1101"); // XXX - still needed???
+	request_mem_region(SA1101_INTERRUPT, 0x1ffff, "irqs-1101"); // XXX - still needed???
 
 	/* disable all IRQs */
 	INTENABLE0 = 0;
@@ -428,7 +436,7 @@ void sa1101_init_irq(int sa1101_irq)
 //		    "SA1101 chain interrupt", NULL); // DEBUG
 	
 	set_irq_type(sa1101_irq, IRQT_RISING);
-	set_irq_data(sa1101_irq, (void *)_INTTEST0);
+	set_irq_data(sa1101_irq, (void *)SA1101_INTERRUPT);
 	set_irq_chained_handler(sa1101_irq, sa1101_irq_handler); // NORMAL
 }
 

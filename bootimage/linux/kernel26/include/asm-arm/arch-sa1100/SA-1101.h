@@ -58,6 +58,10 @@
 #define	__VGA_CONTROL		0x00200000
 #define __GPIO_INTERFACE	0x00300000
 
+#define SA1101_INTERRUPT	__INTERRUPT_CONTROL
+#define SA1101_USB			__USB_CONTROL
+#define SA1101_PCMCIA		__PCMCIA_INTERFACE
+
 /*
  * Macro that calculates real address for registers in the SA-1101
  */
