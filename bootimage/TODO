@@ -1,9 +1,10 @@
-$Id: TODO,v 1.4 2004/06/24 21:07:52 fare Exp $
+$Id: TODO,v 1.5 2004/06/25 17:51:17 fare Exp $
 
 Kernel 2.4
 * move on, dude!
 * maybe fix issues (that may reappear in 2.6?):
  * the APM kill-the-machine-if-kapmd-killed bug if still present
+ * make the cursor visible by default
 
 Kernel 2.6
 * have the kernel compile properly (see errors below)
@@ -11,8 +12,8 @@ Kernel 2.6
 * ensure that bits that weren't merged easily make it to 2.6
 * fix any issues with the initial port from 2.4 that still remain in 2.6
 * fix PCMCIA issues
-* debug USB driver
-* debug sound driver
+* make the USB driver work
+* make the sound driver work
 * play nicer with booting to/from WinCE
 * get external VGA working and/or some swap-on-VRAM
 * get modem working?
@@ -25,6 +26,9 @@ Bootdisk
 
 Userland
 * gather a sensible base for userland (?)
+
+Web site
+* have a cron job update the web site from CVS.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 
