@@ -8,7 +8,7 @@
  *
  * George Almasi (galmasi@optonline.net), 2004/1/24
  * Based on the sa1111_generic.c file.
- * $Id: sa1101.c,v 1.3 2004/07/04 16:23:50 fare Exp $
+ * $Id: sa1101.c,v 1.4 2004/07/06 14:39:26 oleg820 Exp $
  */
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -74,10 +74,6 @@ static void sa1101_pcmcia_socket_state(struct soc_pcmcia_socket *skt, struct pcm
 {
 	unsigned long status = PCSR;
 
-	/* XXX - as compared to what we do here, jornada56x does as follows:
-	 * _detected is inverted and _VS2 is 2 rather than 1.
-	 * If there is trouble, try that.
-	 */
 	switch (skt->nr) {
 	case 0:
 		state->detect = (status & PCSR_S0_detected)     ? 0 : 1;
@@ -99,6 +95,9 @@ static void sa1101_pcmcia_socket_state(struct soc_pcmcia_socket *skt, struct pcm
 		break;
 	}
 }
+
+/* this function is specific to jornada820.
+   if you have other sa1101 based device, verify the settings yourself */ 
 
 static int sa1101_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, const socket_state_t *state)
 {
@@ -145,6 +144,16 @@ static int sa1101_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, const s
 	            printk(KERN_ERR "sa1101_pcmcia: sock=0 unrecognised VCC %u\n",state->Vcc);
 	            return -1;
 	    };
+
+          switch (state->Vpp)
+            {
+            case   0: break;
+            case  50: mask1 |= vpp0; break;
+            default:
+                    printk(KERN_ERR "sa1101_pcmcia: sock=0 unrecognised VPP %u\n",state->Vpp);
+                    return -1;
+          };
+
     break;
     case 1:
 	  switch (state->Vcc)
@@ -155,26 +164,23 @@ static int sa1101_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, const s
 	            printk(KERN_ERR "sa1101_pcmcia: sock=1 unrecognised VCC %u\n",state->Vcc);
 	            return -1;
 	    };
+
+          switch (state->Vpp)
+            {
+	    case  0: break;
+            default:
+                    printk(KERN_WARNING "sa1101_pcmcia: CF sock=1 VPP %u ???\n",state->Vpp);
+          };
     break;
 
     default:  return -1;
     }
 
-    /* TODO: how to verify ? */
-  switch (state->Vpp)
-    {
-    case   0: break;
-    case  33: mask1 |= vpp0; break;
-    case  50: mask1 |= (vpp0|vpp1); break;
-    default:
-            printk(KERN_ERR "sa1101_pcmcia: unrecognised VPP %u\n",state->Vpp);
-            return -1;
-    };
-
   if (state->flags & SS_RESET)  mask1 |= rst;
   if (state->flags & SS_OUTPUT_ENA)  mask1 |= flt;
 
   local_irq_save(flags);
+  /* we have a minor timing problem here */
   PCCR = ((PCCR & ~mask0) | mask1);
   local_irq_restore(flags);
 
@@ -201,6 +207,9 @@ struct pcmcia_low_level sa1101_pcmcia_ops = {
 	.configure_socket	= sa1101_pcmcia_configure_socket,
 	.socket_init		= sa1101_pcmcia_socket_init,
 	.socket_suspend		= sa1101_pcmcia_socket_suspend,
+/*
+	.socket_get_timing	= 
+*/
 };
 
 static int pcmcia_probe(struct sa1101_dev *dev)
