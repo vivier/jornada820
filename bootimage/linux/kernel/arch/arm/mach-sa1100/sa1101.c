@@ -1,6 +1,6 @@
 /*
  * 2004/01/22 George Almasi (galmasi@optonline.net)
- * Driver for the SA1101 chip in the Jornada820.
+ * Main driver for the SA1101 chip.
  * Modelled after the file sa1111.c
  */
 
@@ -17,6 +17,7 @@
 #include <linux/timer.h>
 
 #include <asm/hardware.h>
+#include "asm/hardware/sa1101.h"
 #include <asm/irq.h>
 #include <asm/mach/irq.h>
 #include <asm/arch/irq.h>
@@ -24,13 +25,12 @@
 
 #include <asm/io.h>
 
-#include "sa1101.h"
+/* TODO: remove */
+static void jornada820_init_proc (void);
 
-struct resource sa1101_resource = {
+static struct resource sa1101_resource = {
   .name   = "SA1101"
 };
-
-EXPORT_SYMBOL_GPL(sa1101_resource);
 
 /*
  * Figure out whether we can see the SA1101
@@ -85,8 +85,6 @@ void sa1101_IRQ_demux(int irq, void *dev_id, struct pt_regs *regs)
     }
 }
 
-#define SA1101_IRQMASK_LO(x)	(1 << (x - IRQ_SA1101_START))
-#define SA1101_IRQMASK_HI(x)	(1 << (x - IRQ_SA1101_START - 32))
 
 /*
  * A note about masking IRQs:
@@ -185,6 +183,98 @@ void __init sa1101_init_irq(int irq_nr)
     printk(KERN_ERR "SA1101: unable to claim IRQ %d\n", irq_nr);
 }
 
+static struct sa1101_pcmcia_irqs 
+{
+  int irq;
+  const char *str;
+} sa1101_pcmcia_irqs[] = {
+  { IRQ_SA1101_S0_CDVALID,     "PCMCIA card detect" },
+  { IRQ_SA1101_S0_BVD1_STSCHG, "PCMCIA BVD1" },
+  { IRQ_SA1101_S1_CDVALID,     "CF card detect" },
+  { IRQ_SA1101_S1_BVD1_STSCHG, "CF BVD1" },
+};
+
+/* ************************************************************************* */
+/*  Initialize the PCMCIA subsystem: turn on interrupts, reserve memory      */
+/* ************************************************************************* */
+
+int sa1101_pcmcia_init(void *handler)
+{
+  int i, ret;
+
+  if (!request_mem_region(_PCCR, 512, "PCMCIA")) return -1;
+  
+  for (i = ret = 0; i < ARRAY_SIZE(sa1101_pcmcia_irqs); i++)
+    {
+      ret = request_irq(sa1101_pcmcia_irqs[i].irq, 
+			handler, 
+			SA_INTERRUPT,
+			sa1101_pcmcia_irqs[i].str, 
+			NULL);
+      if (ret)break;
+    }
+
+
+  if (i < ARRAY_SIZE(sa1101_pcmcia_irqs)) 
+    {
+      printk(KERN_ERR "sa1101_pcmcia: unable to grab IRQ%d (%d)\n",
+	     sa1101_pcmcia_irqs[i].irq, ret);
+      while (i--) 
+       free_irq(sa1101_pcmcia_irqs[i].irq, NULL);
+      release_mem_region(_PCCR, 16);
+    }
+
+  INTPOL1 |= (SA1101_IRQMASK_HI(IRQ_SA1101_S0_CDVALID) |
+              SA1101_IRQMASK_HI(IRQ_SA1101_S1_CDVALID) |
+              SA1101_IRQMASK_HI(IRQ_SA1101_S0_BVD1_STSCHG) |
+              SA1101_IRQMASK_HI(IRQ_SA1101_S0_BVD1_STSCHG));
+
+  return ret ? -1 : 2;
+}
+
+/* ************************************************************************* */
+/*      Shut down PCMCIA: release memory, interrupts.                        */
+/* ************************************************************************* */
+
+int sa1101_pcmcia_shutdown(void)
+{
+  int i;
+  for (i = 0; i < ARRAY_SIZE(sa1101_pcmcia_irqs); i++) 
+   free_irq(sa1101_pcmcia_irqs[i].irq, NULL);
+
+  INTPOL1 &= ~(SA1101_IRQMASK_HI(IRQ_SA1101_S0_CDVALID) |
+	       SA1101_IRQMASK_HI(IRQ_SA1101_S1_CDVALID) |
+	       SA1101_IRQMASK_HI(IRQ_SA1101_S0_BVD1_STSCHG) |
+	       SA1101_IRQMASK_HI(IRQ_SA1101_S0_BVD1_STSCHG));
+
+  release_mem_region(_PCCR, 512);
+  return 0;
+}
+
+static int sa1101_usb_shutdown(void)
+{
+  /* not yet */
+ return 0;
+}
+
+static int sa1101_vga_shutdown(void)
+{
+  /* not yet */
+ return 0;
+}
+
+static int sa1101_usb_init(void)
+{
+  /* not yet */
+ return 0;
+}
+
+static int sa1101_vga_init(void)
+{
+  /* not yet */
+ return 0;
+}
+
 /*
  * wake up the 1101
  */
@@ -232,6 +322,10 @@ void sa1101_wake(void)
   USBReset |= USBReset_ForceHcReset;
 
   local_irq_restore(flags);
+
+   /* TODO: remove */
+  jornada820_init_proc();
+
 }
 
 
@@ -244,6 +338,8 @@ void sa1101_doze(void)
   /* not implemented */
 	printk("SA1101 doze mode not implemented\n");
 }
+
+/* TODO: remove **********************************************************************************/
 
 int j820_apm_get_power_status(u_char *ac_line_status, u_char *battery_status, u_char *battery_flag, 
                               u_char *battery_percentage, u_short *battery_life)
@@ -259,8 +355,85 @@ int j820_apm_get_power_status(u_char *ac_line_status, u_char *battery_status, u_
  return 0;
 }
 
+/* *********************************************************************** */
+/* machine specific proc file system                                       */
+/* *********************************************************************** */
+
+#include <linux/proc_fs.h>
+#include <asm/uaccess.h>
+
+static struct proc_dir_entry *j820_dir, *parent_dir = NULL;
+
+
+#define PROC_NAME "j820"
+
+static int j820_read_proc(char *buf,
+			  char **start,
+			  off_t pos,
+			  int count,
+			  int *eof,
+			  void *data)
+{
+  char *p = buf;
+  p += sprintf(p, "\t Contrast  = %u\n", DAC_JORNADA820_CONTRAST);
+  p += sprintf(p, "\t Brightness= %u\n", DAC_JORNADA820_BRIGHTNESS);
+  p += sprintf(p, "\t PADRR     = %08x\n", PADRR);
+  p += sprintf(p, "\t PBDRR     = %08x\n", PBDRR);
+  return (p-buf);
+}
+
+static int j820_write_proc (struct file *file,
+			    const char *buffer,
+			    unsigned long count,
+			    void *data)
+{
+  char buf[260];
+  if (count > 258) return -EINVAL;
+  if (copy_from_user(buf, buffer, count)) return -EFAULT;
+  if (!strncmp(buf, "Contrast", 8))
+    {
+      unsigned val;
+      sscanf(buf+8, "%d", &val);
+      DAC_JORNADA820_CONTRAST = val;
+    }
+  if (!strncmp(buf, "Brightness", 10))
+    {
+      unsigned val;
+      sscanf (buf+10, "%d", &val);
+      DAC_JORNADA820_BRIGHTNESS = val;
+    }
+  if (!strncmp(buf, "Backlight", 9))
+    {
+      unsigned val;
+      sscanf (buf+9, "%d", &val);
+      if (val) GPSR = GPIO_JORNADA820_BACKLIGHTON;
+      else     GPCR = GPIO_JORNADA820_BACKLIGHTON;
+    }
+  return count;
+}
+
+static void jornada820_init_proc (void)
+{
+  j820_dir = create_proc_entry ("j820", 0, parent_dir);
+  if (j820_dir == NULL)
+    {
+      printk("jornada820_init_proc failed\n");
+      return;
+    }
+  j820_dir->read_proc = j820_read_proc;
+  j820_dir->write_proc = j820_write_proc;
+}
+
+/*********************************************************************************/
+
 EXPORT_SYMBOL_GPL(sa1101_wake);
 EXPORT_SYMBOL_GPL(sa1101_doze);
+EXPORT_SYMBOL_GPL(sa1101_pcmcia_init);
+EXPORT_SYMBOL_GPL(sa1101_pcmcia_shutdown);
+EXPORT_SYMBOL_GPL(sa1101_usb_init);
+EXPORT_SYMBOL_GPL(sa1101_usb_shutdown);
+EXPORT_SYMBOL_GPL(sa1101_vga_init);
+EXPORT_SYMBOL_GPL(sa1101_vga_shutdown);
 
 MODULE_DESCRIPTION("Main driver for SA-1101.");
 MODULE_LICENSE("GPL");
