@@ -124,12 +124,12 @@ do-j820:
 	    CROSS_COMPILE=${TARGET}- \
 	    INITRD=$${RDIMAGE} \
 	    zImage j820
-	cp ${KBUILDDIR}/arch/arm/boot/j820/j820 $@
+	cp ${KBUILDDIR}/arch/arm/boot/j820/j820 j820
 
 sandisk: j820
 	mount /mnt/sandisk/; cp j820 /mnt/sandisk/; umount /mnt/sandisk/
 
-j820-26: config26 depend26 modules26 ramdisk26 do-j820-26
+j820-26: config26 modules26 ramdisk26 do-j820-26
 do-j820-26:
 	export RDIMAGE=$(TOPDIR)/ramdisk/ramdiskimage26.gz && \
 	cd ${KBUILDDIR26} && \
@@ -138,7 +138,7 @@ do-j820-26:
 	    CROSS_COMPILE=${TARGET}- \
 	    INITRD=$${RDIMAGE} \
 	    zImage j820
-	cp ${KBUILDDIR26}/arch/arm/boot/j820/j820 $@
+	cp ${KBUILDDIR26}/arch/arm/boot/j820/j820 j820-26
 
 
 # -------------------------------------------------------------------------- 
@@ -163,11 +163,6 @@ ${KBUILDDIR}/.config: kbuildtree
 menuconfig26: kbuildtree26
 	cd ${KBUILDDIR26} && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- menuconfig
-
-depend26: config26 ${KBUILDDIR26}/.depend
-${KBUILDDIR26}/.depend:
-	cd ${KBUILDDIR26} && \
-	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- depend
 
 config26: ${KBUILDDIR26}/.config
 ${KBUILDDIR26}/.config: kbuildtree26
@@ -194,7 +189,7 @@ ramdisk/lib/modules:
 		DEPMOD=true \
 	        modules modules_install
 
-modules26: config26 depend26 ramdisk/modules26.tar.bz2
+modules26: config26 ramdisk/modules26.tar.bz2
 
 ramdisk/modules26.tar.bz2: $(KBUILDDIR26)/target/lib/modules
 	cd $(KBUILDDIR26)/target && \
@@ -220,4 +215,4 @@ ramdisk: modules
 	${MAKE} -C ramdisk TARGET=${TARGET} OS=${OS}
 
 ramdisk26: modules26
-	${MAKE} -C ramdisk26 TARGET=${TARGET} OS=${OS}
+	${MAKE} -C ramdisk TARGET=${TARGET} OS=${OS} ramdisk26
