@@ -29,6 +29,7 @@ clean::
 	${MAKE} -C ramdisk clean
 
 distclean:: clean
+	${MAKE} -C ${KERNELDIR} ARCH=arm mrproper
 
 # -------------------------------------------------------------------------- 
 #                    build the boot image
