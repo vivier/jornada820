@@ -89,6 +89,7 @@ char j820_kbd_unexpected_up(unsigned char keycode)
 
 static void j820_kbd_irq(int irq, void *dev_id, struct pt_regs *regs)
 {
+  unsigned scancode;
 
 #ifdef CONFIG_VT
   kbd_pt_regs = regs;
@@ -96,7 +97,7 @@ static void j820_kbd_irq(int irq, void *dev_id, struct pt_regs *regs)
   disable_irq(irq);
 
   ssp_write_word(0x8200);
-  unsigned scancode = ssp_read_word();
+  scancode = ssp_read_word();
   handle_scancode(scancode, (scancode & 0x80) ? 0 : 1);
 
   enable_irq(irq);
