@@ -358,8 +358,7 @@ CONFIG_BLK_DEV_INITRD=y
 #
 # Networking options
 #
-CONFIG_PACKET=y
-# CONFIG_PACKET_MMAP is not set
+# CONFIG_PACKET is not set
 # CONFIG_NETLINK_DEV is not set
 # CONFIG_NETFILTER is not set
 # CONFIG_FILTER is not set
@@ -1227,7 +1226,7 @@ CONFIG_USB_USBNET=m
 # Kernel hacking
 #
 CONFIG_FRAME_POINTER=y
-CONFIG_DEBUG_USER=y
+# CONFIG_DEBUG_USER is not set
 # CONFIG_DEBUG_INFO is not set
 # CONFIG_NO_PGT_CACHE is not set
 CONFIG_DEBUG_KERNEL=y
