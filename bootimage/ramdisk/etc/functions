@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.20 2004/07/10 11:49:29 fare Exp $
+# $Id: functions,v 1.21 2004/07/15 11:42:40 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -197,7 +197,7 @@ rootfs () {
   try_pivot_root
 }
 
-linkme () {
+linkme () { (
   cd /mnt/linux
   for i in etc/* usr/* lib/* ; do
     [ -e /$i ] || DO_T ln -s /mnt/linux/$i /$i
@@ -205,9 +205,14 @@ linkme () {
   for i in bin/* ; do
     DO_T ln -s /mnt/linux/$i /usr/bin/
   done
-}
+) }
 CET () { export TZ=CET-1CEST ; }
-nameserver () { for i ; do echo nameserver $i ; done > /etc/resolv.conf ; }
+
+nameserver () { (
+  for i in $2 ; do echo search $i ; done
+  for i in $1 ; do echo nameserver $i ; done
+ ) > /etc/resolv.conf
+}
 
 net0 () {
   hostname mildendo
@@ -491,3 +496,4 @@ getdate () {
 mnt1 () {
   mount /dev/hda1 /mnt
 }
+up () { cd .. ; }
