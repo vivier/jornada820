@@ -63,7 +63,7 @@ $(KUPSTREAMDIR)/CVS/Root $(KUPSTREAMDIR)/CVS/Repository:
 
 $(KUPSTREAMDIR)/Makefile: $(KUPSTREAMDIR)/CVS/Root
 	cd $(KUPSTREAMDIR) && cvs -z9 update -dfP && \
-	touch $(KUPSTREAMDIR)/Makefile
+	touch Makefile
 
 # --------------------------------------------------------------------------
 #                       kernel build tree, v2.6                            |
