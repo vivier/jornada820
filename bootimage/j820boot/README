@@ -1,0 +1,34 @@
+
+
+THIS PROGRAM IS BASED ON LINEXEC.
+
+here is how you use linexec:
+
+To use linexec, you need 4 files.
+
+linexec config file: params
+
+Create a file called "params"
+
+This params file specifies three lines of config for:
+kernel image
+initrd image
+kernel args
+
+For example, my params looks like this:
+\My Documents\zimage
+\My Documents\initrd.gz
+init=/linuxrc keepinitrd root=/dev/rd/0
+
+
+(This is what I actually have in my params file, but remember this might not
+work for your kernel/device)
+
+(Also a note for the params file, seems that the code is only happy if the
+file is in unix format, i.e. newline as \r, but not dos format)
+
+Pigeon.
+
+
+
+
