@@ -1,19 +1,7 @@
 #!/bin/sh
-# $Id: functions,v 1.9 2004/05/02 11:01:54 fare Exp $
+# $Id: functions,v 1.10 2004/05/08 12:38:26 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
-
-ascii_table () {
-  i=32 ; while [ $i -lt 256 ] ; do
-    case $i in
-      ?|[12][0-9]|3[01]|127|155) j=" " ;;
-      *) j=$(eval "echo -ne '\\$(printf %03o $i)'") ;;
-    esac
-    printf "%02x:%c " "$i" "$j"
-    i=$(($i+1))
-    #if [ $(($i % 16)) = 0 ] ; then echo ; fi 
-  done
-}
 
 re () {
   # RE-REad RenE's Runtime-Environment
@@ -40,6 +28,75 @@ cursor () {
   echo -ne "\\033[?${1:-2}c"
 }
 
+
+LOG () {
+  LOG_T "$@" ; LOG_C "$@"
+}
+LOG_C () {
+  echo "$@" >&2
+}
+LOG_T () {
+  opts=""
+  case "$1" in
+    -*) opts="$1" ; shift ;;
+  esac
+  echo $opts "$$ $(date +'%Y-%m-%d %H:%M:%S'): $@" >> /tmp/log
+}
+DO () {
+  LOG "$@" ; "$@" 2>&1 | tee -a /tmp/log
+}
+DO_C () {
+  LOG_C "$@" ; "$@"
+}
+DO_T () {
+  LOG_T "$@" ; "$@" >> /tmp/log 2>&1 
+}
+ABORT () {
+  if [ -n "$1" ] ; then
+    LOG "$1"
+  fi
+  if [ 1 = $$ ] ; then
+    exec_sh
+  else
+    exit ${2:-42}
+  fi
+}
+CHECK () {
+  # Check whether what we want is OK
+  ERR="${3:-Something is wrong about the target filesystem.}
+Stopping before we do a big mistake."
+  LOG_T -n "Checking: $1 ... "
+  if eval "$1" ; then
+    LOG_T "ok"
+  else
+    if [ -n "$2" ] ; then
+      LOG_T -n "failed. Taking a corrective measure: "
+      eval "DO_T $2"
+      eval "$1" ||
+      ABORT "$ERR" ${4:-42}
+    else
+      ABORT "$ERR" ${4:-42}
+    fi
+  fi
+}
+
+ascii_table () {
+  if [ -z "$ASCII_TABLE" ] ; then
+    ASCII_TABLE="$(
+      i=32 ; while [ $i -lt 256 ] ; do
+	case $i in
+	  ?|[12][0-9]|3[01]|127|155) j=' ' ;;
+	  *) j=$(eval "echo -ne '\\$(printf %03o $i)'") ;;
+	esac
+	printf "%02x:%c " "$i" "$j"
+	i=$(($i+1))
+	#if [ $(($i % 16)) = 0 ] ; then echo ; fi 
+      done )"
+  fi
+  export ASCII_TABLE
+  echo "$ASCII_TABLE"
+}
+
 nbdswap () {
   # See http://www.it.uc3m.es/~ptb/nbd/
   mknod /dev/nb0 b 43 0
@@ -55,7 +112,7 @@ link_applets () {
 }
 
 ensure_tmp () {
-  mkdir -p tmp
+  DO_T mkdir -p tmp
   CHECK '[ -d tmp ]' \
       '' \
       "Cannot ensure existence of $PWD/tmp directory."
@@ -79,12 +136,28 @@ CHECK '[ -c dev/console ]' \
       "Cannot mount the $PWD/dev partition."
 }
 
+ensure_shm () {
+CHECK '[ -d dev/shm ]' \
+      'mkdir dev/shm' \
+      "Cannot make a $PWD/dev/shm directory node."
+CHECK "grep -q $PWD/dev/shm /proc/mounts" \
+      "mount tmpfs dev/shm -t tmpfs" \
+      "Cannot mount the $PWD/dev/shm partition."
+DO_T mkdir -p dev/shm/tmp dev/shm/var dev/shm/var/run dev/shm/var/lock
+}
+
+ensure_shm_tmp () {
+  CHECK "[ -h tmp -o -d tmp ]" \
+	"ln -s dev/shm/tmp tmp" \
+	"Cannot ensure existence of $PWD/tmp directory."
+}
+
 my_linuxrc () {
-  echo "We're in my_linuxrc! PID=$$" >> /tmp/log 
+  echo "We're in my_linuxrc! PID=$$" >> /tmp/log
   ps >> /tmp/log
 
-  cd /
-  mkdir -p /tmp
+  DO_T cd /
+  DO_T mkdir -p /tmp
   LOG "Mounting proc and dev"
   ensure_proc
   ensure_dev
@@ -100,16 +173,15 @@ my_linuxrc () {
     fi
     LOG "Fallback plan: running busybox on the initial ramdisk."
     sysinit
-    LOGC "This is a single-user shell with PID=$$.
+    LOG_C "This is a single-user shell with PID=$$.
 You can attempt to pivot_root manually, or
 you can instead let busybox manage your consoles with 'exec /linuxrc'"
-    exec /bin/sh < dev/console > dev/console 2>&1
+    exec_sh
   }
 
   try_pivot_root
 
   ABORT "Abnormal return from try_pivot_root."
-
 }
 
 lisp () {
@@ -119,10 +191,10 @@ lisp () {
 linkme () {
   cd /mnt/linux
   for i in etc/* usr/* lib/* ; do
-    [ -e /$i ] || ln -s /mnt/linux/$i /$i
+    [ -e /$i ] || DO_T ln -s /mnt/linux/$i /$i
   done
   for i in bin/* ; do
-    ln -s /mnt/linux/$i /usr/bin/
+    DO_T ln -s /mnt/linux/$i /usr/bin/
   done
 }
 
@@ -151,52 +223,38 @@ udhcp () {
 change_root () {
   # See /usr/src/linux/Documentation/initrd.txt
   PARTNUM=${1:-3} # Partition with root disk in /dev/hda. Default: hda3
-  : cardmgr -o
+  : DO_T cardmgr -o
   # /dev/hda1 = 0x301, /dev/hda2 = 0x302, etc
   echo $(( 768 + $PARTNUM )) > /proc/sys/kernel/real-root-dev
   #cat /proc/sys/kernel/real-root-dev
   #cat /proc/cmdline
 }
 
-ABORT () {
-  if [ -n "$1" ] ; then
-    LOG "$1"
-  fi
-  exit ${2:-42}
-}
-CHECK () {
-  # Check whether what we want is OK
-  ERR="${3:-Something is wrong about the target filesystem.}
-Stopping before we do a big mistake."
-  LOGT -n "Checking: $1 ... "
-  if eval "$1" ; then
-    LOGT "ok"
-  else
-    if [ -n "$2" ] ; then
-      LOGT "failed. Taking a corrective measure: $2"
-      eval "$2"
-      eval "$1" ||
-      ABORT "$ERR" ${4:-42}
-    else
-      ABORT "$ERR" ${4:-42}
-    fi
-  fi
+exec_sh () {
+    exec /bin/sh < dev/console > dev/console 2>&1 $@
 }
 
 no_noautomount_p () {
   # create a file or directory noautomount on your WinCE FAT partition
   # to prevent the boot disk image from automounting your rootfs.
+  N="$NO_NOAUTOMOUNT"
+  no_noautomount
+  [ -n "$N" ] && return 0
   R=0
   [ -d /mnt/dos ] || mkdir -p /mnt/dos
   DOSPART=$(fdisk -l /dev/hda | grep FAT | head -1 | cut -d" " -f1 )
   if [ -n "$DOSPART" ] ; then
-    mount $DOSPART /mnt/dos -t vfat -o ro
+    DO_T mount $DOSPART /mnt/dos -t vfat -o ro
     if [ -e /mnt/dos/noautomount ] ; then
       R=1
     fi
-    umount /mnt/dos
+    DO_T umount /mnt/dos
   fi
   return $R
+}
+
+no_noautomount () {
+  export NO_NOAUTOMOUNT=1
 }
 
 ensure_no_noautomount () {
@@ -204,10 +262,10 @@ ensure_no_noautomount () {
   [ -d /mnt/dos ] || mkdir -p /mnt/dos
   DOSPART=$(fdisk -l /dev/hda | grep FAT | head -1 | cut -d" " -f1 )
   if [ -n "$DOSPART" ] ; then
-    mount $DOSPART /mnt/dos -t vfat -o rw,noatime
-    [ -d /mnt/dos/noautomount ] && rmdir /mnt/dos/noautomount
-    [ -f /mnt/dos/noautomount ] && rm -f /mnt/dos/noautomount
-    umount /mnt/dos
+    DO_T mount $DOSPART /mnt/dos -t vfat -o rw,noatime
+    [ -d /mnt/dos/noautomount ] && DO_T rmdir /mnt/dos/noautomount
+    [ -f /mnt/dos/noautomount ] && DO_T rm -f /mnt/dos/noautomount
+    DO_T umount /mnt/dos
   fi
 }
 
@@ -219,11 +277,23 @@ ensure_linuxpartition () {
 	'mkdir -p /mnt/linux' \
 	'Cannot make /mnt/linux directory.'
   CHECK "grep -q '$PART /mnt/linux' /proc/mounts" \
-	"mount $PART /mnt/linux -o noatime,rw" \
+	"mount $PART /mnt/linux -o noatime,ro" \
 	"Cannot mount the target partition $PART to /mnt/linux."
   PARTNUM="$(echo $PART | cut -c9-)"
   change_root $PARTNUM # necessary if we're not PID=1
 }
+
+try_fsck () {
+  FSTYPE="$(< /proc/mounts grep $PART | cut -d' ' -f 3)"
+  FSCK=sbin/fsck.$FSTYPE
+  ensure_dev
+  ensure_proc
+  if [ -x ./$FSCK ] ; then
+    LOG chroot $PWD /$FSCK -y $PART
+    chroot $PWD /$FSCK -y $PART
+  fi
+}
+
 has_init_p () {
   # [ -x linuxrc ] ||
   [ -x sbin/init ] || [ -x etc/init ] || [ -x bin/init ] ||
@@ -242,9 +312,10 @@ do_init () {
 }
 
 ensure_partition_bootable () {
+  mount -o remount,rw .
   for i in bin sbin usr/bin usr/sbin etc etc/pcmcia \
 	   tmp var/run initrd lib/modules mnt ; do
-    CHECK "[ -d $i ]" "mkdir -p $i" \
+    CHECK "[ -h $i -o -d $i ]" "mkdir -p $i" \
 	"Cannot ensure directory /$i on target partition"
   done
   for i in bin/busybox bin/cardmgr bin/cardctl \
@@ -262,28 +333,14 @@ ensure_partition_bootable () {
   CHECK "grep -q pivot_root_part2 etc/functions" \
 	"cp -af /etc/functions etc/functions" \
 	"Cannot ensure pivot_root_part2 in target /etc/functions"
-  LOGT "Ensuring a working bin/sh..."
+  LOG_T "Ensuring a working bin/sh..."
   CHECK "[ -x bin/sh ]" \
 	"chroot . /bin/busybox --install -s" \
 	"Cannot ensure a working /bin/sh on target."
-  LOGT "Installing kernel modules..."
+  LOG_T "Installing kernel modules..."
   MODULES="lib/modules/$(uname -r)"
   CHECK "[ -d $MODULES ]" "cp -a /$MODULES $MODULES" \
 	"Cannot ensure kernel modules on target partition"
-}
-
-LOGT () {
-  opts=""
-  case "$1" in
-    -*) opts="$1" ; shift ;;
-  esac
-  echo $opts "$$ $(date +'%Y-%m-%d %H:%M:%S'): $@" >> /tmp/log
-}
-LOGC () {
-  echo "$@" >&2
-}
-LOG () {
-  LOGT "$@" ; LOGC "$@"
 }
 
 try_pivot_root () {
@@ -292,7 +349,7 @@ try_pivot_root () {
   # either from linuxrc of from a single-user mode shell.
 
   LOG "Let's pivot_root if we can."
-  cd /
+  DO_T cd /
   ensure_tmp ; ensure_proc ; ensure_dev # necessary for many things
   LOG "Checking for a CF memory card..."
   CHECK 'dd if=/dev/hda count=1 of=/dev/null 2> /dev/null' \
@@ -305,22 +362,29 @@ try_pivot_root () {
   ensure_linuxpartition
   LOG "Trying to make the Linux partition livable..."
   cd /mnt/linux
+  LOG "Trying to fsck the Linux partition..."
+  try_fsck
   LOG "Ensuring the target partition is bootable..."
   ensure_partition_bootable
+  do_pivot_root
+}
 
+do_pivot_root () {
   if [ 1 = $$ ] ; then
     ensure_proc
     ensure_dev
+    ensure_shm
+    ensure_shm_tmp
     LOG "Changing current I/O to new /dev"
     exec < dev/console > dev/console 2>&1
     LOG "Switching root partition..."
-    cp /tmp/log tmp/log # copying logfile over...
+    cp /tmp/log tmp/log # "copying logfile over..."
     pivot_root . initrd
     exec chroot . ./bin/sh ./etc/please pivot_root_part2 \
 	< dev/console > dev/console 2>&1
   else
     cd /
-    umount /mnt/linux
+    DO_T umount /mnt/linux
     LOG "PID = $$ != 1; Let's trust linux/init/do_mount.c for the sequel ..."
     exit 0
   fi
@@ -331,19 +395,17 @@ pivot_root_part2 () {
   LOG "Ensuring dev and proc"
   ensure_dev ; ensure_proc
   LOG "Cleaning filedescriptors"
-  cd /
+  DO_T cd /
   exec < dev/console > dev/console 2>&1
-  LOGT "mounts:
-$(cat proc/mounts)"
-  LOGT "ps:
-$(ps)"
+  DO_T cat /proc/mounts
+  DO_T ps
   LOG "Unmounting dev and proc from initrd"
-  umount initrd/dev
-  umount initrd/proc
+  DO_T umount initrd/dev
+  DO_T umount initrd/proc
   LOG "Freeing resources occupied by the initrd..."
-  umount initrd
+  DO_T umount initrd
   # problem: blockdev (part of the util-linux debian package) isn't in busybox
-  blockdev --flushbufs /dev/rd/0 # /dev/ram0
+  DO_T blockdev --flushbufs /dev/rd/0 # /dev/ram0
   if [ 1 = $$ ] ; then
     LOG "Jumping into the rootfs' init process..."
     do_init
