@@ -1,4 +1,8 @@
-Build Environment for the Jornada 820 bootimage
+Jornada 820 bootimage information
+$Id: README,v 1.4 2004/07/15 11:41:53 fare Exp $
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+BUILD ENVIRONMENT
 
 The Makefile ought to contain everything you need to build the bootimage.
 For hacking, an optional script "please" helps you do things
@@ -44,7 +48,7 @@ Most importantly, it lacks pcmcia support as of the writing of this line.
 See the TODO file.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
-NOTES
+BUILD ENVIRONMENT NOTES
 
 The current build system may have glitches. We're sorry for the inconvenience.
 Please report to us any bugs as you experience them.
@@ -72,8 +76,12 @@ The ramdisk that is built by this Makefile has the following usage:
 * To free the memory occupied by the ramdisk, your rootfs will need to run
  the program blockdev, which is part of the util-linux debian package.
 
+* With kernel 2.6, you must use cat /proc/modules instead of lsmod
+
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 RAMDISKIMAGE NOTES
 
 * Building with a glibc toolchain will not only make everything much larger, it
  will also break the resolver functionality, that requires dynamic loading (!)
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
