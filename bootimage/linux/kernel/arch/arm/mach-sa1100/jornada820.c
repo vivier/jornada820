@@ -8,7 +8,7 @@
  * re-initialize everything, but lazily allow certain pre-set WinCE
  * things to continue functioning.
  *
- * This dependance will removed soon (?).
+ * This dependance will be removed soon ? (01.05.2004)
  */
 
 #include <linux/init.h>
