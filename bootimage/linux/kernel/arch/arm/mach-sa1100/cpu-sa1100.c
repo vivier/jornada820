@@ -112,6 +112,7 @@ typedef struct {
 static sa1100_dram_regs_t sa1100_dram_settings[] =
 {
 	/* {        mdcnfg,     mdcas0,     mdcas1,     mdcas2 } */ /* clock frequency */
+	{ 176900, 0x05c7213f, 0x18c6301f, 0xffff0c63, 0xffffffff },
 	{ 191700, 0x063d213f, 0x18c6301f, 0xffff0c63, 0xffffffff }, /* 191.7 MHz */
 	{ 0, 0, 0, 0, 0 } /* last entry */
 };

@@ -323,6 +323,9 @@ void sa1101_wake(void)
 
   local_irq_restore(flags);
 
+	TUCR |= 0x400; /* MR bit - enable master request in the sa1100. */
+	SMCR = 0x1e; /* 10 cColAdrBits and 12 RowAdrBits, so how come I see 0x16 ? */
+  
    /* TODO: remove */
   jornada820_init_proc();
 

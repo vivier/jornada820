@@ -93,7 +93,7 @@ obj-$(CONFIG_SA1100_SIMPUTER) += simputer.o
 obj-$(CONFIG_SA1100_VICTOR) += victor.o
 obj-$(CONFIG_SA1100_XP860) += xp860.o
 obj-$(CONFIG_SA1100_YOPY) += yopy.o
-obj-$(CONFIG_SA1100_JORNADA820) += jornada820.o sa1101.o
+obj-$(CONFIG_SA1100_JORNADA820) += jornada820.o sa1101.o pcipool.o
 
 # LEDs support
 leds-y := leds.o

@@ -144,6 +144,8 @@ dep_tristate '  Support for SA11x0 USB character device emulation' CONFIG_SA1100
 dep_tristate 'CPU Registers via /proc (experimental)' CONFIG_REGISTERS $CONFIG_ARCH_SA1100 $CONFIG_EXPERIMENTAL
 dep_tristate 'SA1100 Generic PIO SSP support' CONFIG_SA1100_SSP $CONFIG_ARCH_SA1100
 
+dep_bool 'SA1101 support' CONFIG_SA1101 $CONFIG_ARCH_SA1100
+
 endmenu
 
 mainmenu_option next_comment
