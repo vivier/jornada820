@@ -120,6 +120,7 @@ CONFIG_SA1100_USB_NETLINK=m
 CONFIG_SA1100_USB_CHAR=m
 CONFIG_REGISTERS=m
 CONFIG_SA1100_SSP=y
+CONFIG_SA1101=y
 
 #
 # Intel PXA250/210 Implementations
@@ -195,7 +196,6 @@ CONFIG_HOTPLUG=y
 # PCMCIA/CardBus support
 #
 CONFIG_PCMCIA=y
-CONFIG_PCMCIA_PROBE=y
 # CONFIG_I82092 is not set
 # CONFIG_I82365 is not set
 # CONFIG_TCIC is not set
@@ -410,6 +410,7 @@ CONFIG_INET=y
 # Network testing
 #
 # CONFIG_NET_PKTGEN is not set
+# CONFIG_IPSEC is not set
 
 #
 # Network device support
@@ -1019,6 +1020,7 @@ CONFIG_DUMMY_CONSOLE=y
 # CONFIG_FB_ANAKIN is not set
 # CONFIG_FB_CLPS711X is not set
 # CONFIG_FB_S3C2410 is not set
+# CONFIG_FB_SA1101 is not set
 CONFIG_FB_SA1100=y
 # CONFIG_FB_EPSON1356 is not set
 # CONFIG_FB_MQ200 is not set
@@ -1125,7 +1127,8 @@ CONFIG_USB=m
 # CONFIG_USB_EHCI_HCD is not set
 # CONFIG_USB_UHCI is not set
 # CONFIG_USB_UHCI_ALT is not set
-# CONFIG_USB_OHCI is not set
+CONFIG_USB_OHCI=m
+CONFIG_USB_OHCI_SA1101=m
 # CONFIG_USB_OHCI_SA1111 is not set
 # CONFIG_USB_OHCI_H5400 is not set
 # CONFIG_USB_OHCI_S3C2410 is not set

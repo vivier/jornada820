@@ -175,6 +175,10 @@ extern void set_GPIO_IRQ_edge( int gpio_mask, int edge_mask );
 #include "jornada56x.h"
 #endif
 
+#if defined(CONFIG_SA1100_JORNADA820)
+#include "jornada820.h"
+#endif
+
 #if defined(CONFIG_SA1100_PLEB)
 #include "pleb.h"
 #endif
@@ -199,6 +203,10 @@ extern void set_GPIO_IRQ_edge( int gpio_mask, int edge_mask );
 #include "adsbitsy.h"
 #endif
 
+#if defined(CONFIG_SA1100_FLEXANET)
+#include "flexanet.h"
+#endif
+
 #ifdef CONFIG_SA1101
 
 /*
@@ -211,15 +219,6 @@ extern void set_GPIO_IRQ_edge( int gpio_mask, int edge_mask );
 
 #include "SA-1101.h"
 
-#endif
-
-#if defined(CONFIG_SA1100_FLEXANET)
-#include "flexanet.h"
-#endif
-
-#if defined(CONFIG_SA1100_JORNADA820)
-#include "jornada820.h"
-#include "SA-1101.h"
 #endif
 
 #endif  /* _ASM_ARCH_HARDWARE_H */

@@ -2,7 +2,7 @@
  * URB OHCI HCD (Host Controller Driver) for USB.
  *
  * Jornada820 version based on usb-ohci.c 1.37 from cvs.handhelds.org
- * $Id: usb-ohci.c,v 1.1 2004/07/13 09:19:28 fare Exp $
+ * $Id: usb-ohci.c,v 1.2 2004/07/14 20:04:42 fare Exp $
  *
  * (C) Copyright 1999 Roman Weissgaerber <weissg@vienna.at>
  * (C) Copyright 2000-2001 David Brownell <dbrownell@users.sourceforge.net>
@@ -79,13 +79,20 @@
 #define OHCI_USE_NPS		// force NoPowerSwitching mode
 #undef OHCI_VERBOSE_DEBUG	/* not always helpful */
 
-#include "usb-ohci.h"
-
-#include <asm/arch/hardware.h>
+#ifdef CONFIG_SA1101
+#include <asm/hardware.h>
+#include <asm/hardware/sa1101.h>
+#ifndef CONFIG_PCI
+#define CONFIG_PCI
+#include "../../arch/arm/mach-sa1100/pcipool.h"
+#endif
 #undef readl
-#define readl(a) (*(volatile unsigned int *)(SA1101_p2v(_Revision+0x100*(int)(a))))
 #undef writel
-#define writel(d, a) ((*(volatile unsigned int *)SA1101_p2v(_Revision+0x100*(int)(a)))=(d))
+#define real(d, a) sa1101_readreg(d, _SA1101( _USB( 0x100 * (int)(a) )))
+#define writel(d, a) sa1101_writereg(d, _SA1101( _USB( 0x100 * (int)(a) )))
+#endif
+
+#include "usb-ohci.h"
 
 /*
  * Version Information
