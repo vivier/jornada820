@@ -1,4 +1,4 @@
-$Id: TODO,v 1.7 2004/06/29 09:29:11 fare Exp $
+$Id: TODO,v 1.8 2004/06/29 23:33:57 fare Exp $
 
 Kernel 2.4
 * move on, dude!
@@ -118,5 +118,19 @@ There's a bug to be traced in init/do_mounts_rd.c or init/initramfs.c
 -- somehow, the ramdisk isn't loaded properly.
 Using md5sum to check that the compressed then uncompressed disk
 images are there might or mightn't be useful in locating the bug.
+
+Tracing do_mounts_rd.c, we find that in rd_load_image, the following
+statement exits.
+	nblocks = identify_ramdisk_image(in_fd, rd_image_start);
+	if (nblocks < 0)
+		goto done;
+
+Tracing what is going wrong when loading the initrd on the j820, 
+I find in identify_ramdisk_image that initrd.image has been written 
+with parts of the linux kernel instead of the ramdisk. 
+I guess some memory address loading parameters are wrong in a
+   Makefile.
+
+OK, so the initrd was being overwritten by the bss of the decompressor. Bad!
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
