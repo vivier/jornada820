@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.5 2004/04/27 11:33:15 fare Exp $
+# $Id: functions,v 1.6 2004/04/27 12:41:39 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -90,8 +90,8 @@ my_linuxrc () {
 
   # Fallback plan: busybox's linuxrc
   ABORT () {
-    if [ -n "$2" ] ; then
-      LOG "$2"
+    if [ -n "$1" ] ; then
+      LOG "$1"
     fi
     LOG "Fallback plan: running busybox standalone on the boot disk."
     exec /linuxrc
@@ -150,10 +150,10 @@ change_root () {
 }
 
 ABORT () {
-  if [ -n "$2" ] ; then
-    LOG "$2"
+  if [ -n "$1" ] ; then
+    LOG "$1"
   fi
-  exit ${1:-2}
+  exit ${2:-42}
 }
 CHECK () {
   # Check whether what we want is OK
@@ -190,6 +190,18 @@ no_noautomount_p () {
   return $R
 }
 
+ensure_no_noautomount () {
+  # Remove any noautomount flag
+  [ -d /mnt/dos ] || mkdir -p /mnt/dos
+  DOSPART=$(fdisk -l /dev/hda | grep FAT | head -1 | cut -d" " -f1 )
+  if [ -n "$DOSPART" ] ; then
+    mount $DOSPART /mnt/dos -t vfat -o ro
+    [ -d /mnt/dos/noautomount ] && rmdir /mnt/dos/noautomount
+    [ -f /mnt/dos/noautomount ] && rm /mnt/dos/noautomount
+    umount /mnt/dos
+  fi
+}
+
 ensure_linuxpartition () {
   PART=$(fdisk -l /dev/hda | grep '83  Linux' | head -1 | cut -d" " -f1 )
   [ -n "$PART" ] ||
@@ -202,15 +214,18 @@ ensure_linuxpartition () {
 	"Cannot mount the target partition $PART to /mnt/linux."
 }
 has_init_p () {
-  [ -x linuxrc ] ||
+  # [ -x linuxrc ] ||
   [ -x sbin/init ] || [ -x etc/init ] || [ -x bin/init ] ||
   [ -x bin/sh ]
 }
 do_init () {
-  [ -x /linuxrc ] && exec /linuxrc
-  [ -x sbin/init ] && exec /sbin/init
-  [ -x etc/init ] && exec /etc/init
-  [ -x bin/init ] && exec /bin/init
+  # [ -x /linuxrc ] && exec /linuxrc
+  if [ 1 = $$ ] ; then
+    # Don't try to exec init if not PID 1
+    [ -x sbin/init ] && exec /sbin/init
+    [ -x etc/init ] && exec /etc/init
+    [ -x bin/init ] && exec /bin/init
+  fi
   [ -x bin/sh ] && exec /bin/sh
 }
 
@@ -232,8 +247,10 @@ ensure_partition_bootable () {
 	"cp -a /$i $i" \
 	"Cannot ensure /$i on target partition."
   done
-  LOGT "Installing busybox..."
-  chroot . /bin/busybox --install -s
+  LOGT "Ensuring a working bin/sh..."
+  CHECK "[ -x bin/sh ]" \
+	"chroot . /bin/busybox --install -s" \
+	"Cannot ensure a working /bin/sh on target."
   LOGT "Installing kernel modules..."
   MODULES=lib/modules/$(uname -r)
   CHECK '[ -d $MODULES ]' 'cp -a /$MODULES $MODULES' \
