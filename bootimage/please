@@ -111,7 +111,7 @@ ensure_build_file () {
     cp -laf $upstream $build
   fi
 }
-build () {
+compile () {
   ensure_build_file
   cd ${TOPDIR}/linux/build/$linux
   make ${sub%.c}.o
