@@ -8,7 +8,7 @@
  *
  * George Almasi (galmasi@optonline.net), 2004/1/24
  * Based on the sa1111_generic.c file.
- * $Id: sa1100_jornada820.c,v 1.2 2004/07/02 00:02:08 fare Exp $
+ * $Id: sa1100_jornada820.c,v 1.3 2004/07/03 13:27:39 fare Exp $
  */
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -78,7 +78,7 @@ static void sa1101_pcmcia_socket_state(struct sa1100_pcmcia_socket *skt, struct 
 
 static int sa1101_pcmcia_configure_socket(struct sa1100_pcmcia_socket *skt, const socket_state_t *state)
 {
-  unsigned int rst, flt, irq, vcc0, vcc1, vpp0, vpp1, mask0, mask1;
+	unsigned int rst, flt, vcc0, vcc1, vpp0, vpp1, mask0, mask1; // irq
   unsigned long flags;
 
   switch (skt->nr)
@@ -90,7 +90,7 @@ static int sa1101_pcmcia_configure_socket(struct sa1100_pcmcia_socket *skt, cons
       vcc1 = PCCR_S0_VCC1;
       vpp0 = PCCR_S0_VPP0;
       vpp1 = PCCR_S0_VPP1;
-      irq  = IRQ_SA1101_S0_READY_NIREQ;
+//    irq  = IRQ_SA1101_S0_READY_NIREQ;
       break;
 
     case 1:
@@ -100,7 +100,7 @@ static int sa1101_pcmcia_configure_socket(struct sa1100_pcmcia_socket *skt, cons
       vcc1 = PCCR_S1_VCC1;
       vpp0 = PCCR_S1_VPP0;
       vpp1 = PCCR_S1_VPP1;
-      irq  = IRQ_SA1101_S1_READY_NIREQ;
+//    irq  = IRQ_SA1101_S1_READY_NIREQ;
       break;
 
     default:  return -1;
@@ -154,8 +154,8 @@ static int sa1101_pcmcia_configure_socket(struct sa1100_pcmcia_socket *skt, cons
   PCCR = ((PCCR & ~mask0) | mask1);
   local_irq_restore(flags);
 
-  if (skt->irq)  enable_irq(irq);
-  else   	 disable_irq(irq);
+//  if (skt->irq)  enable_irq(irq);
+//  else   	 disable_irq(irq);
   return 0;
 }
 
