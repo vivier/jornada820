@@ -1,6 +1,10 @@
-# Makefile.project
-# You specify target name, source files, flags for compiling/building here
+# Somehow, ensure here that we're using a cross-compiler
+# producing arm-wince-pe binaries...
 
+CC = arm-linux-gcc
+CFLAGS = -Os -fomit-frame-pointer -W -Wall -mapcs-32 -b arm-wince-pe
+LD = arm-linux-ld
+LDFLAGS = --oformat arm-wince-pe -s -N
 
 TARGETBIN = j820boot.exe
 
@@ -16,3 +20,9 @@ SRCS = \
     asmstuff.S	\
     asm.S		\
 
+OBJS =  boot.o asm.o asmstuff.o memory.o gpio.o uart.o
+
+all:	$(TARGETBIN)
+
+$(TARGETBIN): $(OBJS)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS)
