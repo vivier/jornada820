@@ -192,7 +192,6 @@ void __init sa1101_init_irq(int irq_nr)
 void sa1101_wake(void)
 {
   unsigned long flags;
-  extern int sa1101_init_proc(void);
 
   local_irq_save(flags);
 
@@ -205,27 +204,32 @@ void sa1101_wake(void)
 
   /* Snoop register */
 
-  SNPR &= ~SNPR_SnoopEn;
+  SNPR &= ~SNPR_SnoopEn;	/* snoop		off */
 
   /* ---------------------------------------------------------- */
   /* Set up clocks                                              */
   /* ---------------------------------------------------------- */
    
-  SKPCR = 
-    SKPCR_UCLKEn |             /* USB */
-    SKPCR_PCLKEn |             /* PS/2 */
-    SKPCR_ICLKEn |             /* Interrupt controller */
-    SKPCR_VCLKEn |             /* Video controller */
-    SKPCR_PICLKEn |            /* parallel port */
-    SKPCR_nKPADEn |            /* multiplexer */
-    SKPCR_DCLKEn;              /* DACs */
+  SKPCR &=~SKPCR_UCLKEn;	/* USB                  off */
+  SKPCR |= SKPCR_PCLKEn;	/* PS/2                 on  */
+  SKPCR |= SKPCR_ICLKEn;	/* Interrupt controller on  */
+  SKPCR &=~SKPCR_VCLKEn;	/* Video controller     off */
+  SKPCR &=~SKPCR_PICLKEn;	/* parallel port        off */
+  SKPCR |= SKPCR_nKPADEn;	/* multiplexer          on  */
+  SKPCR |= SKPCR_DCLKEn; 	/* DACs                 on  */
   
+  /* reset clock divider */
   SKCDR = 0x30000027;
-  VMCCR=0x100; /* 0x86 */
 
-  /* why ? */
+  /* reset  video memory controller */
+  VMCCR=0x100;
+
+  /* setup shared memory controller */
   SMCR=SMCR_ColAdrBits(10)+SMCR_RowAdrBits(12)+SMCR_ArbiterBias;
 
+  /* reset USB */
+  USBReset |= USBReset_ForceIfReset;
+  USBReset |= USBReset_ForceHcReset;
 
   local_irq_restore(flags);
 }
