@@ -38,7 +38,7 @@ ramdiskimage.gz: ramdiskimage
 
 ramdisk26: ramdiskimage26.gz
 ramdiskimage26: cmdfile26
-	dd if=/dev/zero of=ramdiskimage26 count=3072 bs=1024
+	dd if=/dev/zero of=ramdiskimage26 count=4096 bs=1024
 	$(MKE2FS) -F ramdiskimage26
 	$(DEBUGFS) -f cmdfile26
 	$(E2FSCK) -f -y ramdiskimage26 ; :
