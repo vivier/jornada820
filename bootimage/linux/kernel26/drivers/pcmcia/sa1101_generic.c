@@ -1,14 +1,17 @@
 /*
- * drivers/pcmcia/sa1100_generic.c
+ * linux/drivers/pcmcia/sa1101_generic.c
  *
- * Jornada820 PCMCIA specific routines
+ * We implement the generic parts of a SA1101 PCMCIA driver.  This
+ * basically means we handle everything except controlling the
+ * power.  Power is machine specific...
+ *
  *
  * Francois-Rene Rideau (fare@tunes.org), 2004/07/02
  * Port to 2.6 with inspiration from sa1100_jornada56x.c
  *
  * George Almasi (galmasi@optonline.net), 2004/1/24
  * Based on the sa1111_generic.c file.
- * $Id: sa1101_generic.c,v 1.2 2004/07/10 19:41:13 fare Exp $
+ * $Id: sa1101_generic.c,v 1.3 2004/07/11 14:39:42 oleg820 Exp $
  */
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -31,16 +34,16 @@
 #include "sa11xx_base.h"
 #include "sa1100_generic.h"
 
+#include "sa1101_generic.h"
+
 
 /*
  * Initialize the PCMCIA subsystem: turn on interrupts, reserve memory
  */
 
 static struct pcmcia_irqs irqs[] = {
-//	{ 0, IRQ_SA1101_S0_READY_NIREQ, "SA1101 PCMCIA ready" },
 	{ 0, IRQ_SA1101_S0_CDVALID,     "SA1101 PCMCIA card detect" },
 	{ 0, IRQ_SA1101_S0_BVD1_STSCHG, "SA1101 PCMCIA BVD1" },
-//	{ 1, IRQ_SA1101_S1_READY_NIREQ, "SA1101 CF ready" },
 	{ 1, IRQ_SA1101_S1_CDVALID,     "SA1101 CF card detect" },
 	{ 1, IRQ_SA1101_S1_BVD1_STSCHG, "SA1101 CF BVD1" },
 };
@@ -51,7 +54,7 @@ static irqreturn_t debug_irq_handler(unsigned int irq, void* dev_id, struct pt_r
         return IRQ_HANDLED;
 }
 
-static int sa1101_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
+int sa1101_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
 {
 	int ret;
 	printk("sa1101_pcmcia_hw_init... "); // DEBUG
@@ -65,12 +68,12 @@ static int sa1101_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
 	return ret;
 }
 
-static void sa1101_pcmcia_hw_shutdown(struct soc_pcmcia_socket *skt)
+void sa1101_pcmcia_hw_shutdown(struct soc_pcmcia_socket *skt)
 {
 	soc_pcmcia_free_irqs(skt, irqs, ARRAY_SIZE(irqs));
 }
 
-static void sa1101_pcmcia_socket_state(struct soc_pcmcia_socket *skt, struct pcmcia_state *state)
+void sa1101_pcmcia_socket_state(struct soc_pcmcia_socket *skt, struct pcmcia_state *state)
 {
 	unsigned long status = PCSR;
 
@@ -99,7 +102,7 @@ static void sa1101_pcmcia_socket_state(struct soc_pcmcia_socket *skt, struct pcm
 /* this function is specific to jornada820.
    if you have other sa1101 based device, verify the settings yourself */ 
 
-static int sa1101_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, const socket_state_t *state)
+int sa1101_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, const socket_state_t *state)
 {
 	unsigned int rst, flt, vcc0, vcc1, vpp0, vpp1, mask0, mask1; // irq
   unsigned long flags;
@@ -215,11 +218,32 @@ struct pcmcia_low_level sa1101_pcmcia_ops = {
 static int pcmcia_probe(struct sa1101_dev *dev)
 {
 	printk("sa1101 pcmcia: probe...\n"); // DEBUG
-	return sa11xx_drv_pcmcia_probe(&dev->dev, &sa1101_pcmcia_ops, 0, 2);
+
+	if (!request_mem_region(dev->res.start, 512,
+				SA1101_DRIVER_NAME(dev)))
+		return -EBUSY;
+
+#if 0
+	base = dev->mapbase;
+
+	/*
+	 * Initialise the suspend state.
+	 */
+	sa1101_writel(PCSSR_S0_SLEEP | PCSSR_S1_SLEEP, base + SA1101_PCSSR);
+	sa1101_writel(PCCR_S0_FLT | PCCR_S1_FLT, base + SA1101_PCCR);
+#endif
+
+#ifdef CONFIG_SA1100_JORNADA820
+	pcmcia_jornada820_init(&dev->dev);
+#endif
+
+	return 0;
 }
 static int __devexit pcmcia_remove(struct sa1101_dev *dev)
 {
 	soc_common_drv_pcmcia_remove(&dev->dev);
+	release_mem_region(dev->res.start, 512);
+
 	return 0;
 }
 static int pcmcia_suspend(struct sa1101_dev *dev, u32 state)

@@ -2,7 +2,7 @@
 # Makefile for the kernel pcmcia subsystem (c/o David Hinds)
 #
 # Jornada820 version based on Makefile 1.13 from cvs.handhelds.org
-# $Id: Makefile,v 1.4 2004/07/08 02:44:23 fare Exp $
+# $Id: Makefile,v 1.5 2004/07/11 14:39:42 oleg820 Exp $
 
 ifeq ($(CONFIG_PCMCIA_DEBUG),y)
 EXTRA_CFLAGS += -DDEBUG
@@ -17,6 +17,7 @@ obj-$(CONFIG_TCIC)				+= tcic.o
 obj-$(CONFIG_HD64465_PCMCIA)			+= hd64465_ss.o
 obj-$(CONFIG_PCMCIA_SA1100)			+= sa11xx_core.o sa1100_cs.o
 obj-$(CONFIG_PCMCIA_SA1111)			+= sa11xx_core.o sa1111_cs.o
+#obj-$(CONFIG_PCMCIA_SA1101)			+= sa11xx_core.o sa1101_cs.o
 obj-$(CONFIG_PCMCIA_PXA2XX)			+= pxa2xx_core.o pxa2xx_cs.o
 
 pcmcia_core-y					+= cistpl.o rsrc_mgr.o bulkmem.o cs.o
@@ -48,8 +49,11 @@ sa1100_cs-$(CONFIG_SA1100_SIMPAD)		+= sa1100_simpad.o
 sa1100_cs-$(CONFIG_SA1100_STORK)		+= sa1100_stork.o
 sa1100_cs-$(CONFIG_SA1100_TRIZEPS) 		+= sa1100_trizeps.o
 sa1100_cs-$(CONFIG_SA1100_YOPY)			+= sa1100_yopy.o
-sa1100_cs-$(CONFIG_SA1101)			+= sa1101_generic.o
+
+sa1100_cs-$(CONFIG_SA1100_JORNADA820)		+= sa1101_generic.o
 sa1100_cs-$(CONFIG_SA1100_JORNADA820)		+= sa1100_jornada820.o
+#sa1101_cs-y					+= sa1101_generic.o
+#sa1101_cs-$(CONFIG_SA1100_JORNADA820)		+= sa1100_jornada820.o
 
 pxa2xx_cs-$(CONFIG_ARCH_LUBBOCK)		+= pxa2xx_lubbock.o sa1111_generic.o
 pxa2xx_cs-$(CONFIG_MACH_MAINSTONE)		+= pxa2xx_mainstone.o
