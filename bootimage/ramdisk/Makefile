@@ -28,7 +28,7 @@ RAMDISKIMAGE=ramdiskimage
 all: ramdiskimage.gz
 
 ramdiskimage: cmdfile
-	dd if=/dev/zero of=ramdiskimage count=3072 bs=1024
+	dd if=/dev/zero of=ramdiskimage count=3584 bs=1024
 	$(MKE2FS) -F ramdiskimage
 	$(DEBUGFS) -f cmdfile
 	$(E2FSCK) -f -y ramdiskimage ; :
