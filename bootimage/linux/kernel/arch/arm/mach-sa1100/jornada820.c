@@ -76,6 +76,8 @@ static int __init jornada820_init(void)
 //  Ser4SSCR1 = SSCR1_RIE | SSCR1_SClkIactH | SSCR1_SClk1_2P;
 
   ssp_enable();
+
+  Ser4MCCR0 |= MCCR0_MCE;       /* reenable MCP */
  
   /* Initialize the 1101. */
   GAFR |= GPIO_32_768kHz;
