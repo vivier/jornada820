@@ -1,4 +1,5 @@
 Instructions for installing the Linux kernel on the HP Jornada 820.
+$Id: Jornada820,v 1.2 2004/06/28 20:06:56 fare Exp $
 
 Our project page is at the following URL:
 	http://jornada820.sourceforge.net/
@@ -17,102 +18,63 @@ Our project page is at the following URL:
  Backups are always a good idea. At this time they are a *very* good idea.
 
 * If you're downloading a binary bootimage from our site, jump to Step 5.
-	http://jornada820.sourceforge.net/
- Otherwise, you'll need a net-connected Linux workstation
- with an arm cross-compilation toolchain installed.
- Almost any toolchain should do - I (galmasi) use a homebrew one, but you
- should get the same results with the binaries downloaded from one of these:
-	http://www.handhelds.org/z/wiki/Toolchains
-	http://www.opensistemas.com/Gentoo_for_Zaurus.715.0.html
-	http://www.openzaurus.org/official/toolchain/
+ Otherwise, you'll need a net-connected Linux workstation.
 
-<Step 1> - Get an appropriate kernel tree.
+<Step 1> - Get an appropriate bootimage tree.
 
- method a) Check out current cvs.sf.net kernel:
+ Check out current cvs.sf.net bootimage:
 	cvs -d:pserver:anonymous@cvs.sf.net:/cvsroot/jornada820 login
-	cvs -d:pserver:anonymous@cvs.sf.net:/cvsroot/jornada820 checkout bootimage/linux/kernel
+	cvs -d:pserver:anonymous@cvs.sf.net:/cvsroot/jornada820 checkout bootimage
  The password is empty, just hit enter at the prompt.
 
- method b) Check out current cvs.handhelds.org kernel and patch it.
-	cvs -d:pserver:anoncvs@cvs.handhelds.org:/cvs login
-	cvs -d:pserver:anoncvs@cvs.handhelds.org:/cvs checkout linux/kernel
- The password is "anoncvs", type it at the prompt (w/o quotes) and hit enter.
- Then download the latest patch from jornada820.sf.net and apply it:
-	cd kernel && zcat ../path/to/patch.diff.gz | patch -p1 -E
+ The bootimage contains everything needed to make a bootable image file:
+ not just the kernel, but also a ramdisk with enough things to survive,
+ and even what's required to build a toolchain.
 
- For more details about the handhelds CVS, see
-	http://www.handhelds.org/sources.html
- You may also try to patch a kernel from a different provenance.
- If you try, we're interested in knowing whether or not you succeeded.
+<Step 2> - Make the toolchain.
+ If you don't have a toolchain, then you can
+	make toolchain
+ and it will fetch and compile the uClibc toolchain from uclibc.org.
+ Actually, you may use any existing arm toolchain, but
+ a glibc-based toolchain will have both more bloat and less features (!).
 
-<Step 2> - Get an initial RAM disk image with which to boot your kernel.
- If you're a developer, you can get one from our private FTP site.
- Hopefully, by the time you read these instructions,
- we have released public images. Check our web site:
-	http://jornada820.sourceforge.net/
+<Step 3> - Compile your bootimage
+	make j820-26
+ Is meant to do everything, getting a kernel from upstream,
+ as well as basic userland utilities (busybox, pcmcia-cs) for the ramdiskimage.
 
- The initial ramdisk should be a pre-compiled root file system image
- for the ARM architecture. If you build your own kernel and ramdisk,
- make sure the kernel configuration includes support for the filesystem
- type used by your ramdisk (duh!).
+ Note: for debugging purpose, you may edit the kernel command line in
+ your kernel26/.config and add "console=ttySA0" so as to get console output
+ on the serial port.
 
-<Step 3> - copy the configuration file and adjust to your liking.
- The default configuration file is in 
-	arch/arm/def-configs/jornada820
+<Step 4> - Boot the kernel.
+ Copy hpcbootm.exe from jornada820.sf.net together with j820-26 on your CF,
+ and let it boot the kernel.
 
- Copy it with
-   cd kernel &&
-   cp arch/arm/def-configs/jornada820 .config
+<Step 5> - Configure a Linux partition on your CF.
 
- You can accept it as is with
-	make oldconfig
- Or you can adjust it with
-	make menuconfig
-   or
-	make xconfig
+ The ramdisk has enough stuff (fdisk, NFS support, etc.)
+ so you can configure a Linux partition on your CF.
+ You may for instance chroot to a NFS partition where you preinstalled debian,
+ and from there use all the usual utilities to prepare your partition on CF.
+ See /etc/functions for a lot of functions that may help you along the way.
 
-<Step 3> - Compile the kernel.
+ When a Linux partition is detected at boottime, the ramdisk will
+ automatically try to chain into it with pivot_root,
+ instead of dropping you at the busybox prompt; to avoid this behaviour,
+ create a file or directory named "noautomount" in your WinCE partition.
 
-cd kernel &&
-make ARCH=arm \
-CROSS_COMPILE=arm-linux- \
-INITRD=/home/galmasi/jornadaport/ramdisk/ramdiskimage \
-zImage j820
+<Step 6> - Have FUN.
 
-Replace the path for INITRD by the path to your ramdisk image from Step 2.
+ I'm sure you can figure out how to do that by yourself.
+ For instance, you can have a lot of fun using XEmacs to write programs
+ to be run in clisp or ocaml.
 
-Note that ARCH=arm is not necessary if starting from our CVS release,
-but might be necessary if starting from another kernel
-(e.g. applying our patch to a generic kernel).
+<Step 7> - Be done.
 
-Similarly, the CROSS_COMPILE= statement might not be necessary
-if you're using our CVS release whereas a toolchain is in your path.
-Otherwise, you might have to specify the full path to your toolchain
-as a prefix in statement such as CROSS_COMPILE=/usr/local/arm/3.3.1/bin/
-
-What you end up with is the ELF binary kernel/arch/arm/boot/j820/j820.
-
-<Step 4> - Boot.
-
-Copy hpcboot.exe from NetBSD or our slightly modified version hpcbootl.exe,
-together with j820 onto the CF card mentioned earlier,
-and start hpcboot on the jornada.
-Let it boot j820. You should get a prompt on the Jornada820 screen.
-If you add the following to the kernel's command line: "console=ttySA0"
-you will see the boot message on the serial port.
-
-<Step 5> - Have FUN.
-
-I'm sure you can figure out how to do it by yourself.
-(For instance, you can have a lot of fun programming with ocaml or clisp.)
-
-<Step 6> - Be done.
-
-There is currently no way to shutdown and restart the computer from Linux.
-To shutdown, you must unplug the computer and remove the main batteries.
-If you have problems doing a warm reboot with WinCE,
-then you must *also* remove the backup batteries in addition to the former,
-which will completely clear off the RAM.
-Then you can do a cold reboot of WinCE, and eventually launch Linux again.
-Note: to skip the configuration utility launched by WinCE at cold reboots,
-just kill it with Ctrl-Alt-Del. Aaaah!
+ After Linux halts or reboots, it leaves the memory in a messy state that
+ may confuse WinCE. Your machine may not be usable, and the way to restore
+ factory default settings is to remove the batteries -- backup batteries
+ (on the left side) as well as main batteries -- and unplug the computer.
+ Note: to skip the configuration utility launched by WinCE at cold reboots,
+ just kill it with Ctrl-Alt-Del. Aaaah!
