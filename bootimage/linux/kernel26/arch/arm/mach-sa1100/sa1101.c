@@ -9,7 +9,7 @@
  *
  * Created for the Jornada820 port.
  *
- * $Id: sa1101.c,v 1.6 2004/07/02 00:02:08 fare Exp $
+ * $Id: sa1101.c,v 1.7 2004/07/03 19:46:29 fare Exp $
  */
 
 #include <linux/module.h>
@@ -161,6 +161,11 @@ void __init sa1101_init_irq(int irq_nr)
   INTENABLE0 = 0;
   INTENABLE1 = 0;
   
+  INTPOL0 = 0;
+  INTPOL1 = 
+	  SA1101_IRQMASK_HI(IRQ_SA1101_S0_READY_NIREQ) |
+	  SA1101_IRQMASK_HI(IRQ_SA1101_S1_READY_NIREQ);
+
   INTSTATCLR0 = -1;
   INTSTATCLR1 = -1;
 
