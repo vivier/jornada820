@@ -43,7 +43,7 @@ compile: ${BUSYBOXDIR}/_install/bin/busybox
 	cp busybox.links .. && \
 	cp _install/bin/busybox ..
 
-_install/bin/busybox:
+${BUSYBOXDIR}/_install/bin/busybox:
 	@cd ${BUSYBOXDIR} && \
 	cp ../busybox.cfg .config && \
 	${MAKE}	CROSS=${TARGET}- oldconfig && \
