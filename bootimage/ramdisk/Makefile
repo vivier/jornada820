@@ -65,7 +65,7 @@ cmdfile: cmdfile.in busybox pcmcia
 	#for d in `find lib -type d` ; do \
 	#  echo "mkdir /$$d" ; \
 	#done
-	#for f in `find lib -type f | grep -v CVS` ; do \
+	#for f in `find lib -type f | grep -vi cvs` ; do \
 	#  dir=`dirname $$f`; \
 	#  file=`basename $$f`; \
 	#  echo "cd /$$dir" ; \
