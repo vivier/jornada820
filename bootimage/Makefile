@@ -85,8 +85,8 @@ $(KUPSTREAMDIR26)/CVS/Root $(KUPSTREAMDIR26)/CVS/Repository:
 	echo '/1 :pserver:anoncvs@cvs.handhelds.org:2401/cvs Ay=0=h<Z' >> ~/.cvspass
 
 $(KUPSTREAMDIR26)/Makefile: $(KUPSTREAMDIR26)/CVS/Root
-	cd $(KUPSTREAMDIR26) && cvs -z9 update -dfP &&
-	touch $(KUPSTREAMDIR26)/Makefile
+	cd $(KUPSTREAMDIR26) && cvs -z9 update -dfP && \
+	touch Makefile
 
 # -------------------------------------------------------------------------- 
 #                    optional: build the toolchain
