@@ -1,0 +1,22 @@
+open -w ramdiskimage
+
+mkdir /bin
+mkdir /sbin
+mkdir /usr
+mkdir /usr/sbin
+mkdir /usr/bin
+mkdir /dev
+mkdir /proc
+mkdir /var
+mkdir /var/run
+mkdir /mnt
+mkdir /mnt/sandisk
+
+cd bin
+write busybox/busybox busybox
+write pcmcia/cardmgr cardmgr
+write pcmcia/cardctl cardctl
+ln /bin/busybox /linuxrc
+
+cd /
+
