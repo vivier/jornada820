@@ -11,7 +11,7 @@
  *
  * George Almasi (galmasi@optonline.net), 2004/1/24
  * Based on the sa1111_generic.c file.
- * $Id: sa1101_generic.c,v 1.3 2004/07/11 14:39:42 oleg820 Exp $
+ * $Id: sa1101_generic.c,v 1.4 2004/07/16 16:45:08 fare Exp $
  */
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -59,8 +59,8 @@ int sa1101_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
 	int ret;
 	printk("sa1101_pcmcia_hw_init... "); // DEBUG
 	if (skt->irq == NO_IRQ)
-		skt->irq = skt->nr ? IRQ_SA1101_S0_READY_NIREQ :
-			IRQ_SA1101_S1_READY_NIREQ;
+		skt->irq = skt->nr ? IRQ_SA1101_S1_READY_NIREQ :
+			IRQ_SA1101_S0_READY_NIREQ;
 //	request_irq(skt->irq, debug_irq_handler, SA_INTERRUPT, "SA1101 NIREQ", NULL);
 //	set_irq_type(skt->irq, IRQT_BOTHEDGE);
 	ret = soc_pcmcia_request_irqs(skt, irqs, ARRAY_SIZE(irqs));
