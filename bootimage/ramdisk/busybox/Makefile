@@ -40,7 +40,6 @@ busybox-cvs: src/CVS/Root
 
 compile: ${BUSYBOXDIR}/_install/bin/busybox
 	@cd ${BUSYBOXDIR} && \
-	cp busybox.links .. && \
 	cp _install/bin/busybox ..
 
 ${BUSYBOXDIR}/_install/bin/busybox:
@@ -58,5 +57,5 @@ localclean:
 clean:	localclean
 
 distclean veryclean mrproper:: localclean
-	$(RM) -rf ${BUSYBOXDIR}
+	$(RM) -rf ${BUSYBOXDIR} busybox-cvs
 	#$(RM) ${BUSYBOXTAR}
