@@ -8,7 +8,7 @@
  *
  * George Almasi (galmasi@optonline.net), 2004/1/24
  * Based on the sa1111_generic.c file.
- * $Id: sa1100_jornada820.c,v 1.3 2004/07/03 13:27:39 fare Exp $
+ * $Id: sa1100_jornada820.c,v 1.4 2004/07/03 14:04:50 fare Exp $
  */
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -28,8 +28,10 @@
  */
 
 static struct pcmcia_irqs irqs[] = {
+//	{ 0, IRQ_SA1101_S0_READY_NIREQ, "SA1101 PCMCIA ready" },
 	{ 0, IRQ_SA1101_S0_CDVALID,     "SA1101 PCMCIA card detect" },
 	{ 0, IRQ_SA1101_S0_BVD1_STSCHG, "SA1101 PCMCIA BVD1" },
+//	{ 1, IRQ_SA1101_S1_READY_NIREQ, "SA1101 CF ready" },
 	{ 1, IRQ_SA1101_S1_CDVALID,     "SA1101 CF card detect" },
 	{ 1, IRQ_SA1101_S1_BVD1_STSCHG, "SA1101 CF BVD1" },
 };

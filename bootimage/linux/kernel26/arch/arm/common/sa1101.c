@@ -12,7 +12,7 @@
  *
  * Created for the Jornada820 port.
  *
- * $Id: sa1101.c,v 1.1 2004/07/03 13:26:15 fare Exp $
+ * $Id: sa1101.c,v 1.2 2004/07/03 14:04:46 fare Exp $
  */
 
 #include <linux/module.h>
@@ -282,8 +282,10 @@ void sa1101_init_irq(int sa1101_irq)
 	/*
 	 * Register SA1101 interrupt
 	 */
-	set_irq_chained_handler(sa1101_irq, sa1101_irq_handler);
+//	request_irq(sa1101_irq, sa1101_irq_handler, 0,
+//		    "SA1101 chain interrupt", NULL);
 	set_irq_type(sa1101_irq, IRQT_RISING);
+	set_irq_chained_handler(sa1101_irq, sa1101_irq_handler);
 }
 
 extern void sa1101_wake(void)

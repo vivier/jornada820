@@ -183,7 +183,7 @@ CONFIG_BINFMT_ELF=y
 # CONFIG_DEBUG_DRIVER is not set
 CONFIG_PM=y
 CONFIG_PREEMPT=y
-CONFIG_APM=m
+# CONFIG_APM is not set
 # CONFIG_ARTHUR is not set
 CONFIG_CMDLINE="root=/dev/ram init=/linuxrc rw"
 # CONFIG_LEDS is not set

@@ -2,7 +2,7 @@
 # Makefile for the input core drivers.
 #
 # Jornada820 version based on Makefile 1.3 from cvs.handhelds.org
-# $Id: Makefile,v 1.1 2004/06/30 20:34:03 fare Exp $
+# $Id: Makefile,v 1.2 2004/07/03 14:04:50 fare Exp $
 #
 
 # Each configuration option enables a list of files.
@@ -21,4 +21,4 @@ obj-$(CONFIG_SERIO_98KBD)	+= 98kbd-io.o
 obj-$(CONFIG_SERIO_GSCPS2)	+= gscps2.o
 obj-$(CONFIG_SERIO_PCIPS2)	+= pcips2.o
 obj-$(CONFIG_SERIO_MACEPS2)	+= maceps2.o
-#obj-$(CONFIG_SA1100_JORNADA820)	+= sa1101ps2.o
+obj-$(CONFIG_SA1100_JORNADA820)	+= sa1101ps2.o
