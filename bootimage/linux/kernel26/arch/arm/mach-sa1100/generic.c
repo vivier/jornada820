@@ -9,6 +9,9 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
+/* Jornada820 version based on generic.c 1.7 from cvs.handhelds.org
+ * $Id: generic.c,v 1.2 2004/06/28 20:08:00 fare Exp $
+ */
 #include <linux/config.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
