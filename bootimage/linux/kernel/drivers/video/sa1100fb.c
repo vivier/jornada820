@@ -709,8 +709,8 @@ static struct sa1100fb_rgb jornada56x_rgb_16 = {
 
 #ifdef CONFIG_SA1100_JORNADA820
 static struct sa1100fb_mach_info j820_info __initdata = {
-	/* wince: 237222 - too low */
-  pixclock:       305000,          bpp:            8,
+	/* Windows uses 4.17MHz pixclock */
+  pixclock:       238000,          bpp:            8,
   xres:           640,        yres:           480,
   
   hsync_len:      3,          vsync_len:      1,
@@ -1481,10 +1481,8 @@ static inline int get_pcd(unsigned int pixclock)
 	unsigned int pcd;
 
 	if (pixclock) {
-		pcd = cpufreq_get(0) / 100;
-		pcd *= pixclock;
-		pcd /= 10000000;
-		pcd += 1;	/* make up for integer math truncations */
+		pixclock = 4000000000UL/(pixclock/250); /* convert period to frequency */
+		pcd = (cpufreq_get(0)*1000+pixclock)/(2*pixclock)-2; /* Formula from SA1100 manual. */
 	} else {
 		/*
 		 * People seem to be missing this message.  Make it big.
@@ -1583,7 +1581,7 @@ static int sa1100fb_activate_var(struct fb_var_screeninfo *var, struct sa1100fb_
 		LCCR3_ACBsCntOff;
 
 	if (pcd)
-		new_regs.lccr3 |= LCCR3_PixClkDiv(pcd);
+		new_regs.lccr3 |= pcd;
 
 	DPRINTK("nlccr0 = 0x%08x\n", new_regs.lccr0);
 	DPRINTK("nlccr1 = 0x%08x\n", new_regs.lccr1);
@@ -2143,7 +2141,7 @@ sa1100fb_clkchg_notifier(struct notifier_block *nb, unsigned long val,
 
 	case CPUFREQ_POSTCHANGE:
 		pcd = get_pcd(fbi->fb.var.pixclock);
-		fbi->reg_lccr3 = (fbi->reg_lccr3 & ~0xff) | LCCR3_PixClkDiv(pcd);
+		fbi->reg_lccr3 = (fbi->reg_lccr3 & ~0xff) | pcd;
 		set_ctrlr_state(fbi, C_ENABLE_CLKCHANGE);
 		break;
 	}
