@@ -3,7 +3,7 @@
 # We must run busybox manually because
 # symlinks are not installed at boot due to a limitation of debugfs,
 # and we hate hardlinks due to a limitation in busybox's du.
-echo "We're in linuxrc! PID=$$" >> /tmp/log
+echo "We're in /linuxrc! PID=$$" >> /tmp/log
 ps >> /tmp/log
 . /etc/functions
 my_linuxrc

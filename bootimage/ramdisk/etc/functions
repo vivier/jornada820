@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.14 2004/06/28 11:21:13 fare Exp $
+# $Id: functions,v 1.15 2004/06/29 01:00:17 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -111,7 +111,7 @@ nbdswap () {
 }
 
 link_applets () {
-  DO_T rm -f /linuxrc
+  DO_T rm -f /linuxrc # /etc/init
   DO_T /bin/busybox --install -s
   DO_T ln -s ../etc/please /bin/please
 }
@@ -170,6 +170,9 @@ my_linuxrc () {
   # make symlinks for all those busybox applications
   LOG "Linking busybox applets"
   link_applets
+
+  # get date from WinCE (?)
+  : windate
 
   # Fallback plan: busybox's linuxrc
   ABORT () {
@@ -462,6 +465,20 @@ setdate () {
   busybox date -s $(printf %02d%02d%02d%02d%04d $MONTH $DAY $HOUR $MINUTE $SECOND $YEAR)
   # GNU date -s $(printf "%04d-%02d-%02d %02d:%02d:%02d" $YEAR $MONTH $DAY $HOUR $MINUTE $SECOND)
 )
+}
+peek_halfword () {
+  dd if=/dev/mem bs=1 skip=$1 count=2 2> /dev/null | od -i | cut -c9-
+}
+windate () {
+  ENCTIME=$(dd if=/dev/mem bs=16 skip=$((0xc004fe0)) count=1 | od -i)
+  YEAR=$(  echo $ENCTIME | cut -c 28-34)
+  #MONTH=$(peek_halfword $((0xc004fe06)) )
+  #DAY=$( peek_halfword $((0xc004fe0a)) )
+  HOUR=$(date +%H)
+  MINUTE=$(date +%M)
+  SECOND=0
+  setdate
+  DO hwclock -w
 }
 getdate () {
   DATE="$(date +"YEAR=%Y MONTH=%m DAY=%d HOUR=%H MINUTE=%M SECOND=%S TZ=$TZ")"
