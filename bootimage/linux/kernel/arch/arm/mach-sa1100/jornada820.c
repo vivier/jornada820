@@ -45,13 +45,15 @@
 static int __init jornada820_init(void)
 {
   printk("In jornada820_init\n");
+
+  /* TODO: move all asm to init.S */
   /* we need to fix the PID register, which was left on by WinCE */
   asm volatile ("mov r0, #0; mcr p15, 0, r0, c13, c0,0;");
 
   /* set GPIO edge detection - GPIO14 is the chained interrupt from SA-1101 */
-  set_GPIO_IRQ_edge(GPIO_GPIO14, (GPIO_FALLING_EDGE | GPIO_RISING_EDGE));
+  set_GPIO_IRQ_edge(GPIO_JORNADA820_SA1101_CHAIN, (GPIO_FALLING_EDGE | GPIO_RISING_EDGE));
 
-  set_GPIO_IRQ_edge(GPIO_GPIO1, GPIO_RISING_EDGE);
+  set_GPIO_IRQ_edge(GPIO_JORNADA820_UCB1200, GPIO_RISING_EDGE);
 
   /* Initialize the 1101. */
   GAFR |= GPIO_32_768kHz;
@@ -68,33 +70,13 @@ static int __init jornada820_init(void)
   GPDR |= (GPIO_GPIO10 | GPIO_GPIO12 | GPIO_GPIO13);
   GPDR &= ~GPIO_GPIO11;
 
-  if (ssp_init()) printk("ssp_init() failed\n");
+  if (ssp_init()) printk("ssp_init() failed.\n");
   
-  Ser4SSCR0 = /* SSCR0_DataSize(8) | SSCR0_Motorola |  */
-    0x0387; /* 8 bit Motorola, 460800 bit rate */
+    /* 8 bit, Motorola, enable, 460800 bit rate */
+  Ser4SSCR0 = SSCR0_DataSize(8)+SSCR0_Motorola+SSCR0_SSE+SSCR0_SerClkDiv(8);
   Ser4SSCR1 = SSCR1_RIE | SSCR1_SClkIactH | SSCR1_SClk1_2P;
+
   ssp_enable();
-
-  /*
-  printk ("Old value of GPDR = %x\n", GPDR);
-  printk ("Old value of VMCCR=%x\n", VMCCR);
-  printk ("Old value of UFCR=%x\n", UFCR);
-
-  printk ("Old value of VideoControl=%x\n", VideoControl);
-  printk ("Old value of VgaTiming0=%x\n", VgaTiming0);
-  printk ("Old value of VgaTiming1=%x\n", VgaTiming1);
-  printk ("Old value of VgaTiming2=%x\n", VgaTiming2);
-  printk ("Old value of VgaTiming3=%x\n", VgaTiming3);
-  printk ("Old value of VgaBorder=%x\n", VgaBorder);
-  printk ("Old value of VgaDBAR=%x\n", VgaDBAR);
-  printk ("Old value of VgaDCAR=%x\n", VgaDCAR);
-  printk ("Old value of VgaStatus=%x\n", VgaStatus);
-  printk ("Old value of VgaInterruptMask=%x\n", VgaInterruptMask);
-  printk ("Old value of VgaPalette=%x\n", VgaPalette);
-  //   printk ("Old value of DacControl=%x\n", DacControl);
-  printk ("Old value of VgaTest=%x\n", VgaTest);
-  */
-
 
   /* This should reset the SA1101 
   GPDR |= GPIO_GPIO20;
@@ -106,7 +88,7 @@ static int __init jornada820_init(void)
   
   sa1101_probe(SA1101_BASE);
   sa1101_wake();
-  sa1101_init_irq (IRQ_JORNADA820_SA1101_CHAIN);
+  sa1101_init_irq (GPIO_JORNADA820_SA1101_CHAIN_IRQ);
 
   jornada820_init_proc();
 
@@ -158,10 +140,11 @@ static void __init jornada820_map_io(void)
   sa1100_map_io();
   iotable_init(jornada820_io_desc);
   
-  /* these are a wild guess */
+  /* rs232 out */
   sa1100_register_uart(0, 3);
+
+  /* internal diag. */
   sa1100_register_uart(1, 1);
-  /*sa1100_register_uart(2, 2);*/
 }
 
 MACHINE_START(JORNADA820, "HP Jornada 820")
@@ -198,7 +181,7 @@ static int j820_read_proc(char *buf,
   p += sprintf(p, "\t Brightness= %u\n", DAC_JORNADA820_BRIGHTNESS);
   p += sprintf(p, "\t GPLR      = %08x\n", GPLR);
   p += sprintf(p, "\t PADRR     = %08x\n", PADRR);
-  p += sprintf(p, "\t BBDRR     = %08x\n", PBDRR);
+  p += sprintf(p, "\t PBDRR     = %08x\n", PBDRR);
   return (p-buf);
 }
 
