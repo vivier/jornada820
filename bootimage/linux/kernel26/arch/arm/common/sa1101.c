@@ -12,7 +12,7 @@
  *
  * Created for the Jornada820 port.
  *
- * $Id: sa1101.c,v 1.12 2004/07/10 19:41:12 fare Exp $
+ * $Id: sa1101.c,v 1.13 2004/07/11 13:02:31 oleg820 Exp $
  */
 
 #include <linux/module.h>
@@ -157,7 +157,7 @@ sa1101_init_one_child(struct device *parent, struct resource *parent_res,
 	dev->dev.bus     = &sa1101_bus_type;
 	dev->dev.release = sa1101_dev_release;
 	dev->dev.coherent_dma_mask = 0xffffffff;
-	dev->res.start   = 0x18000000 + info->offset;
+	dev->res.start   = SA1101_BASE + info->offset;
 	dev->res.end     = dev->res.start + 0x1ffff;
 	dev->res.name    = dev->dev.bus_id;
 	dev->res.flags   = IORESOURCE_MEM;
@@ -248,18 +248,19 @@ sa1101_irq_handler(unsigned int irq, struct irqdesc *desc, struct pt_regs *regs)
 	}
 
 	do {
-	for (i = IRQ_SA1101_START; stat0; i++, stat0 >>= 1)
+	 for (i = IRQ_SA1101_START; stat0; i++, stat0 >>= 1)
 		if (stat0 & 1)
 			do_edge_IRQ(i, irq_desc + i, regs);
 
-	for (i = IRQ_SA1101_START + 32; stat1; i++, stat1 >>= 1)
+	 for (i = IRQ_SA1101_START + 32; stat1; i++, stat1 >>= 1)
 		if (stat1 & 1)
 			do_edge_IRQ(i, irq_desc + i, regs);
 
-		stat0 = INTSTATCLR0;
-		stat1 = INTSTATCLR1;	
-		INTSTATCLR0 = stat0;
-		INTSTATCLR1 = stat1;
+	 stat0 = INTSTATCLR0;
+	 stat1 = INTSTATCLR1;	
+	 INTSTATCLR0 = stat0;
+	 INTSTATCLR1 = stat1;
+
 	} while (stat0 | stat1); 
 
 	/* For level-based interrupts */
