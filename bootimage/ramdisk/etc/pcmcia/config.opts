@@ -16,14 +16,14 @@
 # the PCI hotplug subsystem.
 #
 
-include memory 0xc0000-0xfffff
-include memory 0xa0000000-0xa0ffffff, memory 0x60000000-0x60ffffff
+#include memory 0xc0000-0xfffff
+#include memory 0xa0000000-0xa0ffffff, memory 0x60000000-0x60ffffff
 
 # Resources we should not use, even if they appear to be available
 
 # First built-in serial port
-exclude irq 4
+#exclude irq 4
 # Second built-in serial port
 #exclude irq 3
 # First built-in parallel port
-exclude irq 7
+#exclude irq 7
