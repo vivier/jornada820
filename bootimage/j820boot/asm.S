@@ -1,4 +1,4 @@
-	TTL	C:\pocket\test\asm.cpp
+	TTL	asm.S
 
 	AREA	|.drectve|, DRECTVE
 	DCB	"-defaultlib:coredll.lib "
@@ -20,30 +20,15 @@
 
 
 ; turn off LCD controller...
-; I couldn't figure out how to use armasm.exe conditional with variables
-; #if xscale
-		ldr	r9, =0x44000000
+		ldr	r9, =0xb0100000
 		ldr	r8, [r9]
-		orr	r8, r8, #0x400
+		bic	r8, r8, #1
 		str	r8, [r9]
-
-; #elif strongarm
-;		ldr	r9, =0xb0100000
-;		ldr	r8, [r9]
-;		bic	r8, r8, #1
-;		str	r8, [r9]
-; #endif
 
 		add	r9, r1, #0x100
 
-; #if xscale
-		ldr	r5, =0xa0000100
-		ldr	r7, =0xa0400000
-
-; #elif strongarm
-;		ldr	r5, =0xc0000100
-;		ldr	r7, =0xc0400000
-; #endif
+		ldr	r5, =0xc0000100
+		ldr	r7, =0xc0400000
 
 
 label		ldr     r8, [r9]
@@ -53,12 +38,7 @@ label		ldr     r8, [r9]
 		cmp     r5, r7
         	blt     label
 
-; #if xscale
-		MOV	r4, #0xA0000000
-
-; #elif strongarm
-;		MOV	r4, #0xc0000000
-; #endif
+		MOV	r4, #0xc0000000
 
 		add	r11,r4,#0x8000
 

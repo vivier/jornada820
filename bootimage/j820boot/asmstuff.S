@@ -1,4 +1,4 @@
-	TTL	C:\pocket\asmstuff\asmstuff.cpp
+	TTL	asmstuff.S
 
 	AREA	|.drectve|, DRECTVE
 	DCB	"-defaultlib:coredll.lib "
