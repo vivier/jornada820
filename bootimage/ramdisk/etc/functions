@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.21 2004/07/15 11:42:40 fare Exp $
+# $Id: functions,v 1.22 2005/01/19 16:48:14 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -207,6 +207,7 @@ linkme () { (
   done
 ) }
 CET () { export TZ=CET-1CEST ; }
+PST () { export TZ=PST+8PDT ; }
 
 nameserver () { (
   for i in $2 ; do echo search $i ; done
@@ -371,7 +372,7 @@ ensure_partition_bootable () {
 	"Cannot ensure a working /bin/sh on target."
   LOG_T "Installing kernel modules..."
   MODULES="lib/modules/$(uname -r)"
-  CHECK "[ -d $MODULES ]" "cp -a /$MODULES $MODULES" \
+  CHECK "[ -d $MODULES ]" "tar jxf /modules.tar.bz2" \
 	"Cannot ensure kernel modules on target partition"
 }
 
@@ -466,7 +467,7 @@ sysinit () {
 setdate () {
 (  eval $@
   : ${DAY:=4} ${MONTH:=7} ${YEAR:=2004} ${HOUR:=23} ${MINUTE:=5} ${SECOND:=42}
-  busybox date -s $(printf %02d%02d%02d%02d%04d $MONTH $DAY $HOUR $MINUTE $SECOND $YEAR)
+  busybox date -s $(printf %02d%02d%02d%02d%04d $MONTH $DAY $HOUR $MINUTE $YEAR)
   # GNU date -s $(printf "%04d-%02d-%02d %02d:%02d:%02d" $YEAR $MONTH $DAY $HOUR $MINUTE $SECOND)
 )
 }
@@ -494,6 +495,6 @@ getdate () {
   eval "$DATE"
 }
 mnt1 () {
-  mount /dev/hda1 /mnt
+  mount /dev/hda1 /mnt -t vfat -o shortname=winnt,umask=077,noatime
 }
 up () { cd .. ; }
