@@ -7,8 +7,8 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-/* Jornada820 version based on init.c 1.3 from cvs.handhelds.org
- * $Id: init.c,v 1.3 2004/07/01 21:53:02 fare Exp $
+/* Jornada820 version based on init.c 1.4 from cvs.handhelds.org
+ * $Id: init.c,v 1.4 2004/07/02 00:03:08 fare Exp $
  */
 
 #include <linux/config.h>
@@ -81,7 +81,7 @@ void show_mem(void)
 			else if (!page_count(page))
 				free++;
 			else
-				shared += atomic_read(&page->count) - 1;
+				shared += page_count(page) - 1;
 			page++;
 		} while (page < end);
 	}
@@ -229,6 +229,8 @@ find_memend_and_nodes(struct meminfo *mi, struct node_info *np)
 		bootmem_pages += np[i].bootmap_pages;
 	}
 
+	high_memory = __va(memend_pfn << PAGE_SHIFT);
+	
 	/*
 	 * This doesn't seem to be used by the Linux memory
 	 * manager any more.  If we can get rid of it, we
@@ -236,8 +238,7 @@ find_memend_and_nodes(struct meminfo *mi, struct node_info *np)
 	 */
 	max_low_pfn = memend_pfn - O_PFN_DOWN(PHYS_OFFSET);
 	max_pfn = memend_pfn - O_PFN_DOWN(PHYS_OFFSET);
-	mi->end = memend_pfn << PAGE_SHIFT;
-
+	
 	return bootmem_pages;
 }
 
@@ -284,6 +285,7 @@ static int __init check_initrd(struct meminfo *mi)
 static __init void reserve_node_zero(unsigned int bootmap_pfn, unsigned int bootmap_pages)
 {
 	pg_data_t *pgdat = NODE_DATA(0);
+	unsigned long res_size = 0;
 
 	/*
 	 * Register the kernel text and data with bootmem.
@@ -307,31 +309,32 @@ static __init void reserve_node_zero(unsigned int bootmap_pfn, unsigned int boot
 			     bootmap_pages << PAGE_SHIFT);
 
 	/*
-	 * Hmm... This should go elsewhere, but we really really
-	 * need to stop things allocating the low memory; we need
-	 * a better implementation of GFP_DMA which does not assume
-	 * that DMA-able memory starts at zero.
+	 * Hmm... This should go elsewhere, but we really really need to
+	 * stop things allocating the low memory; ideally we need a better
+	 * implementation of GFP_DMA which does not assume that DMA-able
+	 * memory starts at zero.
 	 */
-	if (machine_is_integrator())
-		reserve_bootmem_node(pgdat, 0, __pa(swapper_pg_dir));
+	if (machine_is_integrator() || machine_is_cintegrator())
+		res_size = __pa(swapper_pg_dir) - PHYS_OFFSET;
+
 	/*
-	 * These should likewise go elsewhere.  They pre-reserve
-	 * the screen memory region at the start of main system
-	 * memory.
+	 * These should likewise go elsewhere.  They pre-reserve the
+	 * screen memory region at the start of main system memory.
 	 */
-	if (machine_is_archimedes() || machine_is_a5k())
-		reserve_bootmem_node(pgdat, 0x02000000, 0x00080000);
 	if (machine_is_edb7211())
-		reserve_bootmem_node(pgdat, 0xc0000000, 0x00020000);
+		res_size = 0x00020000;
 	if (machine_is_p720t())
-		reserve_bootmem_node(pgdat, PHYS_OFFSET, 0x00014000);
+		res_size = 0x00014000;
+
 #ifdef CONFIG_SA1111
 	/*
-	 * Because of the SA1111 DMA bug, we want to preserve
-	 * our precious DMA-able memory...
+	 * Because of the SA1111 DMA bug, we want to preserve our
+	 * precious DMA-able memory...
 	 */
-	reserve_bootmem_node(pgdat, PHYS_OFFSET, __pa(swapper_pg_dir)-PHYS_OFFSET);
+	res_size = __pa(swapper_pg_dir) - PHYS_OFFSET;
 #endif
+	if (res_size)
+		reserve_bootmem_node(pgdat, PHYS_OFFSET, res_size);
 #ifdef CONFIG_SA1100_JORNADA820
 	/*
 	 * We have to reserve this area because the hpcboot
@@ -581,7 +584,6 @@ void __init mem_init(void)
 	datapages = &_end - &_etext;
 	initpages = &__init_end - &__init_begin;
 
-	high_memory = (void *)__va(meminfo.end);
 #ifndef CONFIG_DISCONTIGMEM
 	max_mapnr   = virt_to_page(high_memory) - mem_map;
 #endif
@@ -636,7 +638,7 @@ void __init mem_init(void)
 
 void free_initmem(void)
 {
-	if (!machine_is_integrator()) {
+	if (!machine_is_integrator() && !machine_is_cintegrator()) {
 		free_area((unsigned long)(&__init_begin),
 			  (unsigned long)(&__init_end),
 			  "init");
