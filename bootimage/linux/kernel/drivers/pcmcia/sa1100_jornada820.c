@@ -101,16 +101,42 @@ int jornada820_pcmcia_configure_socket(const struct pcmcia_configure *conf)
   mask0 = rst | flt | vcc0 | vcc1 | vpp0 | vpp1;
   mask1 = 0;
 
-  switch (conf->vcc)
+  switch (conf->sock)
     {
-    case 33: mask1 |= vcc0; break;      
-    case 50: mask1 |= (vcc0 | vcc1); break;
-    };
+    case 0:
+	  switch (conf->vcc)
+	    {
+	    case  0: break;
+	    case 33: mask1 |= (vcc0|vcc1); break;      
+	    case 50: mask1 |=  vcc0      ; break;
+	    default:
+	            printk(KERN_ERR "sa1101_pcmcia: sock=0 unrecognised VCC %u\n",conf->vcc);
+	            return -1;
+	    };
+    break;
+    case 1:
+	  switch (conf->vcc)
+	    {
+	    case  0: break;
+	    case 33: mask1 |= vcc0; break;      
+	    default:
+	            printk(KERN_ERR "sa1101_pcmcia: sock=1 unrecognised VCC %u\n",conf->vcc);
+	            return -1;
+	    };
+    break;
+      
+    default:  return -1;
+    }
 
+    /* TODO: how to verify ? */
   switch (conf->vpp)
     {
-    case 33: mask1 |= vpp0; break;      
-    case 50: mask1 |= (vpp0 | vpp1); break;
+    case   0: break;
+    case  33: mask1 |= vpp0; break;      
+    case  50: mask1 |= (vpp0|vpp1); break;
+    default:
+            printk(KERN_ERR "sa1101_pcmcia: unrecognised VPP %u\n",conf->vpp);
+            return -1;
     };
 
   if (conf->reset)  mask1 |= rst;
