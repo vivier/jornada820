@@ -10,7 +10,7 @@ This module is made for
 debugging and testing purpose.
 
 Jornada820 version based on ???
-$Id: regs-sa1101.c,v 1.1 2004/06/24 16:58:36 fare Exp $
+$Id: regs-sa1101.c,v 1.2 2004/06/27 13:21:37 oleg820 Exp $
 
 ****************************************************************************/
 
@@ -139,7 +139,10 @@ static sa1101_reg_entry_t sa1101_regs[] =
      	{ _PADDR	,"PADDR", "	     	Port A Data Direction Register"},
      	{ _PBDDR	,"PBDDR", "	     	Port B Data Direction Register"},
      	{ _PASSR	,"PASSR", "	     	Port A Sleep State Register"},
-     	{ _PBSSR	,"PBSSR", "	     	Port B Sleep State Register"}
+     	{ _PBSSR	,"PBSSR", "	     	Port B Sleep State Register"},
+     	{ _PCCR     	,"PCCR", "	     	PCMCIA Control Register"},
+     	{ _PCSSR     	,"PCSSR", "	     	PCMCIA Sleep State Register"},
+     	{ _PCSR     	,"PCSR", "	     	PCMCIA Status Register"}
 };
 
 #define NUM_OF_SA1101_REG_ENTRY	(sizeof(sa1101_regs)/sizeof(sa1101_reg_entry_t))
