@@ -29,6 +29,7 @@ ramdiskimage: cmdfile
 	dd if=/dev/zero of=ramdiskimage count=3072 bs=1024
 	mke2fs -F ramdiskimage
 	debugfs -f cmdfile
+	e2fsck -f -y ramdiskimage
 
 # ----------------- ramdiskimage command file ------------------------------
 
