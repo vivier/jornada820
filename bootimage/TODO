@@ -1,4 +1,4 @@
-$Id: TODO,v 1.8 2004/06/29 23:33:57 fare Exp $
+$Id: TODO,v 1.9 2004/06/29 23:43:14 fare Exp $
 
 Kernel 2.4
 * move on, dude!
@@ -7,8 +7,8 @@ Kernel 2.4
  * make the cursor visible by default
 
 Kernel 2.6
-* find out why the ramdisk doesn't load
 * port the keyboard driver
+* ensure the mouse driver works
 * port the sa1101 driver
 * port and fix the apm driver
 * port and fix the PCMCIA driver
@@ -25,6 +25,7 @@ Bootdisk
 * have pcmcia and busybox from CVS.
 * include kernel 2.6 module support in busybox configuration.
 * ensure busybox sh correctly reads /etc/profile at startup.
+* make the initrd work with udev ???
 * use early-userspace on kernel 2.6 ???
 
 Userland
@@ -101,36 +102,5 @@ j820kbd.c:
 convert to 2.6 style
 make a serio/sa1101ps2.c ???
 what about the mouse ???
-
------->8------>8------>8------>8------>8------>8------>8------>8------>8------
-Why are we experiencing problems with uncompressing a compressed ramdiskimage,
-whereas we used not to? Maybe upstream bug? Maybe a build glitch?
-For kernel 2.4, somehow we can survive with a non-compressed
-   ramdiskimage, or sometimes by rebuilding. Why is there this bug?
-For kernel 2.6, maybe we should investigate what happens with kinit...
-	http://tree.celinuxforum.org/pubwiki/moin.cgi/EarlyUserSpace
-	Documentation/early-userspace/README
-Somehow with 2.6, the kernel says
-"checking if image is initramfs...it isn't (ungzip failed); looks like
-   an initrd
-Freeing initrd memory: 4096K"
-There's a bug to be traced in init/do_mounts_rd.c or init/initramfs.c
--- somehow, the ramdisk isn't loaded properly.
-Using md5sum to check that the compressed then uncompressed disk
-images are there might or mightn't be useful in locating the bug.
-
-Tracing do_mounts_rd.c, we find that in rd_load_image, the following
-statement exits.
-	nblocks = identify_ramdisk_image(in_fd, rd_image_start);
-	if (nblocks < 0)
-		goto done;
-
-Tracing what is going wrong when loading the initrd on the j820, 
-I find in identify_ramdisk_image that initrd.image has been written 
-with parts of the linux kernel instead of the ramdisk. 
-I guess some memory address loading parameters are wrong in a
-   Makefile.
-
-OK, so the initrd was being overwritten by the bss of the decompressor. Bad!
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
