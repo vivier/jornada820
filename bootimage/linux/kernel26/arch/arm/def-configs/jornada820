@@ -106,15 +106,14 @@ CONFIG_SA1100_JORNADA820=y
 # CONFIG_SA1100_XP860 is not set
 # CONFIG_SA1100_YOPY is not set
 # CONFIG_SA1100_STORK is not set
-CONFIG_SA1100_SSP=y
-CONFIG_SA1100_USB=m
-CONFIG_SA1100_USB_NETLINK=m
-CONFIG_SA1100_USB_CHAR=m
+CONFIG_SA1100_SSP=m
+# CONFIG_SA1100_USB is not set
 
 #
 # Linux As Bootloader
 #
 # CONFIG_LAB is not set
+# CONFIG_SA1101 is not set
 
 #
 # Processor Type
@@ -153,7 +152,7 @@ CONFIG_PCMCIA=y
 CONFIG_PCMCIA_DEBUG=y
 # CONFIG_I82365 is not set
 # CONFIG_TCIC is not set
-CONFIG_PCMCIA_SA1100=y
+# CONFIG_PCMCIA_SA1100 is not set
 
 #
 # At least one math emulation must be selected
@@ -912,11 +911,7 @@ CONFIG_SOUND_SA1100SSP=m
 #
 # Multimedia Capabilities Port drivers
 #
-CONFIG_MCP=y
-CONFIG_MCP_SA1100=y
-CONFIG_MCP_UCB1200=m
-CONFIG_MCP_UCB1200_AUDIO=m
-CONFIG_MCP_UCB1200_TS=m
+# CONFIG_MCP is not set
 
 #
 # Console Switches
