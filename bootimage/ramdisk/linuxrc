@@ -1,2 +1,4 @@
 #!/bin/busybox sh
+# This file gets clobbered and replaced by a symlink to busybox at startup.
+# We must run busybox manually because symlinks are not installed at boot.
 exec /bin/busybox sh /etc/please my_linuxrc $@

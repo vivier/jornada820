@@ -1,5 +1,5 @@
 ::respawn:/bin/sh
-::sysinit:/etc/init.d/rcS
+::sysinit:/etc/please sysinit
 ::ctrlaltdel:/bin/umount -a -r
 vc/2::askfirst:-/bin/sh
 vc/3::askfirst:-/bin/sh

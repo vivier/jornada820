@@ -1,5 +1,7 @@
 #!/bin/sh
-# Functions defined by Faré
+# $Id: functions,v 1.3 2004/04/27 11:06:16 fare Exp $
+# Shell functions to ease your life at the initrd debug command prompt
+# Use the shell script /etc/please
 
 ascii_table () {
   i=32 ; while [ $i -lt 256 ] ; do
@@ -15,10 +17,12 @@ ascii_table () {
 
 re () {
   # RE-REad RenE's Runtime-Environment
-  [ -x /mnt/linux/functions ] && . /mnt/linux/functions
+  . /etc/functions
+  [ -f /mnt/linux/functions ] && . /mnt/linux/functions
 }
 
-mcs () { # my console settings
+mcs () {
+  # my console settings: visible cursor, latin1 encoding, normal colors, bold.
   echo -ne '\033[?2c\033(?B\033[m\033[1m' # ]])]
 }
 mcsv () { # my console settings for vt #n
@@ -45,33 +49,59 @@ nbdswap () {
 }
 
 link_applets () {
+  rm -f /linuxrc
   /bin/busybox --install -s
-
-  # APPS="$( busybox 2>&1 | ( while read A B ; [ "$A" != "Currently" ] ; do : ; done ; cat ) | sed -e "s/,/ /g" )"
-  # for app in $APPS ; do
-  #  [ -n $(which $app) ] || ln -s busybox $app
-  #done
+  ln -s ../etc/please /bin/please
 }
 
+ensure_tmp () {
+  mkdir -p tmp
+  CHECK '[ -d tmp ]' \
+      '' \
+      "Cannot ensure existence of $PWD/tmp directory."
+}
+
+ensure_proc () {
+CHECK '[ -d proc ]' \
+      'mkdir proc' \
+      "Cannot make a $PWD/proc directory node."
+CHECK '[ -f proc/cpuinfo ]' \
+      'mount none proc -t proc' \
+      "Cannot mount the $PWD/proc partition."
+}
+
+ensure_dev () {
+CHECK '[ -d dev ]' \
+      'mkdir dev' \
+      "Cannot make a $PWD/dev directory node."
+CHECK '[ -c dev/console ]' \
+      'mount none dev -t devfs' \
+      "Cannot mount the $PWD/dev partition."
+}
+
+
 my_linuxrc () {
-  # mount /proc and /dev
-  mount none /proc -t proc
-  mount none /dev -t devfs
+  cd /
+  mkdir -p /tmp
+  ensure_proc
+  ensure_dev
 
   # make symlinks for all those busybox applications
-  rm -f /linuxrc
   link_applets
 
-  exec /linuxrc
+  # Fallback plan: busybox's linuxrc
+  ABORT () {
+    if [ -n "$2" ] ; then
+      LOG "$2"
+    fi
+    LOG "Fallback plan: running busybox standalone on the boot disk."
+    exec /linuxrc
+  }
 
-  #TODO INSTEAD:
-  # Detect if we can mount hda and be done.
-  # if we can, see if the user created a file /mnt/noautomount
-  # if he didn't, try to mount the first linux partition (fdisk tag 83)
-  # if he didn't and that didn't work, try to mount the first vfat partition
-  # if we could mount something, ensure it contains the necessary programs,
-  # and use pivot root
-  # ...
+  try_pivot_root
+
+  ABORT "Abnormal return from try_pivot_root."
+
 }
 
 lisp () {
@@ -122,7 +152,7 @@ change_root () {
 
 ABORT () {
   if [ -n "$2" ] ; then
-    echo >&2 $2
+    LOG "$2"
   fi
   exit ${1:-2}
 }
@@ -130,95 +160,144 @@ CHECK () {
   # Check whether what we want is OK
   ERR="${3:-Something is wrong about the target filesystem.}
 Stopping before we do a big mistake."
-  eval "$1" || {
+  LOGT -e "Checking: $1 ..."
+  if eval "$1" ; then
+    LOGT "ok"
+  else
     if [ -n "$2" ] ; then
-      # Take a corrective measure if defined
+      LOGT "failed. Taking a corrective measure: $2"
       eval "$2"
       eval "$1" ||
-      ABORT $ERR ${4:-42}
+      ABORT "$ERR" ${4:-42}
     else
-      ABORT $ERR ${4:-42}
+      ABORT "$ERR" ${4:-42}
     fi
-  }
+  fi
+}
+
+no_noautomount_p () {
+  # create a file or directory noautomount on your WinCE FAT partition
+  # to prevent the boot disk image from automounting your rootfs.
+  R=0
+  [ -d /mnt/dos ] || mkdir -p /mnt/dos
+  DOSPART=$(fdisk -l /dev/hda | grep FAT | head -1 | cut -d" " -f1 )
+  if [ -n "$DOSPART" ] ; then
+    mount $DOSPART /mnt/dos -t vfat -o ro
+    if [ -e /mnt/dos/noautomount ] ; then
+      R=1
+    fi
+    umount /mnt/dos
+  fi
+  return $R
+}
+
+ensure_linuxpartition () {
+  PART=$(fdisk -l /dev/hda | grep '83  Linux' | head -1 | cut -d" " -f1 )
+  [ -n "$PART" ] ||
+  ABORT "Cannot find a Linux partition. Please make one with fdisk."
+  CHECK '[ -d /mnt/linux ]' \
+	'mkdir -p /mnt/linux' \
+	'Cannot make /mnt/linux directory.'
+  CHECK 'grep -q "$PART /mnt/linux" /proc/mounts' \
+	'mount $PART /mnt/linux -o noatime,rw' \
+	"Cannot mount the target partition $PART to /mnt/linux."
+}
+has_init_p () {
+  [ -x linuxrc ] ||
+  [ -x sbin/init ] || [ -x etc/init ] || [ -x bin/init ] ||
+  [ -x bin/sh ]
+}
+do_init () {
+  [ -x /linuxrc ] && exec /linuxrc
+  [ -x sbin/init ] && exec /sbin/init
+  [ -x etc/init ] && exec /etc/init
+  [ -x bin/init ] && exec /bin/init
+  [ -x bin/sh ] && exec /bin/sh
+}
+
+ensure_partition_bootable () {
+  for i in bin sbin usr/bin usr/sbin etc etc/pcmcia \
+	   tmp var/run initrd lib/modules mnt ; do
+    CHECK "[ -d $i ]" "mkdir -p $i" \
+	"Cannot ensure directory /$i on target partition"
+  done
+  for i in bin/busybox bin/cardmgr bin/cardctl \
+	etc/functions etc/please etc/udhcpc.sh \
+	etc/passwd etc/group etc/fstab etc/inittab \
+	etc/host.conf etc/nsswitch.conf etc/resolv.conf \
+	etc/pcmcia/shared etc/pcmcia/config etc/pcmcia/config.opts \
+	etc/pcmcia/ide etc/pcmcia/ide.opts \
+	etc/pcmcia/network etc/pcmcia/network.opts
+  do
+    CHECK '[ -f $i ]' \
+	'cp -a /$i $i' \
+	"Cannot ensure /$i on target partition."
+  done
+  LOGT "Installing busybox..."
+  chroot . /bin/busybox --install -s
+  LOGT "Installing kernel modules..."
+  MODULES=lib/modules/$(uname -r)
+  CHECK '[ -d $MODULES ]' 'cp -a /$MODULES $MODULES' \
+	"Cannot ensure kernel modules on target partition"
+}
+
+LOGT () {
+  echo "$@" >> /tmp/log
+}
+LOGC () {
+  echo "$@" >&2
+}
+LOG () {
+  LOGT "$@" ; LOGC "$@"
 }
 
 try_pivot_root () {
-# You must exec this script as the first process
-# without any other processes running so that it may free the ramdisk.
+  # NB: So as to be able to free the ramdisk's memory,
+  # this script must be run as the only process, #1,
+  # either from linuxrc of from a single-user mode shell.
 
-cd /
-
-CHECK '[ -x /etc/please -a -f /etc/functions ]' \
-      '' \
-      "Can't find the supporting script."
-CHECK '[ -x /sbin/pivot_root ]' \
-      '' \
-      "Can't find the pivot_root binary."
-CHECK 'dd if=/dev/hda count=1 of=/dev/null 2> /dev/null' \
-      'cardmgr -o ; sleep 3' \
-      "Cannot find a CF disk."
-CHECK 'PART=$(fdisk -l /dev/hda | grep Linux | head -1 | cut -d" " -f1 )' \
-      '' \
-      "Cannot find a Linux partition. Please make one with fdisk."
-CHECK '[ -d /proc ]' \
-      'mkdir /proc' \
-      "Cannot make a /proc directory node."
-CHECK '[ -f /proc/cpuinfo ]' \
-      'mount proc proc -t proc' \
-      "Cannot mount the /proc partition."
-CHECK '[ -d /mnt ]' \
-      'mkdir /mnt' \
-      "Cannot make a /mnt directory node."
-CHECK 'grep -q "$PART /mnt" /proc/mounts' \
-      'mount $PART /mnt' \
-      "Cannot mount the target partition $PART to /mnt."
-CHECK '[ -d /mnt/dev ]' \
-      'mkdir /mnt/dev' \
-      "Cannot ensure /dev on target partition $PART."
-CHECK '[ -c /mnt/dev/console ]' \
-      'mknod /mnt/dev/console c 5 1' \
-      "Cannot ensure /dev/console on target partition $PART."
-CHECK '[ -x /mnt/bin/sh ]' \
-      '[ -x /mnt/bin/busybox ] || cp /bin/busybox /mnt/bin/busybox ; \
-      ln -s busybox /mnt/bin/sh' \
-      "Cannot ensure an executable /bin/sh on target partition $PART."
-
-# pivot the root device
-cd /mnt
-if [ ! -d initrd ] ; then
-  mkdir initrd
-fi
-/sbin/pivot_root . initrd
-
-# Now, initialize things under the new root tree
-
-# Jump into the new tree
-exec ./initrd/usr/sbin/chroot . \
-	./initrd/bin/sh ./initrd/etc/please pivot_root_part2 \
-	< dev/console > dev/console 2>&1
+  cd /
+  ensure_tmp ; ensure_proc ; ensure_dev # necessary for many things
+  LOG "Checking for a CF memory card..."
+  CHECK 'dd if=/dev/hda count=1 of=/dev/null 2> /dev/null' \
+	'cardmgr -o ; sleep 1' \
+	"Cannot find a CF disk."
+  LOG "Checking for noautomount request..."
+  CHECK no_noautomount_p '' \
+	"User requested noautomount - not trying to mount a Linux partition."
+  LOG "Trying to mount a Linux partition..."
+  ensure_linuxpartition
+  LOG "Trying to make the Linux partition livable..."
+  cd /mnt/linux
+  ensure_proc
+  ensure_dev
+  LOG "Ensuring the target partition is bootable..."
+  ensure_partition_bootable
+  LOG "Changing current I/O to new /dev"
+  exec < dev/console > dev/console 2>&1
+  LOG "Unmounting dev and proc"
+  umount /proc
+  umount /dev
+  LOG "Switching root partition..."
+  cp /tmp/log tmp/log # copying logfile over...
+  pivot_root . initrd
+  exec chroot . /bin/sh /etc/please pivot_root_part2
 }
 
 pivot_root_part2 () {
-# NOT FINISHED YET
-./initrd/bin/mount dev dev -t devfs
-./initrd/bin/mount proc proc -t proc
+  LOG "Made it to the other side!"
+  # mknod /dev/initrd b 1 250
+  # chmod 400 /dev/initrd
+  LOG "Freeing resources occupied by the initrd..."
+  umount /initrd
+  blockdev --flushbufs /dev/rd/0 # /dev/ram0
+  LOG "Jumping into the rootfs' init process..."
+  do_init
+  exec /bin/sh
+}
 
-# echo --- trying to unmount ramdisk
-# ps -ef
-# /bin/umount /initrd/dev
-# /bin/umount /initrd/proc
-# /bin/umount /initrd
-echo ---- done
-
-# mknod /dev/initrd b 1 250
-# chmod 400 /dev/initrd
-
-umount /initrd
-blockdev --flushbufs /dev/rd/0 # /dev/ram0
-
-if [ -x /mnt/sbin/init ] ; then
-   exec /sbin/init
-fi
-
-exec /bin/sh
+sysinit () {
+  # replaces the /etc/init.d/rcS script -- see /etc/inittab
+  echo -ne '\033[?2c\033(?B\033[m\033[1m'
+  echo 'Welcome to the Linux initial ramdisk for HP Jornada 820'
 }

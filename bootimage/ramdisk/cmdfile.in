@@ -9,8 +9,10 @@ mkdir /dev
 mkdir /proc
 mkdir /var
 mkdir /var/run
+mkdir /tmp
 mkdir /mnt
-mkdir /mnt/sandisk
+mkdir /mnt/dos
+mkdir /mnt/linux
 
 cd bin
 write busybox/busybox busybox
