@@ -112,15 +112,22 @@ __initcall(jornada820_init);
 static void setup_memory(struct meminfo *mi)
 {
 	int bank = 0;
-	SET_BANK( bank++, 0xc0000000, 16<<20 ); /* 16MB of RAM in bank 0 */
+	SET_BANK( bank, 0xc0000000, 16<<20 ); /* 16MB of RAM in bank 0 */
+	bank++;
 #ifdef CONFIG_JORNADA820_GRAB_VRAM
-	/* What's wrong with putting these 2MB of VRAM to good use? */
-	SET_BANK( bank++, 0xc8000000,  2<<20 ); /* 2MB of RAM in bank 1 */
-	/* UNTESTED */
+	/* DON'T USE THIS, IT DOESN'T WORK.
+	 * Somehow, we can't use the 2MB of VRAM as normal RAM.
+	 * Maybe it's a matter of bad timings?
+	 * Ideally, we should have either a video driver for the external VGA,
+	 * or a driver for a block device that could be used as swap.
+	 */
+	SET_BANK( bank, 0xc8000000,  2<<20 ); /* 2MB of RAM in bank 1 */
+	bank++;
 #endif
 #ifdef CONFIG_JORNADA820_F1267A
 	/* F1267A memory expansion module to 32MB total memory */
-	SET_BANK( bank++, 0xd0000000, 16<<20 ); /* 16 MB in bank 2 */
+	SET_BANK( bank, 0xd0000000, 16<<20 ); /* 16 MB in bank 2 */
+	bank++;
 #endif
 	mi->nr_banks = bank;
 }
