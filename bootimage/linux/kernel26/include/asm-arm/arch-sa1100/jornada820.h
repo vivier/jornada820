@@ -5,7 +5,7 @@
  * Based on John Ankcorn's Jornada 720 file
  *
  * This file contains the hardware specific definitions for HP Jornada 820
- * $Id: jornada820.h,v 1.1 2004/06/24 16:58:52 fare Exp $
+ * $Id: jornada820.h,v 1.2 2004/06/27 16:24:50 oleg820 Exp $
  */
 
 #ifndef __ASM_ARCH_HARDWARE_H
@@ -71,10 +71,10 @@
 #define GPIO_JORNADA820_DTRDSR_IRQ		IRQ_GPIO18
 
 /*
- * GPIO 20 is the reset for the SA-1101. Hold to 1 to reset SA-1101.
+ * GPIO 20 is the reset for the LCD. Hold to 1 to reset LCD.
  */
 
-#define GPIO_JORNADA820_SA1101RESET		GPIO_GPIO(20)
+#define GPIO_JORNADA820_LCDRESET		GPIO_GPIO(20)
 
 /*
  * GPIO 23 is the backlight switch. Turn to 0.
