@@ -26,7 +26,7 @@ if you're doing any serious hacking with our code base.
 You may join the project if you want -- just show us your code,
 create a sf.net account, tell us the username, and we'll add you.
 </p>
-<h2 align="center">Living with WinCE</h2>
+<h2 align="center">Surviving with WinCE</h2>
 <pre>
 &gt; Incidentally, I talked to HP the other day and asked
 &gt; about detailed hardware specs, and they
@@ -66,12 +66,21 @@ See for instance
 <h3>TODO list</h3>
 <ol>
 <li>
-modify hpcboot to <em>really</em> take over the machine from WinCE:
+Actually port linexec to the gcc toolchain.
+We will thus have a bootloader that allows for command-line arguments, etc.
+<li>
+Modify the bootloader to <em>really</em> take over the machine from WinCE:
 preserve just enough of the memory layout so that at startup,
 WinCE will chain into hpcboot once more when the machine restarts.
 <li>
-Write a new bootloader that replaces hpcboot,
-and allows for command-line arguments, etc., etc.
+Be able to keep the date and time from Windows when initializing Linux.
+<li>
+Be able to leave the machine in a clean state when rebooting under WinCE.
+<li>
+Be able to leave the machine in a state that autolaunches linexec,
+when shutting down.
+<li>
+Be able to load a new kernel (using LAB) without going through WinCE.
 </ol>
 <h3>wince kernel vmem and pmem layout</h3>
 <h4>1. static vmem and pmem allocations</h4>
@@ -145,6 +154,6 @@ Back to <a href="http://jornada820.sourceforge.net"
          + "/" + lastModDay + "/" + lastModYear + "</small></i>")
       </script>
 </td></tr></table>
-<!-- $Id: developer.html,v 1.9 2004/07/02 21:27:11 fare Exp $ -->
+<!-- $Id: developer.html,v 1.10 2004/07/02 21:34:03 fare Exp $ -->
 </body>
 </html>
