@@ -1,12 +1,17 @@
 #!/bin/sh
-# $Id: functions,v 1.10 2004/05/08 12:38:26 fare Exp $
+# $Id: functions,v 1.11 2004/05/09 22:41:26 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
 re () {
   # RE-REad RenE's Runtime-Environment
   . /etc/functions
-  [ -f /mnt/linux/functions ] && . /mnt/linux/functions
+  [ -f /mnt/linux/etc/functions ] && . /mnt/linux/etc/functions
+}
+
+ping () {
+  # avoid uninterruptible ping when console is broken
+  /bin/ping -c 10 $@
 }
 
 mcs () {
@@ -106,9 +111,9 @@ nbdswap () {
 }
 
 link_applets () {
-  rm -f /linuxrc
-  /bin/busybox --install -s
-  ln -s ../etc/please /bin/please
+  DO_T rm -f /linuxrc
+  DO_T /bin/busybox --install -s
+  DO_T ln -s ../etc/please /bin/please
 }
 
 ensure_tmp () {
@@ -174,8 +179,13 @@ my_linuxrc () {
     LOG "Fallback plan: running busybox on the initial ramdisk."
     sysinit
     LOG_C "This is a single-user shell with PID=$$.
-You can attempt to pivot_root manually, or
-you can instead let busybox manage your consoles with 'exec /linuxrc'"
+If using the bootimage standalone, let busybox manage your consoles with:
+	exec /linuxrc
+You may use our predefined shell functions with:
+	. /etc/functions
+Once you have setup and fixed your rootfs on CF, umount -a and invoke function:
+	try_pivot_root
+"
     exec_sh
   }
 
@@ -246,6 +256,7 @@ no_noautomount_p () {
   if [ -n "$DOSPART" ] ; then
     DO_T mount $DOSPART /mnt/dos -t vfat -o ro
     if [ -e /mnt/dos/noautomount ] ; then
+      LOG_T "Found file or directory /noautomount on VFAT partition."
       R=1
     fi
     DO_T umount /mnt/dos
@@ -300,7 +311,6 @@ has_init_p () {
   [ -x bin/sh ]
 }
 do_init () {
-  # [ -x linuxrc ] && exec ./linuxrc
   if [ 1 = "$$" ] ; then
     [ -x sbin/init ] && exec ./sbin/init
     [ -x etc/init ] && exec ./etc/init
@@ -375,15 +385,18 @@ do_pivot_root () {
     ensure_dev
     ensure_shm
     ensure_shm_tmp
-    LOG "Changing current I/O to new /dev"
+    LOG_T "Changing current I/O to new /dev"
     exec < dev/console > dev/console 2>&1
+    LOG_T "Switching log file"
+    mv /tmp/log tmp/log
+    ln -s ../$PWD/tmp/log /tmp/log
     LOG "Switching root partition..."
-    cp /tmp/log tmp/log # "copying logfile over..."
     pivot_root . initrd
+    LOG_T "Jumping to the other side"
     exec chroot . ./bin/sh ./etc/please pivot_root_part2 \
 	< dev/console > dev/console 2>&1
   else
-    cd /
+    DO_T cd /
     DO_T umount /mnt/linux
     LOG "PID = $$ != 1; Let's trust linux/init/do_mount.c for the sequel ..."
     exit 0
