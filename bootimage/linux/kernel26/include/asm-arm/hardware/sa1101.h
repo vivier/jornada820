@@ -1,6 +1,6 @@
 /*
  * File created for Jornada 820... (?)
- * $Id: sa1101.h,v 1.5 2004/07/03 23:42:41 fare Exp $
+ * $Id: sa1101.h,v 1.6 2004/07/08 10:02:59 oleg820 Exp $
  */
 #ifndef _ASM_ARCH_SA1101
 #define _ASM_ARCH_SA1101
@@ -12,6 +12,8 @@
 
 #ifndef __ASSEMBLY__
 
+/* TODO: driver interface */
+/*------------------------*/
 extern int sa1101_probe(unsigned long phys_addr);
 
 extern void sa1101_wake(void);
@@ -28,18 +30,21 @@ extern int sa1101_usb_shutdown(void);
 extern int sa1101_vga_init(void);
 extern int sa1101_vga_shutdown(void);
 
+/*------------------------*/
+
 #define sa1101_writel(val,addr)	({ *(volatile unsigned int *)(addr) = (val); })
 #define sa1101_readl(addr)	(*(volatile unsigned int *)(addr))
 
 #define SA1101_DEVID_SBI	0
 #define SA1101_DEVID_SK		1
 #define SA1101_DEVID_USB	2
-#define SA1101_DEVID_SAC	3
-#define SA1101_DEVID_SSP	4
+#define SA1101_DEVID_VGA	3
+#define SA1101_DEVID_IEEE	4
 #define SA1101_DEVID_PS2	5
 #define SA1101_DEVID_GPIO	6
 #define SA1101_DEVID_INT	7
 #define SA1101_DEVID_PCMCIA	8
+#define SA1101_DEVID_KEYPAD	9
 
 struct sa1101_dev {
 	struct device	dev;
@@ -69,8 +74,12 @@ struct sa1101_driver {
 
 #define SA1101_DRIVER_NAME(_sadev) ((_sadev)->dev.driver->name)
 
+void sa1101_enable_device(struct sa1101_dev *);
+void sa1101_disable_device(struct sa1101_dev *);
+
 int sa1101_driver_register(struct sa1101_driver *);
 void sa1101_driver_unregister(struct sa1101_driver *);
+
 
 #endif
 
