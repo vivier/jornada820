@@ -1,0 +1,118 @@
+Instructions for installing the Linux kernel on the HP Jornada 820.
+
+<Step 0> - Prerequisites
+
+* You need a CompactFlash card that fits into the Jornada's CF Type II slot.
+ I (galmasi) use a small 32MB Sandisk.
+ I (fare) use either a 8MB Sandisk or a gigabyte microdrive.
+ Actually, if you have a NIC or if you're patient with your serial cable,
+ you might be able to download the bootimage into RAM and boot from there.
+
+* Since Linux will take over control of your RAM,
+ you should backup any WinCE files and settings that you care to preserve,
+ to CompactFlash or to a remote computer.
+ Backups are always a good idea. At this time they are a *very* good idea.
+
+* If you're downloading a binary bootimage from our site, jump to Step 5.
+	http://jornada820.sf.net/
+ Otherwise, you'll need a net-connected Linux workstation
+ with an arm cross-compilation toolchain installed.
+ Almost any toolchain should do - I (galmasi) use a homebrew one, but you
+ should get the same results with the binaries downloaded from one of these:
+	http://www.handhelds.org/z/wiki/Toolchains
+	http://www.opensistemas.com/Gentoo_for_Zaurus.715.0.html
+	http://www.openzaurus.org/official/toolchain/
+
+<Step 1> - Get an appropriate kernel tree.
+
+ method a) Check out current cvs.sf.net kernel:
+	cvs -d:pserver:anonymous@cvs.sf.net:/cvsroot/jornada820 login
+	cvs -d:pserver:anonymous@cvs.sf.net:/cvsroot/jornada820 checkout bootimage/linux/kernel
+ The password is empty, just hit enter at the prompt.
+ Note that we are reorganizing things on the CVS server, so in the meantime,
+ you might have to use the old path and use the following to checkout instead:
+	cvs -d:pserver:anonymous@cvs.sf.net:/cvsroot/jornada820 checkout kernel/linux/kernel
+
+ method b) Check out current cvs.handhelds.org kernel and patch it.
+	cvs -d:pserver:anoncvs@cvs.handhelds.org:/cvs login
+	cvs -d:pserver:anoncvs@cvs.handhelds.org:/cvs checkout linux/kernel
+ The password is "anoncvs", type it at the prompt (w/o quotes) and hit enter.
+ Then download the latest patch from jornada820.sf.net and apply it:
+	cd kernel && zcat ../path/to/patch.diff.gz | patch -p1 -E
+
+ For more details about the handhelds CVS, see
+	http://www.handhelds.org/sources.html
+ You may also try to patch a kernel from a different provenance.
+ If you try, we're interested in knowing whether or not you succeeded.
+
+<Step 2> - Get an initial RAM disk image with which to boot your kernel.
+ If you're a developer, you can get one from our private FTP site.
+ Hopefully, by the time you read these instructions,
+ we have released public images. Check our web site:
+	http://jornada820.sourceforge.net/
+
+ The initial ramdisk should be a pre-compiled root file system image
+ for the ARM architecture. If you build your own kernel and ramdisk,
+ make sure the kernel configuration includes support for the filesystem
+ type used by your ramdisk (duh!).
+
+<Step 3> - copy the configuration file and adjust to your liking.
+ The default configuration file is in 
+	arch/arm/def-configs/jornada820
+
+ Copy it with
+   cd kernel &&
+   cp arch/arm/def-configs/jornada820 .config
+
+ You can accept it as is with
+	make oldconfig
+ Or you can adjust it with
+	make menuconfig
+   or
+	make xconfig
+
+<Step 3> - Compile the kernel.
+
+cd kernel &&
+make ARCH=arm \
+CROSS_COMPILE=arm-linux- \
+INITRD=/home/galmasi/jornadaport/ramdisk/ramdiskimage \
+zImage j820
+
+Replace the path for INITRD by the path to your ramdisk image from Step 2.
+
+Note that ARCH=arm is not necessary if starting from our CVS release,
+but might be necessary if starting from another kernel
+(e.g. applying our patch to a generic kernel).
+
+Similarly, the CROSS_COMPILE= statement might not be necessary
+if you're using our CVS release whereas a toolchain is in your path.
+Otherwise, you might have to specify the full path to your toolchain
+as a prefix in statement such as CROSS_COMPILE=/usr/local/arm/3.3.1/bin/
+
+What you end up with is the ELF binary kernel/arch/arm/boot/j820/j820.
+
+<Step 4> - Boot.
+
+Copy hpcboot.exe from NetBSD or our slightly modified version hpcbootl.exe,
+together with j820 onto the CF card mentioned earlier,
+and start hpcboot on the jornada.
+Let it boot j820. You should get a prompt on the Jornada820 screen.
+If you add the following to the kernel's command line: "console=ttySA0"
+you will see the boot message on the serial port.
+
+<Step 5> - Have FUN.
+
+I'm sure you can figure out how to do it by yourself.
+(For instance, you can have a lot of fun programming with ocaml or clisp.)
+
+<Step 6> - Be done.
+
+There is currently no way to shutdown and restart the computer from Linux.
+To shutdown, you must unplug the computer and remove the main batteries.
+If you have problems doing a warm reboot with WinCE,
+then you must *also* remove the backup batteries in addition to the former,
+which will completely clear off the RAM.
+Then you can do a cold reboot of WinCE, and eventually launch Linux again.
+Note: to skip the configuration utility launched by WinCE at cold reboots,
+just kill it with Ctrl-Alt-Del. Aaaah!
