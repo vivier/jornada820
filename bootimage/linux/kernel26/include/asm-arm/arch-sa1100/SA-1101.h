@@ -8,7 +8,7 @@
  *
  */
 /* Jornada820 version based on SA-1101.h 1.1.1.1 from cvs.handhelds.org
- * $Id: SA-1101.h,v 1.1 2004/06/24 16:58:52 fare Exp $
+ * $Id: SA-1101.h,v 1.2 2004/06/27 17:36:12 oleg820 Exp $
  */
 
 /* Be sure that virtual mapping is defined right */
@@ -396,7 +396,7 @@
 #define VgaStatus      (*((volatile Word *) SA1101_p2v (_VgaStatus)))
 #define VgaInterruptMask (*((volatile Word *) SA1101_p2v (_VgaInterruptMask)))
 #define VgaPalette     (*((volatile Word *) SA1101_p2v (_VgaPalette)))
-#define DacControl     (*((volatile Word *) SA1101_p2v (_DacControl))
+#define DacControl     (*((volatile Word *) SA1101_p2v (_DacControl)))
 #define VgaTest        (*((volatile Word *) SA1101_p2v (_VgaTest)))
 
 #define VideoControl_VgaEn    0x00000000
