@@ -1,5 +1,9 @@
 OS			= linux
 TARGET			= arm-linux
+TOPDIR			= $(shell pwd)
+PATH:=$(TOPDIR)/gcc-3.3.x/toolchain_arm/bin:$(PATH)
+
+export PATH
 
 .PHONY: ramdisk
 
@@ -11,11 +15,12 @@ TEE			= tee
 TOUCH			= touch
 CP			= cp -f
 RM			= rm -f
-CANONICAL_PATH		= /bin:/usr/bin
 
 # ------------- directories for source code ----------------------------
 
 KERNELDIR		= linux/kernel
+KBUILDDIR		= linux/build/kernel
+KUPSTREAMDIR		= linux/upstream/kernel
 
 # --------------------------------------------------------------------------
 #                       default targets                                    |
@@ -26,17 +31,35 @@ localclean::
 	-${RM} vmlinux j820
 
 clean:: localclean
-	${MAKE} -C ${KERNELDIR} ARCH=arm clean
+	${MAKE} -C ${KBUILDDIR} ARCH=arm clean
 	${MAKE} -C ramdisk clean
 
 distclean:: localclean
-	${MAKE} -C ${KERNELDIR} ARCH=arm mrproper
+	${MAKE} -C ${KBUILDDIR} ARCH=arm mrproper
 	${MAKE} -C ramdisk ARCH=arm mrproper
 
+kbuildtree:: $(KUPSTREAMDIR)/Makefile
+	cp -fal $(KUPSTREAMDIR) linux/build/
+	cp -fal $(KERNELDIR) linux/build/
+
+$(KUPSTREAMDIR)/CVS/Root $(KUPSTREAMDIR)/CVS/Repository:
+	mkdir -p $(KUPSTREAMDIR)/CVS ; cd $(KUPSTREAMDIR)/CVS || exit 2 ; \
+	echo :pserver:anoncvs@cvs.handhelds.org:/cvs > Root ; \
+	echo linux/kernel > Repository ; \
+	touch Entries ; \
+	grep -q ':pserver:anoncvs@cvs.handhelds.org:2401/cvs' ~/.cvspass || \
+	echo '/1 :pserver:anoncvs@cvs.handhelds.org:2401/cvs Ay=0=h<Z' >> ~/.cvspass
+
+$(KUPSTREAMDIR)/Makefile: $(KUPSTREAMDIR)/CVS/Root
+	cd $(KUPSTREAMDIR) && cvs -z9 update -dfP &&
+	touch $(KUPSTREAMDIR)/Makefile
 
 # -------------------------------------------------------------------------- 
-#                    build the toolchain
+#                    optional: build the toolchain
 # --------------------------------------------------------------------------
+
+gcc_version:
+	${TARGET}-gcc -v
 
 gcc-3.3.x/CVS/Root gcc-3.3.x/CVS/Repository:
 	mkdir -p gcc-3.3.x/CVS ; cd gcc-3.3.x/CVS || exit 2 ; \
@@ -58,16 +81,15 @@ toolchain: gcc-3.3.x/toolchain_arm/bin/arm-linux-gcc
 #                    build the boot image
 # --------------------------------------------------------------------------
 
-j820: config depend ramdisk
-	export RDIMAGE=`pwd`/ramdisk/ramdiskimage.gz && \
-	export PATH=`pwd`/gcc-3.3.x/toolchain_arm/bin:${PATH} && \
-	cd ${KERNELDIR} && \
+j820: config depend ramdisk kbuildtree
+	export RDIMAGE=$(TOPDIR)/ramdisk/ramdiskimage.gz && \
+	cd ${KBUILDDIR} && \
 	${MAKE} \
 	    ARCH=arm \
 	    CROSS_COMPILE=${TARGET}- \
 	    INITRD=$${RDIMAGE} \
 	    zImage j820
-	cp ${KERNELDIR}/arch/arm/boot/j820/j820 $@
+	cp ${KBUILDDIR}/arch/arm/boot/j820/j820 $@
 
 sandisk: j820
 	mount /mnt/sandisk/; cp j820 /mnt/sandisk/; umount /mnt/sandisk/
@@ -77,18 +99,18 @@ sandisk: j820
 # --------------------------------------------------------------------------
 
 
-menuconfig:
-	cd ${KERNELDIR} && \
+menuconfig: kbuildtree
+	cd ${KBUILDDIR} && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- menuconfig
 
-depend: config ${KERNELDIR}/.depend
-${KERNELDIR}/.depend:
-	cd ${KERNELDIR} && \
+depend: config ${KBUILDDIR}/.depend
+${KBUILDDIR}/.depend:
+	cd ${KBUILDDIR} && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- depend
 
-config: ${KERNELDIR}/.config
-${KERNELDIR}/.config:
-	cd ${KERNELDIR} && \
+config: ${KBUILDDIR}/.config
+${KBUILDDIR}/.config: kbuildtree
+	cd ${KBUILDDIR} && \
 	cp arch/arm/def-configs/jornada820 .config && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- oldconfig
 
@@ -101,10 +123,10 @@ modules: config depend ramdisk/modules.tar.bz2
 ramdisk/modules.tar.bz2: ramdisk/lib/modules
 	cd ramdisk && tar jcf modules.tar.bz2 lib/modules
 
-ramdisk/lib/modules:
-	export MODDIR=`pwd`/ramdisk/ && \
+ramdisk/lib/modules: kbuildtree
+	export MODDIR=$(TOPDIR)/ramdisk/ && \
 	echo $${MODDIR} && \
-	cd ${KERNELDIR} && \
+	cd ${KBUILDDIR} && \
 	${MAKE} ARCH=arm \
 	        CROSS_COMPILE=${TARGET}- \
 		INSTALL_MOD_PATH=$${MODDIR} \
