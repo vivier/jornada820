@@ -12,17 +12,21 @@
 The <a href="sources.html">Sources on CVS</a>
 contain scripts that will automatically fetch and compile
 all the software dependencies used while building the bootimage.
+Read the README file and peruse the Makefile for details.
 The
-<a href="binaries.html">result bootimage plus bootloader executable</a>
+<a href="binaries.html">resulting bootimage plus bootloader executable</a>
 can easily fit within 2.5MB of vfat partition on a CompactFlash card.
 </p><p align="justify">
 Check our <a href="status.html">project status page</a>
-to see what remains to be done,
-and come discuss on our <a href="mailinglists.html">mailing-lists</a>
+to see what remains to be done.
+For details, see TODO file in our sources.
+You may join our <a href="mailinglists.html">mailing-lists</a>
+to discuss your progress and blocks
 if you're doing any serious hacking with our code base.
-You may join the project if you want -- just show us your code.
+You may join the project if you want -- just show us your code,
+create a sf.net account, tell us the username, and we'll add you.
 </p>
-<h2 align="center">WinCE</h2>
+<h2 align="center">Living with WinCE</h2>
 <pre>
 &gt; Incidentally, I talked to HP the other day and asked
 &gt; about detailed hardware specs, and they
@@ -32,12 +36,15 @@ You may join the project if you want -- just show us your code.
 </pre>
 <h3>Bootloader</h3>
 <p align="justify">
-Our bootloader is
+Our current bootloader is
 <a href="http://cvsweb.netbsd.org/bsdweb.cgi/src/sys/arch/hpc/stand/hpcboot/">hpcboot</a>
 from <a href="http://www.netbsd.org/">NetBSD</a>
 (<a href="http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/hpc/stand/binary/ARM/hpcboot.exe.uue">compiled binary</a>).
 Oleg Gusev tailored a modified version for the Jornada 820
 -- beg the sources from him!
+</p>
+<p align="justify">
+Oleg recommends that we should switch to linexec in the future.
 </p>
 <h3>Toolchain</h3>
 <p align="justify">
@@ -105,14 +112,18 @@ US103463 3.6 1650 10 34 62.8 58 278 102 21.4
 <h3>Trackpad</h3>
 ALPS
 <h3>Hardware Manuals</h3>
-<a href=docs/arm/SA-1100-manual.pdf>SA-1100 Manual</a><br>
-<a href=docs/arm/SA-1100-update.pdf>SA-1100 Update</a><br>
-<a href=docs/arm/SA-1110-manual.pdf>SA-1110 Manual</a><br>
-<a href=docs/arm/SA1101.pdf>SA-1101 Manual</a><br>
-<a href=docs/arm/strongARM-cpu.pdf>Strong ARM CPU Manual</a><br>
-<a href=docs/arm/strongARM.pdf>Strong ARM Evaulation Board Manual</a><br>
-<a href=docs/chips/ss_brc.pdf>RAM/ROM connectors</a><br>
-<br>
+<a href=docs/>All the documentation we have</a>
+about the ARM and its companion, and other chips within the 820.
+A few quicklinks:
+<ul>
+<li><a href=docs/arm/SA-1100-manual.pdf>SA-1100 Manual</a>
+<li><a href=docs/arm/SA-1100-update.pdf>SA-1100 Update</a>
+<li><a href=docs/arm/SA1101.pdf>SA-1101 Manual</a>
+<li><a href=docs/arm/strongARM-cpu.pdf>Strong ARM CPU Manual</a>
+<li><a href=docs/arm/strongARM.pdf>Strong ARM Evaluation Board Manual</a>
+<li><a href=docs/chips/ss_brc.pdf>RAM/ROM connectors</a>
+<li>...
+</ul>
 <!-- required stuff -->
 <a href="http://sourceforge.net"><img src="http://sourceforge.net/sflogo.php?group_id=102135&amp;type=5" width="105" height="31" border="0" alt="SourceForge.net Logo" /></a>
 <br><script language="JavaScript">
