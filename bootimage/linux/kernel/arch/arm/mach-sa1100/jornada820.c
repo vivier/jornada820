@@ -22,10 +22,8 @@
 #include <asm/irq.h>
 #include <asm/hardware.h>
 #include <asm/hardware/ssp.h>
+#include <asm/delay.h>
 #include "generic.h"
-#include "sa1101.h"
-
-static void jornada820_init_proc (void);
 
 /* *********************************************************************** */
 /* Initialize the Jornada 820.                                             */
@@ -61,11 +59,16 @@ static int __init jornada820_init(void)
   set_GPIO_IRQ_edge(GPIO_JORNADA820_LEDBUTTON,    GPIO_RISING_EDGE);
 #endif
 
-  /* Initialize the 1101. */
-  GAFR |= GPIO_32_768kHz;
-  GPDR |= GPIO_32_768kHz;
-  TUCR = TUCR_3_6864MHz | TUCR_MBGPIO ; /* should also set TUCR_MR */
-  
+#if 0
+  /* TODO: This should reset the SA1101 
+  GPDR |= GPIO_GPIO20;
+  GPSR = GPIO_GPIO20;
+  udelay(1);
+  GPCR = GPIO_GPIO20;
+  udelay(1);
+  */
+#endif
+
   /* ------------------- */
   /* Initialize the SSP  */
   /* ------------------- */
@@ -83,25 +86,20 @@ static int __init jornada820_init(void)
 //  Ser4SSCR1 = SSCR1_RIE | SSCR1_SClkIactH | SSCR1_SClk1_2P;
 
   ssp_enable();
+ 
+  /* Initialize the 1101. */
+  GAFR |= GPIO_32_768kHz;
+  GPDR |= GPIO_32_768kHz;
 
-  /* This should reset the SA1101 
-  GPDR |= GPIO_GPIO20;
-  GPSR = GPIO_GPIO20;
-  udelay(1);
-  GPCR = GPIO_GPIO20;
-  udelay(1);
-  */
-  
+  TUCR = TUCR_3_6864MHz; /* */
+
   sa1101_probe(SA1101_BASE);
   sa1101_wake();
   sa1101_init_irq (GPIO_JORNADA820_SA1101_CHAIN_IRQ);
 
-  jornada820_init_proc();
 
-  /* Until we're sure that the 1kHz 16-bit counter at 0xc05c080 is disabled
-   * (as enabled by WinCE, or maybe hpcboot, or an interaction between them),
-   * we'll keeping the page out of the Linux memory pool.
-   * This is done in arch/arm/mm/init.c -- it's an ugly hack, but it works.
+  /*
+   * TODO: don't forget to remove the code from "arch/arm/mm/init.c".
    */
 
   return 0;
@@ -122,13 +120,12 @@ fixup_jornada820(struct machine_desc *desc, struct param_struct *params,
 
 static struct map_desc jornada820_io_desc[] __initdata = {
   /* virtual     physical    length      domain     r  w  c  b */
-  { 0xf4000000, 0x18000000, 0x00400000, DOMAIN_IO, 0, 1, 0, 0 }, /* SA-1101 */
+  { 0xf4000000, 0x18000000, 0x00400000, DOMAIN_IO, 1, 1, 0, 0 }, /* SA-1101 */
   LAST_DESC
 };
 
 static void __init jornada820_map_io(void)
 {
-  printk("In jornada820_map_io\n");
   sa1100_map_io();
   iotable_init(jornada820_io_desc);
   
@@ -148,74 +145,3 @@ MACHINE_START(JORNADA820, "HP Jornada 820")
      SOFT_REBOOT
      MAINTAINER(galmasi@optonline.net)
 MACHINE_END
-
-/* *********************************************************************** */
-/* machine specific proc file system                                       */
-/* *********************************************************************** */
-
-
-#include <linux/proc_fs.h>
-#include <asm/uaccess.h>
-
-static struct proc_dir_entry *j820_dir, *parent_dir = NULL;
-
-#define PROC_NAME "j820"
-
-static int j820_read_proc(char *buf,
-			  char **start,
-			  off_t pos,
-			  int count,
-			  int *eof,
-			  void *data)
-{
-  char *p = buf;
-  p += sprintf(p, "\t Contrast  = %u\n", DAC_JORNADA820_CONTRAST);
-  p += sprintf(p, "\t Brightness= %u\n", DAC_JORNADA820_BRIGHTNESS);
-  p += sprintf(p, "\t GPLR      = %08x\n", GPLR);
-  p += sprintf(p, "\t PADRR     = %08x\n", PADRR);
-  p += sprintf(p, "\t PBDRR     = %08x\n", PBDRR);
-  return (p-buf);
-}
-
-static int j820_write_proc (struct file *file,
-			    const char *buffer,
-			    unsigned long count,
-			    void *data)
-{
-  char buf[260];
-  if (count > 258) return -EINVAL;
-  if (copy_from_user(buf, buffer, count)) return -EFAULT;
-  if (!strncmp(buf, "Contrast", 8))
-    {
-      unsigned val;
-      sscanf(buf+8, "%d", &val);
-      DAC_JORNADA820_CONTRAST = val;
-    }
-  if (!strncmp(buf, "Brightness", 10))
-    {
-      unsigned val;
-      sscanf (buf+10, "%d", &val);
-      DAC_JORNADA820_BRIGHTNESS = val;
-    }
-  if (!strncmp(buf, "Backlight", 9))
-    {
-      unsigned val;
-      sscanf (buf+9, "%d", &val);
-      if (val) GPSR = GPIO_JORNADA820_BACKLIGHTON;
-      else     GPCR = GPIO_JORNADA820_BACKLIGHTON;
-    }
-  return count;
-}
-
-static void jornada820_init_proc (void)
-{
-  j820_dir = create_proc_entry ("j820", 0, parent_dir);
-  if (j820_dir == NULL)
-    {
-      printk("jornada820_init_proc failed\n");
-      return;
-    }
-  j820_dir->read_proc = j820_read_proc;
-  j820_dir->write_proc = j820_write_proc;
-}
-
