@@ -22,6 +22,7 @@ extern void smartio_kbd_init_hw(void);
 extern void cerf_kbd_init_hw(void);
 extern void h3600_kbd_init_hw(void);
 extern void jornada720_kbd_init_hw(void);
+extern void jornada820_kbd_init_hw(void);
 
 static inline void kbd_init_hw(void)
 {
@@ -50,7 +51,8 @@ static inline void kbd_init_hw(void)
 		jornada720_kbd_init_hw();
 #endif
 #ifdef CONFIG_SA1100_JORNADA820
-	jornada820_kbd_init_hw();
+	if (machine_is_jornada820())
+		jornada820_kbd_init_hw();
 #endif
 }
 
