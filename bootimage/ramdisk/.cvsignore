@@ -1,4 +1,4 @@
-cmdfile
+cmdfile cmdfile26
 ramdiskimage*
 lib
-modules.tar.bz2
+modules*.tar.bz2

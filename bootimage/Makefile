@@ -138,7 +138,7 @@ do-j820-26:
 	    CROSS_COMPILE=${TARGET}- \
 	    INITRD=$${RDIMAGE} \
 	    zImage j820
-	cp ${KBUILDDIR}/arch/arm/boot/j820/j820 $@
+	cp ${KBUILDDIR26}/arch/arm/boot/j820/j820 $@
 
 
 # -------------------------------------------------------------------------- 
@@ -198,11 +198,12 @@ modules26: config26 depend26 ramdisk/modules26.tar.bz2
 
 ramdisk/modules26.tar.bz2: $(KBUILDDIR26)/target/lib/modules
 	cd $(KBUILDDIR26)/target && \
-	tar jcf $(TOPDIR)/ramdisk/modules.tar.bz2 lib/modules && \
+	tar jcf modules.tar.bz2 lib/modules && \
 	ln -f modules.tar.bz2 $(TOPDIR)/ramdisk/modules26.tar.bz2
 
 $(KBUILDDIR26)/target/lib/modules:
-	export MODDIR=$(KBUILDDIR26)/target/ && \
+	export MODDIR=$(TOPDIR)/$(KBUILDDIR26)/target/ && \
+	mkdir -p $${MODDIR} && \
 	echo $${MODDIR} && \
 	cd ${KBUILDDIR26} && \
 	${MAKE} ARCH=arm \

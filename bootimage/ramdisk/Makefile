@@ -48,19 +48,20 @@ ramdiskimage26.gz: ramdiskimage26
 # ----------------- ramdiskimage command file ------------------------------
 
 cmdfile: cmdfile.in busybox pcmcia
-	cat cmdfile.in > $@
-	echo "cd /" >> $@
-	echo write modules.tar.bz2 modules.tar.bz2 >> $@
+	( echo open -w ramdiskimage ; \
+	cat cmdfile.in ; \
+	echo "cd /" ; \
+	echo write modules.tar.bz2 modules.tar.bz2 ; \
 	for d in `find etc -type d | grep -v CVS` ; do \
 	  echo "mkdir /$$d" >> $@; \
-	done
+	done ; \
 	for f in `find etc -type f | grep -v CVS` ; do \
 	  dir=`dirname $$f`; \
 	  file=`basename $$f`; \
 	  echo "cd /$$dir" >> $@; \
-	  echo "write $$f $$file" >> $@; \
-	done
-	echo "cd /" >> $@
+	  echo "write $$f $$file" ; \
+	done ; \
+	echo "cd /" ) > $@
 	#for d in `find lib -type d` ; do \
 	#  echo "mkdir /$$d" >> $@; \
 	#done
@@ -73,20 +74,20 @@ cmdfile: cmdfile.in busybox pcmcia
 
 
 cmdfile26: cmdfile.in busybox pcmcia
-	cat cmdfile.in > $@
-	echo "cd /" >> $@
-	echo write modules26.tar.bz2 modules.tar.bz2 >> $@
+	( echo open -w ramdiskimage26 ; \
+	cat cmdfile.in ; \
+	echo "cd /" ; \
+	echo write modules26.tar.bz2 modules.tar.bz2 ; \
 	for d in `find etc -type d | grep -v CVS` ; do \
 	  echo "mkdir /$$d" >> $@; \
-	done
+	done ; \
 	for f in `find etc -type f | grep -v CVS` ; do \
 	  dir=`dirname $$f`; \
 	  file=`basename $$f`; \
 	  echo "cd /$$dir" >> $@; \
-	  echo "write $$f $$file" >> $@; \
-	done
-	echo "cd /" >> $@
-
+	  echo "write $$f $$file" ; \
+	done ; \
+	echo "cd /" ) > $@
 
 # ---------------------------  busybox  -------------------------------------
 

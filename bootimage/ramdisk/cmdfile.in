@@ -1,5 +1,3 @@
-open -w ramdiskimage
-
 mkdir /bin
 mkdir /sbin
 mkdir /usr
