@@ -4,7 +4,7 @@
  * 2004/01/22 George Almasi (galmasi@optonline.net)
  * Modelled after the Jornada 720 code.
  * 
- * $Id: jornada820.c,v 1.6 2004/07/03 13:26:15 fare Exp $
+ * $Id: jornada820.c,v 1.7 2004/07/08 16:21:17 oleg820 Exp $
  */
 
 #include <linux/init.h>
@@ -55,11 +55,8 @@ static int __init jornada820_init(void)
   Ser4SSCR0 = SSCR0_DataSize(8)+SSCR0_Motorola+SSCR0_SSE+SSCR0_SerClkDiv(8);
 //  Ser4SSCR1 = SSCR1_RIE | SSCR1_SClkIactH | SSCR1_SClk1_2P;
 
+  /* TODO: remove. */
   /* Initialize the 1101. */
-  GAFR |= GPIO_32_768kHz;
-  GPDR |= GPIO_32_768kHz;
-
-  TUCR = TUCR_3_6864MHz; /* */
 
   sa1101_probe(SA1101_BASE);
   sa1101_wake();
