@@ -2,7 +2,7 @@
 # Makefile for the kernel pcmcia subsystem (c/o David Hinds)
 #
 # Jornada820 version based on Makefile 1.13 from cvs.handhelds.org
-# $Id: Makefile,v 1.2 2004/07/03 23:40:26 fare Exp $
+# $Id: Makefile,v 1.3 2004/07/07 16:56:11 oleg820 Exp $
 
 ifeq ($(CONFIG_PCMCIA_DEBUG),y)
 EXTRA_CFLAGS += -DDEBUG
@@ -34,6 +34,9 @@ sa1111_cs-$(CONFIG_SA1100_JORNADA720)		+= sa1100_jornada720.o
 sa1111_cs-$(CONFIG_SA1100_PFS168)		+= sa1100_pfs168.o
 sa1111_cs-$(CONFIG_SA1100_PT_SYSTEM3)		+= sa1100_system3.o
 sa1111_cs-$(CONFIG_SA1100_XP860)		+= sa1100_xp860.o
+
+sa1101_cs-y					+= sa1101_generic.o
+sa1101_cs-$(CONFIG_SA1100_JORNADA820)		+= sa1100_jornada820.o
 
 sa1100_cs-$(CONFIG_SA1100_ASSABET)		+= sa1100_assabet.o
 sa1100_cs-$(CONFIG_SA1100_CERF)			+= sa1100_cerf.o
