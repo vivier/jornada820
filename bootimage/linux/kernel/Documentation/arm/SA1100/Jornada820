@@ -29,9 +29,6 @@ Instructions for installing the Linux kernel on the HP Jornada 820.
 	cvs -d:pserver:anonymous@cvs.sf.net:/cvsroot/jornada820 login
 	cvs -d:pserver:anonymous@cvs.sf.net:/cvsroot/jornada820 checkout bootimage/linux/kernel
  The password is empty, just hit enter at the prompt.
- Note that we are reorganizing things on the CVS server, so in the meantime,
- you might have to use the old path and use the following to checkout instead:
-	cvs -d:pserver:anonymous@cvs.sf.net:/cvsroot/jornada820 checkout kernel/linux/kernel
 
  method b) Check out current cvs.handhelds.org kernel and patch it.
 	cvs -d:pserver:anoncvs@cvs.handhelds.org:/cvs login
