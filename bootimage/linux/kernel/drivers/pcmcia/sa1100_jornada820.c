@@ -127,7 +127,7 @@ int jornada820_pcmcia_get_irq_info(struct pcmcia_irq_info *info)
     {
     case 0: info->irq = IRQ_SA1101_S0_READY_NIREQ;	break;
     case 1: info->irq = IRQ_SA1101_S1_READY_NIREQ;	break;
-    default: ret = 1;
+    default: ret = -1;
     }
   
   return ret;
