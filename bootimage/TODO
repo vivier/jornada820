@@ -56,7 +56,9 @@ apm: do something
 new apm_power_info structure
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 arch/arm/mach-sa1100/sa1101.c
-update IRQ handling to new API...
+update IRQ handling to new API... read Documentation/arm/Interrupts
+avoid use of irq_desc and use request_irq() instead???
+call set_irq_flags(irq,IRQF_VALID|...)???
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 pcmcia:
 in sa1100.h find out what happened to
@@ -78,6 +80,7 @@ drivers/char/keyboard.c:1011:2: warning: #warning "Cannot generate rawmode keybo
 j820kbd.c:
 convert to 2.6 style
 make a serio/sa1101ps2.c ???
+what about the mouse ???
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 drivers/input/serio/i8042.c: In function `i8042_init':
 drivers/input/serio/i8042.c:949: error: `I8042_AUX_IRQ' undeclared (first use in
