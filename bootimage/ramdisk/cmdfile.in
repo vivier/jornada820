@@ -21,4 +21,3 @@ write pcmcia/cardctl cardctl
 
 cd /
 write linuxrc linuxrc
-

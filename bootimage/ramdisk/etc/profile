@@ -6,4 +6,3 @@ echo " --Linus Torvalds"
 echo -e '\33[?2c'
 
 . /etc/functions
-

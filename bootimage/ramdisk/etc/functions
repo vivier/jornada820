@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.7 2004/04/27 13:02:48 fare Exp $
+# $Id: functions,v 1.8 2004/04/27 16:27:55 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -66,7 +66,7 @@ CHECK '[ -d proc ]' \
       'mkdir proc' \
       "Cannot make a $PWD/proc directory node."
 CHECK '[ -f proc/cpuinfo ]' \
-      'mount none proc -t proc' \
+      'mount proc proc -t proc' \
       "Cannot mount the $PWD/proc partition."
 }
 
@@ -75,17 +75,22 @@ CHECK '[ -d dev ]' \
       'mkdir dev' \
       "Cannot make a $PWD/dev directory node."
 CHECK '[ -c dev/console ]' \
-      'mount none dev -t devfs' \
+      'mount devfs dev -t devfs' \
       "Cannot mount the $PWD/dev partition."
 }
 
 my_linuxrc () {
+  echo "We're in my_linuxrc! PID=$$" >> /tmp/log 
+  ps >> /tmp/log
+
   cd /
   mkdir -p /tmp
+  LOG "Mounting proc and dev"
   ensure_proc
   ensure_dev
 
   # make symlinks for all those busybox applications
+  LOG "Linking busybox applets"
   link_applets
 
   # Fallback plan: busybox's linuxrc
@@ -93,8 +98,12 @@ my_linuxrc () {
     if [ -n "$1" ] ; then
       LOG "$1"
     fi
-    LOG "Fallback plan: running busybox standalone on the boot disk."
-    exec /linuxrc
+    LOG "Fallback plan: running busybox on the initial ramdisk."
+    sysinit
+    LOGC "This is a single-user shell with PID=$$.
+You can attempt to pivot_root manually, or
+you can instead let busybox manage your consoles with 'exec /linuxrc'"
+    exec /bin/sh < dev/console > dev/console 2>&1
   }
 
   try_pivot_root
@@ -141,10 +150,10 @@ udhcp () {
 
 change_root () {
   # See /usr/src/linux/Documentation/initrd.txt
-  PART=${1:-3} # Partition with root disk in /dev/hda. Default: hda3
+  PARTNUM=${1:-3} # Partition with root disk in /dev/hda. Default: hda3
   : cardmgr -o
   # /dev/hda1 = 0x301, /dev/hda2 = 0x302, etc
-  echo 0x30$PART > /proc/sys/kernel/real-root-dev
+  echo $(( 768 + $PARTNUM )) > /proc/sys/kernel/real-root-dev
   #cat /proc/sys/kernel/real-root-dev
   #cat /proc/cmdline
 }
@@ -212,6 +221,8 @@ ensure_linuxpartition () {
   CHECK 'grep -q "$PART /mnt/linux" /proc/mounts' \
 	'mount $PART /mnt/linux -o noatime,rw' \
 	"Cannot mount the target partition $PART to /mnt/linux."
+  PARTNUM="$(echo $PART | cut -c9-)"
+  change_root $PARTNUM # necessary if we're not PID=1
 }
 has_init_p () {
   # [ -x linuxrc ] ||
@@ -219,14 +230,15 @@ has_init_p () {
   [ -x bin/sh ]
 }
 do_init () {
-  # [ -x /linuxrc ] && exec /linuxrc
-  if [ 1 = $$ ] ; then
-    # Don't try to exec init if not PID 1
-    [ -x sbin/init ] && exec /sbin/init
-    [ -x etc/init ] && exec /etc/init
-    [ -x bin/init ] && exec /bin/init
+  # [ -x linuxrc ] && exec ./linuxrc
+  if [ 1 = "$$" ] ; then
+    [ -x sbin/init ] && exec ./sbin/init
+    [ -x etc/init ] && exec ./etc/init
+    [ -x bin/init ] && exec ./bin/init
+  else
+    LOG "PID=$$, not 1, so let's not try to exec init."
   fi
-  [ -x bin/sh ] && exec /bin/sh
+  [ -x bin/sh ] && exec ./bin/sh
 }
 
 ensure_partition_bootable () {
@@ -258,7 +270,11 @@ ensure_partition_bootable () {
 }
 
 LOGT () {
-  echo "$@" >> /tmp/log
+  opts=""
+  case "$1" in
+    -*) opts="$1" ; shift ;;
+  esac
+  echo $opts "$$ $(date +'%Y-%m-%d %H:%M:%S'): $@" >> /tmp/log
 }
 LOGC () {
   echo "$@" >&2
@@ -272,6 +288,7 @@ try_pivot_root () {
   # this script must be run as the only process, #1,
   # either from linuxrc of from a single-user mode shell.
 
+  LOG "Let's pivot_root if we can."
   cd /
   ensure_tmp ; ensure_proc ; ensure_dev # necessary for many things
   LOG "Checking for a CF memory card..."
@@ -285,32 +302,51 @@ try_pivot_root () {
   ensure_linuxpartition
   LOG "Trying to make the Linux partition livable..."
   cd /mnt/linux
-  ensure_proc
-  ensure_dev
   LOG "Ensuring the target partition is bootable..."
   ensure_partition_bootable
-  LOG "Changing current I/O to new /dev"
-  exec < dev/console > dev/console 2>&1
-  LOG "Unmounting dev and proc"
-  umount /proc
-  umount /dev
-  LOG "Switching root partition..."
-  cp /tmp/log tmp/log # copying logfile over...
-  pivot_root . initrd
-  exec chroot . /bin/sh /etc/please pivot_root_part2
+
+  if [ 1 = $$ ] ; then
+    ensure_proc
+    ensure_dev
+    LOG "Changing current I/O to new /dev"
+    exec < dev/console > dev/console 2>&1
+    LOG "Switching root partition..."
+    cp /tmp/log tmp/log # copying logfile over...
+    pivot_root . initrd
+    exec chroot . ./bin/sh ./etc/please pivot_root_part2 \
+	< dev/console > dev/console 2>&1
+  else
+    cd /
+    umount /mnt/linux
+    LOG "PID = $$ != 1; Let's trust linux/init/do_mount.c for the sequel ..."
+    exit 0
+  fi
 }
 
 pivot_root_part2 () {
   LOG "Made it to the other side!"
-  # mknod /dev/initrd b 1 250
-  # chmod 400 /dev/initrd
+  LOG "Ensuring dev and proc"
+  ensure_dev ; ensure_proc
+  LOG "Cleaning filedescriptors"
+  cd /
+  exec < dev/console > dev/console 2>&1
+  LOG "Status:"
+  cat proc/mounts
+  ps
+  LOG "Unmounting dev and proc from initrd"
+  umount /initrd/proc
+  umount /initrd/dev
   LOG "Freeing resources occupied by the initrd..."
   umount /initrd
   # problem: blockdev (part of the util-linux debian package) isn't in busybox
   blockdev --flushbufs /dev/rd/0 # /dev/ram0
-  LOG "Jumping into the rootfs' init process..."
-  do_init
-  exec /bin/sh
+  if [ 1 = $$ ] ; then
+    LOG "Jumping into the rootfs' init process..."
+    do_init
+  else
+    LOG "PID = $$ != 1; Let's trust linux/init/do_mount.c for the sequel ..."
+    exit 0
+  fi
 }
 
 sysinit () {
