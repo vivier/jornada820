@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.16 2004/06/29 07:12:36 fare Exp $
+# $Id: functions,v 1.17 2004/06/30 14:04:56 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -180,7 +180,7 @@ my_linuxrc () {
       LOG "$1"
     fi
     LOG "Fallback plan: running busybox on the initial ramdisk."
-    sysinit
+    banner
     LOG_C "This is a single-user shell with PID=$$.
 If using the bootimage standalone, have busybox manage your consoles with:
 	standalone
@@ -213,14 +213,16 @@ linkme () {
     DO_T ln -s /mnt/linux/$i /usr/bin/
   done
 }
-
+CET () { export TZ=CET-1CEST ; }
+nameserver () { for i ; do echo nameserver $i ; done > /etc/resolv.conf ; }
 net0 () {
   hostname mildendo
   ifconfig eth0 192.168.0.16 netmask 255.255.255.0 broadcast 192.168.0.255
   ifconfig lo 127.0.0.1
   route add default gw 192.168.0.1
   rdate 192.168.0.3
-  export TZ=CET-1CEST
+  nameserver 192.168.0.1
+  CET
   export DISTCC_HOSTS=192.168.0.3 CC="distcc arm-linux-gcc" CFLAGS="-Os -fomit-frame-pointer"
 }
 net0a () {
@@ -229,16 +231,18 @@ net0a () {
   ifconfig lo 127.0.0.1
   route add default gw 10.31.0.1
   rdate 10.31.0.1
-  export TZ=CET-1CEST
+  nameserver 10.31.0.1
+  CET
   export DISTCC_HOSTS=10.31.0.1 CC="distcc arm-linux-gcc" CFLAGS="-Os -fomit-frame-pointer"
 }
 net0c () {
   hostname mildendo
-  ifconfig eth0 192.103.2.93 netmask 255.255.255.0 broadcast 192.103.2.255
+  ifconfig eth0 192.103.2.240 netmask 255.255.255.0 broadcast 192.103.2.255
   ifconfig lo 127.0.0.1
   route add default gw 192.103.2.50
   rdate 192.103.2.73
-  export TZ=CET-1CEST
+  nameserver 192.103.2.25 192.103.2.130
+  CET
 }
 
 udhcp () {
@@ -457,10 +461,17 @@ pivot_root_part2 () {
   fi
 }
 
-sysinit () {
-  # replaces the /etc/init.d/rcS script -- see /etc/inittab
+banner () {
   echo -ne '\033[?2c\033(?B\033[m\033[1m'
   echo -e 'Welcome to Linux for the HP Jornada 820.\033[m'
+}
+sysinit () {
+  # replaces the /etc/init.d/rcS script -- see /etc/inittab
+  #banner
+  klogd -c 1
+  syslogd -O /dev/vc/11
+  cardmgr
+  telnetd
 }
 
 setdate () {
