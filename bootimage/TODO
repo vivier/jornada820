@@ -1,0 +1,65 @@
+Kernel
+* start hacking with kernel 2.6
+* do a porting pass over existing 2.4 files into 2.6
+* have the kernel boot properly
+* fix any issues with the initial port from 2.4 that still remains in 2.6
+* fix PCMCIA issues
+* debug USB driver
+* debug sound driver
+* fix the APM kill-the-machine-if-kapmd-killed bug if still present
+* play nicer with booting to/from WinCE
+* get external VGA working and/or some swap-on-VRAM
+* get modem working?
+
+Bootdisk
+* have pcmcia and busybox from CVS.
+* ensure busybox sh is fixed and reads /etc/profile...
+
+Userland
+* gather a sensible base for userland (?)
+
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+
+--- arch/arm/mach-sa1100/apm.c  22 Feb 2004 03:41:28 -0000
+   1.1.1.1
++++ arch/arm/mach-sa1100/apm.c  4 Mar 2004 08:45:07 -0000       1.2
+@@ -168,6 +168,9 @@
+ #ifdef CONFIG_IPAQ_HANDHELD
+             h3600_apm_get_power_status(ac_line_status,
+   battery_status, battery_
+flag, battery_percentage, battery_life);
+ #endif
++#ifdef CONFIG_SA1100_JORNADA820
++            j820_apm_get_power_status(ac_line_status, battery_status,
+   battery_f
+lag, battery_percentage, battery_life);
++#endif
+        return APM_SUCCESS;
+ }
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+video/sa1100fb.c
+
+ensure that somewhere in
+extern void (*sa1100fb_backlight_power)(int on);
+there is
+
+#ifdef CONFIG_SA1100_JORNADA820	
+        GPSR = GPIO_JORNADA820_BACKLIGHTON;
+#endif
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+apm: do something
+2.4 => kernel/arch/arm/mach-sa1100/apm.c
+2.6 => kernel/arch/arm/mach-sa1100/jornada820.c
+   kernel/arch/arm/kernel/apm.c
+new apm_power_info structure
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+pcmcia:
+in sa1100.h find out what happened to
+extern struct pcmcia_low_level jornada820_pcmcia_ops;
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+j820kbd.c:
+convert to 2.6 style
+make a serio/sa1101ps2.c ???
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
