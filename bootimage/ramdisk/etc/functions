@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.22 2005/01/19 16:48:14 fare Exp $
+# $Id: functions,v 1.23 2005/01/26 02:45:10 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -431,6 +431,7 @@ pivot_root_part2 () {
   ensure_dev ; ensure_proc
   LOG "Cleaning filedescriptors"
   DO_T cd /
+  export TERM=linux
   exec < dev/console > dev/console 2>&1
   DO_T cat /proc/mounts
   DO_T ps
