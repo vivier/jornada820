@@ -33,12 +33,34 @@ distclean:: localclean
 	${MAKE} -C ${KERNELDIR} ARCH=arm mrproper
 	${MAKE} -C ramdisk ARCH=arm mrproper
 
+
+# -------------------------------------------------------------------------- 
+#                    build the toolchain
+# --------------------------------------------------------------------------
+
+gcc-3.3.x/CVS/Root gcc-3.3.x/CVS/Repository:
+	mkdir -p gcc-3.3.x/CVS ; cd gcc-3.3.x/CVS || exit 2 ; \
+	echo :pserver:anonymous@uclibc.org:/var/cvs > Root ; \
+	echo toolchain/gcc-3.3.x > Repository ; \
+	touch Entries ; \
+	grep -q ':pserver:anonymous@uclibc.org:2401/var/cvs' ~/.cvspass || \
+	echo '/1 :pserver:anonymous@uclibc.org:2401/var/cvs A' >> ~/.cvspass
+
+gcc-3.3.x/Makefile: gcc-3.3.x/CVS/Root
+	cd gcc-3.3.x && cvs -z9 update -dfP
+
+gcc-3.3.x/toolchain_arm/bin/arm-linux-gcc: gcc-3.3.x/Makefile
+	cd gcc-3.3.x && ( echo 2 ; echo 9 ; echo y ) | make ARCH=arm
+
+toolchain: gcc-3.3.x/toolchain_arm/bin/arm-linux-gcc
+
 # -------------------------------------------------------------------------- 
 #                    build the boot image
 # --------------------------------------------------------------------------
 
 j820: config depend ramdisk
 	export RDIMAGE=`pwd`/ramdisk/ramdiskimage.gz && \
+	export PATH=`pwd`/gcc-3.3.x/toolchain_arm/bin:${PATH} && \
 	cd ${KERNELDIR} && \
 	${MAKE} \
 	    ARCH=arm \
