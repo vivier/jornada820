@@ -113,6 +113,19 @@ int jornada820_pcmcia_configure_socket(const struct pcmcia_configure *conf)
 	            printk(KERN_ERR "sa1101_pcmcia: sock=0 unrecognised VCC %u\n",conf->vcc);
 	            return -1;
 	    };
+
+          switch (conf->vpp)
+            {
+            case   0: break;
+            case  33:
+                    printk(KERN_WARNING "sa1101_pcmcia: sock=0 VPP %u is not available.\n",conf->vpp);
+            break;
+            case  50: mask1 |= vpp0; break;
+            default:
+                    printk(KERN_ERR "sa1101_pcmcia: sock=0 unrecognised VPP %u\n",conf->vpp);
+                    return -1;
+          };
+
     break;
     case 1:
 	  switch (conf->vcc)
@@ -123,26 +136,24 @@ int jornada820_pcmcia_configure_socket(const struct pcmcia_configure *conf)
 	            printk(KERN_ERR "sa1101_pcmcia: sock=1 unrecognised VCC %u\n",conf->vcc);
 	            return -1;
 	    };
+
+          switch (conf->vpp)
+            {
+	    case  0: break;
+            default:
+                    printk(KERN_WARNING "sa1101_pcmcia: CF sock=1 VPP %u\n",conf->vpp);
+          };
     break;
       
     default:  return -1;
     }
 
-    /* TODO: how to verify ? */
-  switch (conf->vpp)
-    {
-    case   0: break;
-    case  33: mask1 |= vpp0; break;      
-    case  50: mask1 |= (vpp0|vpp1); break;
-    default:
-            printk(KERN_ERR "sa1101_pcmcia: unrecognised VPP %u\n",conf->vpp);
-            return -1;
-    };
 
   if (conf->reset)  mask1 |= rst;
   if (conf->output) mask1 |= flt;
  
   local_irq_save(flags);
+  /* we have a minor timing problem here */
   PCCR = ((PCCR & ~mask0) | mask1);
   local_irq_restore(flags);
   
