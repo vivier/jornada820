@@ -1,5 +1,7 @@
 mkdir /bin
 mkdir /sbin
+mkdir /lib
+mkdir /lib/modules
 mkdir /usr
 mkdir /usr/sbin
 mkdir /usr/bin
