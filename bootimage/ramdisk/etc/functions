@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.19 2004/07/03 15:53:58 fare Exp $
+# $Id: functions,v 1.20 2004/07/10 11:49:29 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -453,7 +453,7 @@ sysinit () {
   hostname ${hostname:-j820}
   #banner
   klogd -c 1
-  syslogd -O /dev/vc/11
+  syslogd -O /dev/vc/10
   cardmgr
   telnetd
 }
