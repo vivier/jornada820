@@ -1,4 +1,4 @@
-$Id: TODO,v 1.12 2004/06/30 18:37:56 fare Exp $
+$Id: TODO,v 1.13 2004/06/30 19:19:44 fare Exp $
 
 Kernel 2.4
 * move on, dude!
@@ -102,22 +102,21 @@ Should we just ignore this???
 
 j820_keyb.c:
 conversion to 2.6 style done by Matan Ziv-Av
-make a serio/sa1101ps2.c ???
-what about the mouse ???
 
-1) make a driver for the PS2
+ Maybe special-case the Alt+arrow = PgUp, PgDn, Beg, End mappings? (?)
+ Maybe special-case the On/Off key (?)
+ Have a SysRQ button.
+ Recognize as such the special button on the back?
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+make a serio/sa1101ps2.c ???
+
  take inspiration from sa1111ps2.c
  glue the code together, including psmouse. Howsitdone?
  Apparently, when registering the struct serio *serio, we have
  serio->type == SERIO_8042 or SERIO_PS_PSTHRU, and in the keyboard and
  mouse driver, in .connect, we switch (serio->type & SERIO_TYPE).
  serio/serio.c#serio_find_dev() will do the rest...
-
-2) make a driver for the keyboard based on keyboard/atkbd.c.
- Maybe special-case the Alt+arrow = PgUp, PgDn, Beg, End mappings? (?)
- Maybe special-case the On/Off key (?)
- Have a SysRQ button.
- Recognize as such the special button on the back?
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 Add sleep/wakeup functions for all our drivers,
