@@ -147,8 +147,15 @@ do-j820-26:
 #                  Initial configuration and dependences
 # --------------------------------------------------------------------------
 
+config: ${KBUILDDIR}/.config
+${KBUILDDIR}/.config: kbuildtree
+	cd ${KBUILDDIR} && \
+	( [ -f .config ] || cp arch/arm/def-configs/jornada820 .config ) && \
+	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- oldconfig
+
 menuconfig: kbuildtree
 	cd ${KBUILDDIR} && \
+	( [ -f .config ] || cp arch/arm/def-configs/jornada820 .config ) && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- menuconfig
 
 depend: config ${KBUILDDIR}/.depend
@@ -156,20 +163,15 @@ ${KBUILDDIR}/.depend:
 	cd ${KBUILDDIR} && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- depend
 
-config: ${KBUILDDIR}/.config
-${KBUILDDIR}/.config: kbuildtree
-	cd ${KBUILDDIR} && \
-	cp arch/arm/def-configs/jornada820 .config && \
-	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- oldconfig
-
 menuconfig26: kbuildtree26
 	cd ${KBUILDDIR26} && \
+	( [ -f .config ] || cp arch/arm/def-configs/jornada820 .config ) && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- menuconfig
 
 config26: ${KBUILDDIR26}/.config
 ${KBUILDDIR26}/.config: kbuildtree26
 	cd ${KBUILDDIR26} && \
-	cp arch/arm/def-configs/jornada820 .config && \
+	( [ -f .config ] || cp arch/arm/def-configs/jornada820 .config ) && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- oldconfig
 
 # --------------------------------------------------------------------------
