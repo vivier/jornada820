@@ -1,5 +1,8 @@
 Instructions for installing the Linux kernel on the HP Jornada 820.
 
+Our project page is at the following URL:
+	http://jornada820.sourceforge.net/
+
 <Step 0> - Prerequisites
 
 * You need a CompactFlash card that fits into the Jornada's CF Type II slot.
@@ -14,7 +17,7 @@ Instructions for installing the Linux kernel on the HP Jornada 820.
  Backups are always a good idea. At this time they are a *very* good idea.
 
 * If you're downloading a binary bootimage from our site, jump to Step 5.
-	http://jornada820.sf.net/
+	http://jornada820.sourceforge.net/
  Otherwise, you'll need a net-connected Linux workstation
  with an arm cross-compilation toolchain installed.
  Almost any toolchain should do - I (galmasi) use a homebrew one, but you
