@@ -149,15 +149,17 @@ do-j820-26:
 #                  Initial configuration and dependences
 # --------------------------------------------------------------------------
 
-config: ${KBUILDDIR}/.config
-${KBUILDDIR}/.config: kbuildtree
+config: kbuildtree do-config
+do-config: ${KBUILDDIR}/.config
+${KBUILDDIR}/.config:
 	cd ${KBUILDDIR} && \
 	cp arch/arm/def-configs/jornada820 .config && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- oldconfig && \
 	( cmp -s .config arch/arm/def-configs/jornada820 || \
 	cat .config > arch/arm/def-configs/jornada820 )
 
-menuconfig: kbuildtree
+menuconfig: kbuildtree do-menuconfig
+do-menuconfig:
 	cd ${KBUILDDIR} && \
 	cp arch/arm/def-configs/jornada820 .config && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- menuconfig && \
@@ -165,20 +167,23 @@ menuconfig: kbuildtree
 	( cmp -s .config arch/arm/def-configs/jornada820 || \
 	cat .config > arch/arm/def-configs/jornada820 )
 
-depend: config ${KBUILDDIR}/.depend
+depend: config do-depend
+do-depend: ${KBUILDDIR}/.depend
 ${KBUILDDIR}/.depend:
 	cd ${KBUILDDIR} && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- depend
 
-menuconfig26: kbuildtree26
+menuconfig26: kbuildtree26 do-menuconfig26
+do-menuconfig26:
 	cd ${KBUILDDIR26} && \
 	cp arch/arm/def-configs/jornada820 .config && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- menuconfig && \
 	( cmp -s .config arch/arm/def-configs/jornada820 || \
 	cat .config > arch/arm/def-configs/jornada820 )
 
-config26: ${KBUILDDIR26}/.config
-${KBUILDDIR26}/.config: kbuildtree26
+config26: kbuildtree26 do-config26
+do-config26: ${KBUILDDIR26}/.config
+${KBUILDDIR26}/.config: 
 	cd ${KBUILDDIR26} && \
 	cp arch/arm/def-configs/jornada820 .config && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- oldconfig && \
@@ -189,7 +194,9 @@ ${KBUILDDIR26}/.config: kbuildtree26
 #                     build loadable modules
 # --------------------------------------------------------------------------
 
-modules: config depend ramdisk/modules.tar.bz2
+modules: config depend do-modules
+
+do-modules: ramdisk/modules.tar.bz2
 
 ramdisk/modules.tar.bz2: ramdisk/lib/modules
 	cd ramdisk && tar jcf modules.tar.bz2 lib/modules
@@ -204,7 +211,9 @@ ramdisk/lib/modules:
 		DEPMOD=true \
 	        modules modules_install
 
-modules26: config26 ramdisk/modules26.tar.bz2
+modules26: config26 do-modules26
+
+do-modules26: ramdisk/modules26.tar.bz2
 
 ramdisk/modules26.tar.bz2: $(KBUILDDIR26)/target/lib/modules
 	cd $(KBUILDDIR26)/target && \
