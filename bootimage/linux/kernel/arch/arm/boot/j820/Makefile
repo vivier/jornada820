@@ -3,6 +3,9 @@
 #
 
 ZIMAGE		=$(TOPDIR)/arch/arm/boot/zImage
+INITRD		=$(TOPDIR)/../../ramdisk/ramdiskimage
+# Override the above default if not using the jornada820.sf.net CVS.
+
 ZLDFLAGS	= -p -X -T j820.lds \
 		 --defsym initrd_addr=$(INITRD_PHYS) \
 		 --defsym params=$(PARAMS_PHYS)
