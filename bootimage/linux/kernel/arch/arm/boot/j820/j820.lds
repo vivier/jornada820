@@ -9,6 +9,10 @@ ENTRY(_start)
 SECTIONS
 {
   . = 0xc0800000;
+	/* base + 8MB: leave enough space for initrd
+         * to still be there after kernel relocates and decompresses
+	 * to its rightful place (base + 2MB + 32KB)
+	 */
   _text = .;
   .text : {
    _stext = .;
@@ -22,6 +26,10 @@ SECTIONS
    initrd.o 
    . = ALIGN(32);
    initrd_end = .;
+   initrd_size = initrd_end - initrd_start - 0xc0800000 ;
+	/* somehow, the linker insist in adding 0xc0800000
+	 * to the value of this symbol (!)
+	 */
    _etext = .;
   }
   
