@@ -162,6 +162,9 @@
  * 2002/02/21: <abraham@2d3d.co.za>
  *  - Added support for ICP LCD-Kit01 on Frodo.
  *  - Added support for backlight via CPLDs on Frodo.
+ *
+ * 2004/01/22: <galmasi@optonline.net>
+ *  - Added support for Jornada 820 w/ backlight control.
  */
 
 #include <linux/config.h>
@@ -704,6 +707,22 @@ static struct sa1100fb_rgb jornada56x_rgb_16 = {
 };
 #endif
 
+#ifdef CONFIG_SA1100_JORNADA820
+static struct sa1100fb_mach_info j820_info __initdata = {
+  pixclock:       152500,          bpp:            8,
+  xres:           640,        yres:           480,
+  
+  hsync_len:      11,          vsync_len:      9,
+  left_margin:    2,           upper_margin:   0,
+  right_margin:   2,           lower_margin:   0,
+  
+  sync:           FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+  
+  lccr0:          LCCR0_LEN | LCCR0_Color | LCCR0_Dual | LCCR0_DPD,
+  lccr3:          /* LCCR3_PixClkDiv(46) | */ LCCR3_ACBsDiv(512)
+};
+#endif
+
 
 static struct sa1100fb_mach_info * __init
 sa1100fb_get_machine_info(struct sa1100fb_info *fbi)
@@ -828,6 +847,9 @@ sa1100fb_get_machine_info(struct sa1100fb_info *fbi)
 	if (machine_is_jornada56x()) {
 		inf = &jornada56x_info;
 	}
+#endif
+#ifdef CONFIG_SA1100_JORNADA820
+        inf = &j820_info;
 #endif
 	return inf;
 }
@@ -1647,6 +1669,9 @@ static void sa1100fb_backlight_on(struct sa1100fb_info *fbi)
 	if (machine_is_jornada56x())
 		JORNADA_GPDPCR = JORNADA_BACKLIGHT; // Turn on the front light
 #endif
+#ifdef CONFIG_SA1100_JORNADA820
+        GPSR = GPIO_JORNADA820_BACKLIGHTON;
+#endif
 }
 
 /*
@@ -1681,6 +1706,9 @@ static void sa1100fb_backlight_off(struct sa1100fb_info *fbi)
 #ifdef CONFIG_SA1100_JORNADA56X
 	if (machine_is_jornada56x())
 		JORNADA_GPDPSR = JORNADA_BACKLIGHT; // Turn off the front light
+#endif
+#ifdef CONFIG_SA1100_JORNADA820
+	GPCR = GPIO_JORNADA820_BACKLIGHTON;
 #endif
 }
 

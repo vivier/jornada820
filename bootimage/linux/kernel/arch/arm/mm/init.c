@@ -398,6 +398,19 @@ static __init void reserve_node_zero(unsigned int bootmap_pfn, unsigned int boot
 	 */
 	reserve_bootmem_node(pgdat, PHYS_OFFSET, __pa(swapper_pg_dir)-PHYS_OFFSET);
 #endif
+#ifdef CONFIG_SA1100_JORNADA820
+	/*
+	 * 2004/01/22 galmasi@optonline.net
+	 * Unfortunately we have to reserve this area because
+	 * something is changing things in it after the Linux
+	 * boot. Moreover, this is the area where WinCE keeps 
+	 * its stuff. Change memory in this area, and you are
+	 * in for a nasty surprise when you next try to boot
+	 * WinCE on the machine.
+	 * This reservation will be removed later.
+	 */
+	reserve_bootmem_node(pgdat, PHYS_OFFSET, __pa(swapper_pg_dir)-PHYS_OFFSET);
+#endif
 }
 
 /*

@@ -1021,6 +1021,9 @@ static int __init sa1100_pcmcia_machine_init(void)
         if(machine_is_stork())
                 pcmcia_low_level = &stork_pcmcia_ops;
 #endif
+#ifdef CONFIG_SA1100_JORNADA820
+	pcmcia_low_level = &jornada820_pcmcia_ops;
+#endif
 
         if (!pcmcia_low_level) {
                 printk(KERN_ERR "This hardware is not supported by the SA1100 Card Service driver\n");

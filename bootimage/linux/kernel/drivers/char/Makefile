@@ -119,6 +119,9 @@ ifeq ($(ARCH),arm)
   ifeq ($(CONFIG_ARCH_FORTUNET),y)
     KEYMAP   := defkeymap.o
   endif
+  ifeq ($(CONFIG_SA1100_JORNADA820),y)
+    KEYBD    += j820_keyb.o
+  endif
 endif
 
 ifeq ($(ARCH),sh)

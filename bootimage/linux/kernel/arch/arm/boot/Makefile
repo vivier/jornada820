@@ -126,6 +126,7 @@ ifeq ($(CONFIG_ARCH_ANAKIN),y)
 ZRELADDR	 = 0x20008000
 endif
 
+
 #
 # We now have a PIC decompressor implementation.  Decompressors running
 # from RAM should not define ZTEXTADDR.  Decompressors running directly
@@ -138,6 +139,17 @@ else
 ZTEXTADDR	=0
 ZBSSADDR	=ALIGN(4)
 endif
+
+# On the Jornada 820 we *do* want to define the ZTEXTADDR. 
+ifeq ($(CONFIG_SA1100_JORNADA820),y)
+  ZRELADDR    = 0xc0208000
+  ZTEXTADDR   = 0xc0800000
+  ZBSSADDR    = 0xc0600000
+  PARAMS_PHYS = 0xc0200100
+  INITRD_PHYS = 0xc0A00000
+  INITRD_VIRT = 0xc0A00000
+endif
+
 
 export	SYSTEM ZTEXTADDR ZBSSADDR ZRELADDR INITRD_PHYS PARAMS_PHYS
 
@@ -170,6 +182,12 @@ initrd:
 	@test "$(INITRD_PHYS)" != "" || (echo This machine does not support INITRD; exit -1)
 	@test "$(INITRD)" != "" || (echo You must specify INITRD; exit -1)
 
+j820:
+	@$(MAKE) -C j820 j820
+
+.PHONY: j820
+
+
 install: Image
 	sh ./install.sh $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION) Image $(TOPDIR)/System.map "$(INSTALL_PATH)"
 
@@ -180,6 +198,7 @@ clean:
 	$(RM) Image xipImage zImage bootpImage
 	@$(MAKE) -C compressed clean
 	@$(MAKE) -C bootp clean
+	@$(MAKE) -C j820 clean
 
 dep:
 

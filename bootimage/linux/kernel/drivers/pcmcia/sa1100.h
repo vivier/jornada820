@@ -208,5 +208,6 @@ extern struct pcmcia_low_level graphicsmaster_pcmcia_ops;
 extern struct pcmcia_low_level adsbitsy_pcmcia_ops;
 extern struct pcmcia_low_level stork_pcmcia_ops;
 extern struct pcmcia_low_level badge4_pcmcia_ops;
+extern struct pcmcia_low_level jornada820_pcmcia_ops;
 
 #endif  /* !defined(_PCMCIA_SA1100_H) */

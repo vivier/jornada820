@@ -143,7 +143,7 @@
 #define VMCCR_SDTCTest	    Fld(7,24)	  /* stale data timeout counter */
 #define VMCCR_ForceSelfRef  (1<<31)	  /* Force self refresh */
 
-#endif LANGUAGE == C
+#endif /* LANGUAGE == C */
 
 
 /* Update FIFO
@@ -516,7 +516,8 @@
 
 #if (LANGUAGE == C)
 
-#define Revision	(*((volatile Word *) SA1101_p2v (_Revision)))
+/* definition of Revision interferes with include/pcmcia/cs.h */
+#define Revision0	(*((volatile Word *) SA1101_p2v (_Revision)))
 #define Control		(*((volatile Word *) SA1101_p2v (_Control)))
 #define CommandStatus	(*((volatile Word *) SA1101_p2v (_CommandStatus)))
 #define InterruptStatus	(*((volatile Word *) SA1101_p2v (_InterruptStatus)))
@@ -863,9 +864,9 @@
 
 #define _CARD( x )	_SA1101( ( x ) + __PCMCIA_INTERFACE )
 
-#define _PCSR	   _CARD( 0x0000 )
-#define _PCCR	   _CARD( 0x0400 )
-#define _PCSSR	   _CARD( 0x0800 )
+#define _PCCR	   _CARD( 0x0000 )
+#define _PCSSR	   _CARD( 0x0400 )
+#define _PCSR	   _CARD( 0x0800 )
 
 #if ( LANGUAGE == C )
 #define PCSR    (*((volatile Word *) SA1101_p2v (_PCSR)))

@@ -49,6 +49,9 @@ static inline void kbd_init_hw(void)
 	if (machine_is_jornada720())
 		jornada720_kbd_init_hw();
 #endif
+#ifdef CONFIG_SA1100_JORNADA820
+	jornada820_kbd_init_hw();
+#endif
 }
 
 #endif  /* _SA1100_KEYBOARD_H */

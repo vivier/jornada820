@@ -184,6 +184,11 @@ ifeq ($(CONFIG_ARCH_OMAHA),y)
 MACHINE                = omaha
 endif
 
+ifeq ($(CONFIG_SA1100_JORNADA820),y)
+TEXTADDR        = 0xc0208000
+MACHINE         = sa1100
+endif
+
 ifeq ($(CONFIG_XIP_KERNEL),y) 
   DATAADDR   := $(TEXTADDR)
   # Replace phys addr with virt addr while keeping offset from base.
@@ -346,6 +351,7 @@ Img:;	@$(MAKEBOOT) Image
 i:;	@$(MAKEBOOT) install
 zi:;	@$(MAKEBOOT) zinstall
 bp:;	@$(MAKEBOOT) bootpImage
+j820:;  @$(MAKEBOOT) j820
 
 #
 # Configuration targets.  Use these to select a

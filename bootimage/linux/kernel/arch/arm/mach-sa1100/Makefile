@@ -22,7 +22,7 @@ obj-  :=
 export-objs :=	assabet.o badge4.o dma-sa1100.o dma-sa1111.o \
 		flexanet.o freebird.o frodo.o generic.o h3600.o \
 		huw_webpanel.o irq.o pcipool.o pm-sa1100.o sa1111.o sa1111-pcibuf.o \
-		system3.o yopy.o usb_ctl.o usb_recv.o usb_send.o simputer.o
+		system3.o yopy.o usb_ctl.o usb_recv.o usb_send.o simputer.o ssp.o
 
 ifeq ($(CONFIG_SA1100_JORNADA720),y)
 obj-y += dma-jornada720.o
@@ -92,6 +92,7 @@ obj-$(CONFIG_SA1100_SIMPUTER) += simputer.o
 obj-$(CONFIG_SA1100_VICTOR) += victor.o
 obj-$(CONFIG_SA1100_XP860) += xp860.o
 obj-$(CONFIG_SA1100_YOPY) += yopy.o
+obj-$(CONFIG_SA1100_JORNADA820) += jornada820.o sa1101.o
 
 # LEDs support
 leds-y := leds.o
@@ -137,6 +138,7 @@ obj-$(CONFIG_REGISTERS) += registers.o
 obj-$(CONFIG_PM) += pm-sa1100.o sleep.o
 obj-$(CONFIG_APM) += apm.o
 obj-$(CONFIG_HWTIMER) += hwtimer.o
+obj-$(CONFIG_SA1100_SSP) += ssp.o
 export-objs += hwtimer.o
 
 include $(TOPDIR)/Rules.make

@@ -217,4 +217,9 @@ extern void set_GPIO_IRQ_edge( int gpio_mask, int edge_mask );
 #include "flexanet.h"
 #endif
 
+#if defined(CONFIG_SA1100_JORNADA820)
+#include "jornada820.h"
+#include "SA-1101.h"
+#endif
+
 #endif  /* _ASM_ARCH_HARDWARE_H */
