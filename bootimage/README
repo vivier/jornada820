@@ -58,3 +58,22 @@ rebuilding stuff that's already there.
 Sometimes, a target will fail in a subtle way because old files got in the way.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+RAMDISKIMAGE USAGE
+
+The ramdisk that is built by this Makefile has the following usage:
+* lots of functions are defined in /etc/functions -- see by yourself
+* you may add your own additional functions in /etc/functions.local
+* Use "standalone" to configure linux for standalone usage with the ramdisk.
+* Use "rootfs" to chain-boot into your first Linux partition on CF.
+* The ramdisk will automatically attempt to "rootfs" at startup, unless you
+ create a file or directory named "noautomount" in your WinCE partition.
+* We have mkfs.minix and fsck.minix in busybox. No ext2 support, sorry.
+* Busybox is packed up with lots of functionality. Check it out!
+* To free the memory occupied by the ramdisk, your rootfs will need to run
+ the program blockdev, which is part of the util-linux debian package.
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+RAMDISKIMAGE NOTES
+
+* Building with a glibc toolchain will not only make everything much larger, it
+ will also break the resolver functionality, that requires dynamic loading (!)
