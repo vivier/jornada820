@@ -128,6 +128,10 @@ copy_loop:
 	        cmp     r4, r6		@ it is ok if we copy a bit more
 	        ble     copy_loop
 
+@ clear PID and enable clock switching
+		mov r0, #0; mcr p15, 0, r0, c13, c0, 0;
+		mov r0, #0; mcr p15, 0, r0, c15, c1, 2;
+
 @ jump into (relocated) arch/arm/boot/compressed/head.S
 		b       _kernel_start
 
