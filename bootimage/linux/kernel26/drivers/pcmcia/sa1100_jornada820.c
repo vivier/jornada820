@@ -3,7 +3,7 @@
  *
  * Jornada820 PCMCIA specific routines
  *
- * $Id: sa1100_jornada820.c,v 1.9 2004/07/11 14:39:42 oleg820 Exp $
+ * $Id: sa1100_jornada820.c,v 1.10 2004/07/15 08:46:27 oleg820 Exp $
  */
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -30,7 +30,7 @@
 
 static int jornada820_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, const socket_state_t *state)
 {
-	unsigned int rst, flt, vcc0, vcc1, vpp0, vpp1, mask0, mask1; // irq
+  unsigned int rst, flt, vcc0, vcc1, vpp0, vpp1, mask0, mask1;
   unsigned long flags;
 
   switch (skt->nr)
@@ -68,16 +68,19 @@ static int jornada820_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, con
 	    case 33: mask1 |= (vcc0|vcc1); break;
 	    case 50: mask1 |=  vcc0      ; break;
 	    default:
-	            printk(KERN_ERR "sa1101_pcmcia: sock=0 unrecognised VCC %u\n",state->Vcc);
+	            printk(KERN_ERR "jornada820_pcmcia: sock=0 unrecognised VCC %u\n",state->Vcc);
 	            return -1;
 	    };
 
           switch (state->Vpp)
             {
             case   0: break;
+            case  33: 
+                    printk(KERN_WARNING "jornada820_pcmcia: PCMCIA sock=0 is not capable of VPP %u \n",state->Vpp);
+            break;
             case  50: mask1 |= vpp0; break;
             default:
-                    printk(KERN_ERR "sa1101_pcmcia: sock=0 unrecognised VPP %u\n",state->Vpp);
+                    printk(KERN_ERR "jornada820_pcmcia: sock=0 unrecognised VPP %u\n",state->Vpp);
                     return -1;
           };
 
@@ -88,7 +91,7 @@ static int jornada820_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, con
 	    case  0: break;
 	    case 33: mask1 |= vcc0; break;
 	    default:
-	            printk(KERN_ERR "sa1101_pcmcia: sock=1 unrecognised VCC %u\n",state->Vcc);
+	            printk(KERN_ERR "jornada820_pcmcia: sock=1 unrecognised VCC %u\n",state->Vcc);
 	            return -1;
 	    };
 
@@ -96,7 +99,7 @@ static int jornada820_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, con
             {
 	    case  0: break;
             default:
-                    printk(KERN_WARNING "sa1101_pcmcia: CF sock=1 VPP %u ???\n",state->Vpp);
+                    printk(KERN_WARNING "jornada820_pcmcia: CF sock=1 VPP %u ???\n",state->Vpp);
           };
     break;
 
