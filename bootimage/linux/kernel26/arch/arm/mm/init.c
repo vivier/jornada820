@@ -8,7 +8,7 @@
  * published by the Free Software Foundation.
  */
 /* Jornada820 version based on init.c 1.3 from cvs.handhelds.org
- * $Id: init.c,v 1.1 2004/06/24 16:58:36 fare Exp $
+ * $Id: init.c,v 1.2 2004/06/27 13:42:08 oleg820 Exp $
  */
 
 #include <linux/config.h>
@@ -334,8 +334,8 @@ static __init void reserve_node_zero(unsigned int bootmap_pfn, unsigned int boot
 #endif
 #ifdef CONFIG_SA1100_JORNADA820
 	/*
-	 * We have to reserve this area because WinCE (or hpcboot???)
-	 * somehow sets up a 16-bit 1 kHz counter at 0xc005c080
+	 * We have to reserve this area because the hpcboot
+	 * does not disable USB OHCI operation at 0xc005c000 page,
 	 * that constantly modifies memory, even after Linux has booted.
 	 *
 	 * I (galmasi) leave the whole first 2MB untouched,
