@@ -1,5 +1,5 @@
 Jornada 820 bootimage information
-$Id: README,v 1.4 2004/07/15 11:41:53 fare Exp $
+$Id: README,v 1.5 2004/07/15 21:22:51 fare Exp $
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 BUILD ENVIRONMENT
@@ -83,5 +83,10 @@ RAMDISKIMAGE NOTES
 
 * Building with a glibc toolchain will not only make everything much larger, it
  will also break the resolver functionality, that requires dynamic loading (!)
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+KEYBOARD NOTES
+
+* The top row keys are mapped to F1..F10, SysRq, Suspend.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
