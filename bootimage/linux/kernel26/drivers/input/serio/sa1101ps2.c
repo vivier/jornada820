@@ -5,7 +5,7 @@
  *
  * Based on rmk's sa1111ps2.c from 2.6 and galmasi's j820_keyb.c from 2.4
  *
- * $Id: sa1101ps2.c,v 1.1 2004/06/30 20:34:03 fare Exp $
+ * $Id: sa1101ps2.c,v 1.2 2004/07/03 15:54:38 fare Exp $
  */
 #include <linux/module.h>
 #include <linux/init.h>
@@ -129,6 +129,8 @@ static int ps2_open(struct serio *io)
 	struct ps2if *ps2if = io->driver;
 	int ret;
 
+	printk("Opening sa1101ps2 device...\n"); // DEBUG
+	
 	ret = request_irq(IRQ_SA1101_TPRXINT, ps2_rxint, 0,
 			  "sa1101ps2rx", ps2if);
 	if (ret) {
@@ -144,6 +146,8 @@ static int ps2_open(struct serio *io)
 		free_irq(IRQ_SA1101_TPRXINT, ps2if);
 		return ret;
 	}
+	printk("sa1101ps2: registered interrupts %d and %d\n",
+	       IRQ_SA1101_TPRXINT, IRQ_SA1101_TPTXINT); // DEBUG
 
 	ps2if->open = 1;
 
@@ -203,6 +207,7 @@ static int __init ps2_test(struct ps2if *ps2if)
 	unsigned int stat;
 	int ret = 0;
 
+	printk("ps2_test base=%x, ps2cr=%x\n", ps2if->base, ps2if->base+SA1101_PS2CR); // DEBUG
 	stat = ps2_test_one(ps2if, PS2CR_FKC);
 	if (stat != PS2STAT_KBD) {
 		printk("PS/2 interface test failed[1]: %02x\n", stat);
@@ -247,7 +252,7 @@ static int __init ps2_probe(void)
 	ps2if->io.write		= ps2_write;
 	ps2if->io.open		= ps2_open;
 	ps2if->io.close		= ps2_close;
-	ps2if->io.name		= "sa1101ps2";
+ 	ps2if->io.name		= "sa1101ps2";
 	ps2if->io.phys		= ps2if->io.name;
 	ps2if->io.driver	= ps2if;
 
@@ -266,7 +271,7 @@ static int __init ps2_probe(void)
 	/*
 	 * Our parent device has already mapped the region.
 	 */
-	ps2if->base = 0xf4000000 + __MOUSE_INTERFACE;
+	ps2if->base = 0xf4000000 + __TRACK_INTERFACE;
 
 //	sa1101_enable_device(ps2if->dev);
 
@@ -292,7 +297,9 @@ static int __init ps2_probe(void)
 	ps2_clear_input(ps2if);
 
 //	sa1101_disable_device(ps2if->dev);
+	printk("registering sa1101ps2 port...\n"); // DEBUG
 	serio_register_port(&ps2if->io);
+	printk("registered sa1101ps2 port.\n"); // DEBUG
 	return 0;
 
  out:
@@ -310,6 +317,7 @@ static int __init ps2_probe(void)
 static void __exit ps2_remove(void)
 {
 
+	printk("Unregistering sa1101ps2 port...\n"); // DEBUG
 	serio_unregister_port(&sps2if->io);
 //	release_mem_region(dev->res.start,
 //			   dev->res.end - dev->res.start + 1);

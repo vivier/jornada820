@@ -12,7 +12,7 @@
  *
  * Created for the Jornada820 port.
  *
- * $Id: sa1101.c,v 1.2 2004/07/03 14:04:46 fare Exp $
+ * $Id: sa1101.c,v 1.3 2004/07/03 15:54:38 fare Exp $
  */
 
 #include <linux/module.h>
@@ -93,6 +93,7 @@ static void
 sa1101_irq_handler(unsigned int irq, struct irqdesc *desc, struct pt_regs *regs)
 {
 	unsigned int stat0, stat1, i;
+	printk("Got sa1101 interrupt.\n"); // DEBUG
 
 	stat0 = INTSTATCLR0;
 	stat1 = INTSTATCLR1;
@@ -119,6 +120,7 @@ sa1101_irq_handler(unsigned int irq, struct irqdesc *desc, struct pt_regs *regs)
 
 static void sa1101_ack_irq(unsigned int irq)
 {
+	printk("Got SA1101 interrupt %d.\n", irq); // DEBUG
 }
 
 static void mask_low_irq(unsigned int irq)
