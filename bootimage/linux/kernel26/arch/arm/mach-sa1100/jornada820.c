@@ -4,7 +4,7 @@
  * 2004/01/22 George Almasi (galmasi@optonline.net)
  * Modelled after the Jornada 720 code.
  * 
- * $Id: jornada820.c,v 1.10 2004/07/12 18:32:22 fare Exp $
+ * $Id: jornada820.c,v 1.11 2004/07/14 20:21:42 fare Exp $
  */
 
 #include <linux/init.h>
@@ -67,12 +67,11 @@ static int __init jornada820_init(void)
 
   Ser4MCCR0 |= MCCR0_MCE;       /* reenable MCP */
 
-  /* we can't set the audio divisor here. It will be reset by the generic MCP code.
+  /* we can't set the audio divisor here. It will be reset by the generic MCP code. */
   /* TODO: j820_audio.c driver should take care of this problem */
 
   return platform_add_devices(devices, ARRAY_SIZE(devices));
 
-  return 0;
 }
 
 __initcall(jornada820_init);
@@ -83,7 +82,7 @@ __initcall(jornada820_init);
 
 static struct map_desc jornada820_io_desc[] __initdata = {
   /* virtual     physical    length      type */
-  { 0xf5000000, 0, 0x01000000, MT_DEVICE } /* Boot Rom */
+  { 0xf5000000, 0, 0x01000000, MT_DEVICE }, /* Boot Rom */
   { 0xf4000000, JORNADA820_SA1101_BASE, 0x00400000, MT_DEVICE } /* SA-1101 */
 };
 
