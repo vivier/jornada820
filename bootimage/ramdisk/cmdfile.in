@@ -21,3 +21,4 @@ write pcmcia/cardctl cardctl
 
 cd /
 write linuxrc linuxrc
+write modules.tar.bz2 modules.tar.bz2

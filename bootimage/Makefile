@@ -74,7 +74,11 @@ ${KERNELDIR}/.config:
 #                     build loadable modules
 # --------------------------------------------------------------------------
 
-modules: config depend ramdisk/lib/modules
+modules: config depend ramdisk/modules.tar.bz2
+
+ramdisk/modules.tar.bz2: ramdisk/lib/modules
+	cd ramdisk && tar jcf modules.tar.bz2 lib/modules
+
 ramdisk/lib/modules:
 	export MODDIR=`pwd`/ramdisk/ && \
 	echo $${MODDIR} && \

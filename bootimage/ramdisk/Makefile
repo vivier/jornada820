@@ -52,15 +52,15 @@ cmdfile: cmdfile.in busybox pcmcia
 	  echo "write $$f $$file" >> $@; \
 	done
 	echo "cd /" >> $@
-	for d in `find lib -type d` ; do \
-	  echo "mkdir /$$d" >> $@; \
-	done
-	for f in `find lib -type f | grep -v CVS` ; do \
-          dir=`dirname $$f`; \
-          file=`basename $$f`; \
-          echo "cd /$$dir" >> $@; \
-          echo "write $$f $$file" >> $@; \
-        done
+	#for d in `find lib -type d` ; do \
+	#  echo "mkdir /$$d" >> $@; \
+	#done
+	#for f in `find lib -type f | grep -v CVS` ; do \
+        #  dir=`dirname $$f`; \
+        #  file=`basename $$f`; \
+        #  echo "cd /$$dir" >> $@; \
+        #  echo "write $$f $$file" >> $@; \
+        #done
 
 # ---------------------------  busybox  -------------------------------------
 
@@ -73,7 +73,7 @@ pcmcia:
 # ---------------------------------------------------------------------------
 
 localclean:
-	$(RM) ramdiskimage* *~ cmdfile
+	$(RM) ramdiskimage* *~ cmdfile modules.tar.bz2
 	$(RM) -rf lib/modules
 
 clean: localclean
