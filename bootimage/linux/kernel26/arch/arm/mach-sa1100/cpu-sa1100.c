@@ -1,8 +1,8 @@
 /*
  * cpu-sa1100.c: clock scaling for the SA1100
  *
- * Jornada820 version based on cpu-sa1100.c 1.3 from cvs.handhelds.org
- * $Id: cpu-sa1100.c,v 1.1 2004/06/24 16:58:36 fare Exp $
+ * Jornada820 version based on cpu-sa1100.c 1.4 from cvs.handhelds.org
+ * $Id: cpu-sa1100.c,v 1.2 2004/07/03 13:29:33 fare Exp $
  *
  * Copyright (C) 2000 2001, The Delft University of Technology
  *
@@ -200,7 +200,7 @@ static int sa1100_target(struct cpufreq_policy *policy,
 			 unsigned int target_freq,
 			 unsigned int relation)
 {
-	unsigned int cur = sa11x0_getspeed();
+	unsigned int cur = sa11x0_getspeed(0);
 	unsigned int new_ppcr;
 
 	struct cpufreq_freqs freqs;
@@ -241,7 +241,7 @@ static int __init sa1100_cpu_init(struct cpufreq_policy *policy)
 {
 	if (policy->cpu != 0)
 		return -EINVAL;
-	policy->cur = policy->min = policy->max = sa11x0_getspeed();
+	policy->cur = policy->min = policy->max = sa11x0_getspeed(0);
 	policy->governor = CPUFREQ_DEFAULT_GOVERNOR;
 	policy->cpuinfo.min_freq = 59000;
 	policy->cpuinfo.max_freq = 287000;
@@ -250,15 +250,18 @@ static int __init sa1100_cpu_init(struct cpufreq_policy *policy)
 }
 
 static struct cpufreq_driver sa1100_driver = {
+	.flags		= CPUFREQ_STICKY |
+			  CPUFREQ_PANIC_OUTOFSYNC | 
+			  CPUFREQ_PANIC_RESUME_OUTOFSYNC,
 	.verify		= sa11x0_verify_speed,
 	.target		= sa1100_target,
+	.get		= sa11x0_getspeed,
 	.init		= sa1100_cpu_init,
 	.name		= "sa1100",
 };
 
 static int __init sa1100_dram_init(void)
 {
-	cpufreq_gov_userspace_init();
  	if ((processor_id & CPU_SA1100_MASK) == CPU_SA1100_ID)
 		return cpufreq_register_driver(&sa1100_driver);
 	else

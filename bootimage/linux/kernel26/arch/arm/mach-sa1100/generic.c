@@ -9,8 +9,8 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-/* Jornada820 version based on generic.c 1.7 from cvs.handhelds.org
- * $Id: generic.c,v 1.2 2004/06/28 20:08:00 fare Exp $
+/* Jornada820 version based on generic.c 1.8 from cvs.handhelds.org
+ * $Id: generic.c,v 1.3 2004/07/03 13:29:33 fare Exp $
  */
 #include <linux/config.h>
 #include <linux/module.h>
@@ -99,11 +99,13 @@ int sa11x0_verify_speed(struct cpufreq_policy *policy)
 	return 0;
 }
 
-unsigned int sa11x0_getspeed(void)
+unsigned int sa11x0_getspeed(unsigned int cpu)
 {
+	if (cpu)
+		return 0;
 	return cclk_frequency_100khz[PPCR & 0xf] * 100;
 }
-EXPORT_SYMBOL(sa11x0_getspeed);
+
 #else
 /*
  * We still need to provide this so building without cpufreq works.
