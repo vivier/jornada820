@@ -104,7 +104,8 @@ static int __init jornada820_init(void)
   udelay(1);
   */
   
-  sa1101_wake(SA1101_BASE);
+  sa1101_probe(SA1101_BASE);
+  sa1101_wake();
   sa1101_init_irq (IRQ_JORNADA820_SA1101_CHAIN);
 
   jornada820_init_proc();
