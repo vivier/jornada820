@@ -4,7 +4,15 @@
  * Modelled after the file sa1111.c
  *
  * Created for the Jornada820 port.
- * $Id: sa1101.c,v 1.3 2004/06/27 13:35:30 oleg820 Exp $
+ *
+ * $Id: sa1101.c,v 1.4 2004/06/30 19:28:49 fare Exp $
+ */
+
+#if 0
+/*
+ * Should be updated for kernel 2.6 (from 2.4),
+ * getting inspiration once again from sa1111.c.
+ * For instance, do_IRQ is obsolete.
  */
 
 #include <linux/module.h>
@@ -22,7 +30,6 @@
 #include <asm/hardware.h>
 #include <asm/arch/SA-1101.h>
 #include <asm/hardware/sa1101.h>
-#include <asm/irq.h>
 #include <asm/mach/irq.h>
 #include <asm/arch/irq.h>
 #include <asm/uaccess.h>
@@ -71,7 +78,7 @@ void sa1101_IRQ_demux(int irq, void *dev_id, struct pt_regs *regs)
       stat1 = INTSTATCLR1;
 
       if (stat0 == 0 && stat1 == 0) break;
-      
+
       for (i = IRQ_SA1101_START; stat0; i++, stat0 >>= 1)
 	if (stat0 & 1) 
 	{
@@ -350,3 +357,5 @@ EXPORT_SYMBOL_GPL(sa1101_vga_shutdown);
 
 MODULE_DESCRIPTION("Main driver for SA-1101.");
 MODULE_LICENSE("GPL");
+
+#endif
