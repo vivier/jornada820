@@ -142,7 +142,7 @@ static void sa1101_unmask_highirq(unsigned int irq)
 
 void __init sa1101_init_irq(int irq_nr)
 {
-  int irq, ret;
+  int irq;
   
   request_mem_region(_INTTEST0, 512, "irqs");
   
@@ -187,10 +187,10 @@ void __init sa1101_init_irq(int irq_nr)
  * wake up the 1101
  */
 
-void sa1101_wake()
+void sa1101_wake(void)
 {
   unsigned long flags;
-  extern int sa1101_init_proc();
+  extern int sa1101_init_proc(void);
 
   local_irq_save(flags);
 
@@ -223,6 +223,7 @@ void sa1101_wake()
 
   /* why ? */
   SMCR=SMCR_ColAdrBits(10)+SMCR_RowAdrBits(12)+SMCR_ArbiterBias;
+
 
   local_irq_restore(flags);
 }
