@@ -3,7 +3,7 @@
  *
  * Jornada820 PCMCIA specific routines
  *
- * $Id: sa1100_jornada820.c,v 1.6 2004/07/07 16:57:24 oleg820 Exp $
+ * $Id: sa1100_jornada820.c,v 1.7 2004/07/08 02:44:23 fare Exp $
  */
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -26,8 +26,8 @@
 #include "sa11xx_base.h"
 #include "sa1100_generic.h"
 
-
-static int jornada820_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, const socket_state_t *state)
+#if 0
+extern int jornada820_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, const socket_state_t *state)
 {
 	unsigned int rst, flt, vcc0, vcc1, vpp0, vpp1, mask0, mask1; // irq
   unsigned long flags;
@@ -116,3 +116,4 @@ static int jornada820_pcmcia_configure_socket(struct soc_pcmcia_socket *skt, con
 //  else   	 disable_irq(irq);
   return 0;
 }
+#endif
