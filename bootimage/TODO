@@ -1,9 +1,10 @@
-$Id: TODO,v 1.18 2004/07/11 15:48:27 fare Exp $ -*- Fundamental -*-
+$Id: TODO,v 1.19 2004/07/15 21:22:24 fare Exp $ -*- Fundamental -*-
 
 Kernel 2.4
 * move on, dude!
 * maybe fix issues (that may reappear in 2.6?):
- * the APM kill-the-machine-if-kapmd-killed bug if still present
+ * APM kills the machine if kapmd is killed. Workaround: rmmod apm before.
+ * cardmgr oopses while holding the pcmcia lock if run after pivoting to rootfs
 
 Kernel 2.6
 * fix the PCMCIA driver
@@ -16,11 +17,14 @@ Kernel 2.6
 * get modem working?
 * get some spiffy 802.11g card working!
 * play nicer with booting to/from WinCE (and autobooting from WinCE to Linux?)
+* particularly, find a way to keep (approximate?) time while rebooting.
 
 Bootdisk
-* have pcmcia-cs from CVS.
 * make the initrd work with udev ???
 * move to using early-userspace on kernel 2.6 ???
+* have usbmgr or whatever is required for USB in the ramdiskimage
+(* have blockdev in busybox?)
+(* have pcmcia-cs from CVS?)
 
 Userland
 * gather a sensible base for userland (?)
@@ -34,6 +38,8 @@ Bootloader
 * build a gcc toolchain for arm-wince-pe ???
 * we imported the linexec source code as j820boot,
  now port it to gcc and some gnu libraries.
+* steal the reboot code from LAB so as to enable chainboot from Linux
+ w/o ever going through WinCE
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 apm: do something
@@ -54,15 +60,18 @@ there is
 #endif
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
-pcmcia:
+pcmcia in 2.6:
+
+if sa11xx_core is a module, then busybox's insmod (and module-init-tools?)
+fails to insert sa1100_cs.o: Unknown symbol soc_common_drv_pcmcia_remove
+even though it's an extern symbol in sa11xx_core.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 j820_keyb.c:
 
  Maybe special-case the Alt+arrow = PgUp, PgDn, Beg, End mappings? (?)
- Maybe special-case the On/Off key (?)
- Have a SysRQ button.
- Recognize as such the special button on the back?
+
+ Recognize as such the snooze button on the back as a key?
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 usb:
