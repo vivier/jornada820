@@ -20,10 +20,11 @@
 #include <linux/miscdevice.h>
 #include <linux/mm.h>
 #include <linux/ioport.h>
-
+#include <linux/slab.h>
 #include <asm/keyboard.h>
 #include <asm/irq.h>
 #include <asm/hardware.h>
+#include <asm/hardware/ssp.h>
 #include <asm/uaccess.h>
 
 /*
