@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.4 2004/04/27 11:26:41 fare Exp $
+# $Id: functions,v 1.5 2004/04/27 11:33:15 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -159,7 +159,7 @@ CHECK () {
   # Check whether what we want is OK
   ERR="${3:-Something is wrong about the target filesystem.}
 Stopping before we do a big mistake."
-  LOGT -e "Checking: $1 ..."
+  LOGT -n "Checking: $1 ... "
   if eval "$1" ; then
     LOGT "ok"
   else
@@ -299,5 +299,5 @@ pivot_root_part2 () {
 sysinit () {
   # replaces the /etc/init.d/rcS script -- see /etc/inittab
   echo -ne '\033[?2c\033(?B\033[m\033[1m'
-  echo 'Welcome to Linux for the HP Jornada 820.'
+  echo -e 'Welcome to Linux for the HP Jornada 820.\033[m'
 }
