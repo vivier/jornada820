@@ -1,6 +1,7 @@
 #!/bin/sh
 # See http://udhcp.busybox.net/README.udhcpc
 # Invoked by: udhcpc -H mildendo -n -f -q -s /etc/udhcpc.sh -i eth0
+# $Id: udhcpc.sh,v 1.3 2004/05/08 12:39:23 fare Exp $
 
 action=$1
 
@@ -24,12 +25,27 @@ print_few_vars () {
   print_vars action interface
 }
 
+make_resolv_conf () {
+  if [ -n "$domain" ] ; then
+    echo "search $domain"
+  fi
+  for i in $dns ; do
+    echo "nameserver $i"
+  done
+}
+try_rdate () {
+  if [ -n "$timesvr" ] ; then
+    rdate -s $timesvr
+  fi
+}
+
 case "$action" in
   bound|renew)
     ifconfig $interface $ip netmask $subnet
     route add default gw $router
-    echo "nameserver $namesvr" > /etc/resolv.conf
+    make_resolv_conf > /etc/resolv.conf
     hostname $hostname
+    try_rdate
     print_all_vars
     ;;
   nak)
