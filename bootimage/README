@@ -30,23 +30,31 @@ make j820
 
 create a bootimage based on the Linux 2.4 kernel.
 Assumes that you have a working toolchain.
+The Linux 2.4 kernel is rather stable and is usable as the basis for hacking.
+It has been successfully used as an XEmacs-based editing machine
+and as a debian-arm host.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 make j820-26
 
 create a bootimage based on the Linux 2.6 kernel.
 Assumes that you have a working toolchain.
+Note that the 2.6 kernel might not be usable right now.
+Most importantly, it lacks pcmcia support as of the writing of this line.
+See the TODO file.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 NOTES
 
-the current build system has glitches. Sorry for the inconvenience.
-Please report them as you experience them. We will try to automate things,
-and make the build process as seamless as affordable.
+The current build system may have glitches. We're sorry for the inconvenience.
+Please report to us any bugs as you experience them.
+We will try to automate things and make the build process
+as seamless as affordable.
 
+Kinds of bugs:
 Sometimes, a target won't work at first, because some file didn't exist.
-Sometimes, a target will do too much work at second, rebuilding stuff
-that's already there.
+Sometimes, a target will do too much work at second,
+rebuilding stuff that's already there.
 Sometimes, a target will fail in a subtle way because old files got in the way.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
