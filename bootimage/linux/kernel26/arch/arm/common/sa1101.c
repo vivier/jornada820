@@ -12,7 +12,7 @@
  *
  * Created for the Jornada820 port.
  *
- * $Id: sa1101.c,v 1.6 2004/07/03 20:01:52 fare Exp $
+ * $Id: sa1101.c,v 1.7 2004/07/03 23:42:41 fare Exp $
  */
 
 #include <linux/module.h>
@@ -26,6 +26,7 @@
 #include <linux/ioport.h>
 #include <linux/list.h>
 #include <linux/timer.h>
+#include <linux/device.h>
 
 #include <asm/hardware.h>
 #include <asm/arch/SA-1101.h>
@@ -88,12 +89,6 @@ int __init sa1101_probe(unsigned long phys_addr)
  * Note also that changing INTPOL while an IRQ is enabled will itself
  * trigger an IRQ.
  */
-
-static irqreturn_t debug_sa1101_irq_handler(unsigned int irq, void* dev_id, struct pt_regs *regs)
-{
-	printk("Got sa1101 interrupt (%d). Ignoring.\n", irq); // DEBUG
-        return IRQ_HANDLED;
-}
 
 static void
 sa1101_irq_handler(unsigned int irq, struct irqdesc *desc, struct pt_regs *regs)
@@ -376,6 +371,21 @@ void sa1101_doze(void)
 }
 
 /*********************************************************************************/
+
+int sa1101_driver_register(struct sa1101_driver *driver)
+{
+//	WARN_ON(driver->drv.suspend || driver->drv.resume || driver->drv.probe || driver->drv.remove);
+//	driver->drv.probe = sa1101_bus_probe;
+//	driver->drv.remove = sa1101_bus_remove;
+//	driver->drv.bus = &sa1101_bus_type;
+	return driver_register(&driver->drv);
+}
+
+void sa1101_driver_unregister(struct sa1101_driver *driver)
+{
+	driver_unregister(&driver->drv);
+}
+
 
 EXPORT_SYMBOL_GPL(sa1101_wake);
 EXPORT_SYMBOL_GPL(sa1101_doze);

@@ -8,7 +8,7 @@
  *
  * George Almasi (galmasi@optonline.net), 2004/1/24
  * Based on the sa1111_generic.c file.
- * $Id: sa1101.c,v 1.1 2004/07/03 23:40:26 fare Exp $
+ * $Id: sa1101.c,v 1.2 2004/07/03 23:42:41 fare Exp $
  */
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -54,7 +54,7 @@ static irqreturn_t debug_irq_handler(unsigned int irq, void* dev_id, struct pt_r
 static int sa1101_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
 {
 	int ret;
-	printk(__FUNCTION__ "... "); // DEBUG
+	printk("sa1101_pcmcia_hw_init... "); // DEBUG
 	if (skt->irq == NO_IRQ)
 		skt->irq = skt->nr ? IRQ_SA1101_S0_READY_NIREQ :
 			IRQ_SA1101_S1_READY_NIREQ;

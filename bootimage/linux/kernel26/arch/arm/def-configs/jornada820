@@ -185,7 +185,7 @@ CONFIG_PM=y
 CONFIG_PREEMPT=y
 # CONFIG_APM is not set
 # CONFIG_ARTHUR is not set
-CONFIG_CMDLINE="root=/dev/ram init=/linuxrc rw"
+CONFIG_CMDLINE="root=/dev/ram init=/linuxrc sa11xx_core.pc_debug=999 rw"
 # CONFIG_LEDS is not set
 CONFIG_ALIGNMENT_TRAP=y
 
