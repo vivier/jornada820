@@ -8,7 +8,7 @@ This module is made for
 debugging and testing purpose.
 
 Jornada820 version based on ???
-$Id: regs-sa1100.c,v 1.1 2004/06/24 16:58:36 fare Exp $
+$Id: regs-sa1100.c,v 1.2 2004/07/10 18:58:19 fare Exp $
 
 ****************************************************************************/
 
@@ -24,16 +24,6 @@ $Id: regs-sa1100.c,v 1.1 2004/06/24 16:58:36 fare Exp $
 #define MODULE_NAME "regmonsa1100"
 #define DEV_DIRNAME "sa1100"
 #define REG_DIRNAME "registers"
-
-static ssize_t proc_read_reg(struct file * file, char * buf,
-		size_t nbytes, loff_t *ppos);
-static ssize_t proc_write_reg(struct file * file, const char * buffer,
-		size_t count, loff_t *ppos);
-
-static struct file_operations proc_reg_operations = {
-	read:	proc_read_reg,
-	write:	proc_write_reg
-};
 
 typedef struct sa1100_reg_entry {
 	u32 phyaddr;
@@ -234,50 +224,36 @@ static sa1100_reg_entry_t sa1100_regs[] =
 
 #define NUM_OF_SA1100_REG_ENTRY	(sizeof(sa1100_regs)/sizeof(sa1100_reg_entry_t))
 
-static int proc_read_reg(struct file * file, char * buf,
-		size_t nbytes, loff_t *ppos)
+static int proc_read_reg(char *page, char **start, off_t off,
+		              int count, int *eof, void *data)
 {
-	int i_ino = (file->f_dentry->d_inode)->i_ino;
-	char outputbuf[15];
-	int count;
-	int i;
-	sa1100_reg_entry_t* current_reg=NULL;
-	if (*ppos>0) /* Assume reading completed in previous read*/
-		return 0;
-	for (i=0;i<NUM_OF_SA1100_REG_ENTRY;i++) {
-		if (sa1100_regs[i].low_ino==i_ino) {
-			current_reg = &sa1100_regs[i];
-			break;
-		}
-	}
+	char *p = page;
+	int len;
+	sa1100_reg_entry_t *current_reg=&sa1100_regs[(int)data];
+	
 	if (current_reg==NULL)
 		return -EINVAL;
 
-	count = sprintf(outputbuf, "0x%08X\n",
+	p += sprintf(p, "0x%08X\n",
 			*((volatile unsigned int *) io_p2v(current_reg->phyaddr)));
-	*ppos+=count;
-	if (count>nbytes)  /* Assume output can be read at one time */
-		return -EINVAL;
-	if (copy_to_user(buf, outputbuf, count))
-		return -EFAULT;
-	return count;
+		
+	len = (p - page) - off;
+	if (len < 0)
+		len = 0;
+	
+	*eof = (len <= count) ? 1 : 0;
+	*start = page + off;
+	
+	return len;
 }
 
-static ssize_t proc_write_reg(struct file * file, const char * buffer,
-		size_t count, loff_t *ppos)
+static ssize_t proc_write_reg(struct file * file, const __user char * buffer,
+		unsigned long count, void *data)
 {
-	int i_ino = (file->f_dentry->d_inode)->i_ino;
-	sa1100_reg_entry_t* current_reg=NULL;
-	int i;
+	sa1100_reg_entry_t *current_reg=&sa1100_regs[(int)data];
 	unsigned long newRegValue;
 	char *endp;
 
-	for (i=0;i<NUM_OF_SA1100_REG_ENTRY;i++) {
-		if (sa1100_regs[i].low_ino==i_ino) {
-			current_reg = &sa1100_regs[i];
-			break;
-		}
-	}
 	if (current_reg==NULL)
 		return -EINVAL;
 
@@ -311,8 +287,9 @@ static int __init init_regsa1100_monitor(void)
 				S_IWUSR |S_IRUSR | S_IRGRP,
 				regdir);
 		if(entry) {
-			sa1100_regs[i].low_ino = entry->low_ino;
-			entry->proc_fops = &proc_reg_operations;
+			entry->read_proc = proc_read_reg;
+			entry->write_proc = proc_write_reg;
+			entry->data = (void *)i;
 		} else {
 			printk( KERN_ERR MODULE_NAME
 				": can't create /proc/" REG_DIRNAME
@@ -339,4 +316,3 @@ module_exit(cleanup_regsa1100_monitor);
 MODULE_DESCRIPTION("SA1100 Register monitor");
 MODULE_LICENSE("GPL");
 
-EXPORT_NO_SYMBOLS;

@@ -1,4 +1,4 @@
-$Id: TODO,v 1.16 2004/07/04 16:23:44 fare Exp $ -*- Fundamental -*-
+$Id: TODO,v 1.17 2004/07/10 18:58:18 fare Exp $ -*- Fundamental -*-
 
 Kernel 2.4
 * move on, dude!
@@ -6,8 +6,6 @@ Kernel 2.4
  * the APM kill-the-machine-if-kapmd-killed bug if still present
 
 Kernel 2.6
-* port the keyboard driver
-* ensure the mouse driver works
 * port the sa1101 driver
 * port and fix the PCMCIA driver
 * make the USB driver work
@@ -18,7 +16,8 @@ Kernel 2.6
 * get external VGA working and/or some swap-on-VRAM
 * get modem working?
 * get some spiffy 802.11g card working!
-* play nicer with booting to/from WinCE
+* play nicer with booting to/from WinCE (and autobooting from WinCE to Linux?)
+* get the keyboard driver to recognize on/off properly
 
 Bootdisk
 * have pcmcia and busybox from CVS.

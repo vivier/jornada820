@@ -1,5 +1,5 @@
 # Jornada820 version based on Kconfig 1.13 from cvs.handhelds.org
-# $Id: Kconfig,v 1.4 2004/07/03 13:29:33 fare Exp $
+# $Id: Kconfig,v 1.5 2004/07/10 18:58:19 fare Exp $
 
 
 if ARCH_SA1100
@@ -354,6 +354,10 @@ config SA1100_SSP
 	  This isn't for audio support, but for attached sensors and
 	  other devices, eg for BadgePAD 4 sensor support, or Jornada
 	  720 touchscreen support.
+
+config REGISTERS
+	tristate "SA110/SA1101 Register access through /proc file system."
+	depends on ARCH_SA1100
 
 config SA1100_USB
 	tristate "SA1100 USB function support"

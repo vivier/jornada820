@@ -1,6 +1,6 @@
 /*
  * File created for Jornada 820... (?)
- * $Id: sa1101.h,v 1.6 2004/07/08 10:02:59 oleg820 Exp $
+ * $Id: sa1101.h,v 1.7 2004/07/10 18:58:19 fare Exp $
  */
 #ifndef _ASM_ARCH_SA1101
 #define _ASM_ARCH_SA1101
@@ -12,9 +12,18 @@
 
 #ifndef __ASSEMBLY__
 
+struct sa1101_dev {
+	struct device	dev;
+	unsigned int	devid;
+	struct resource	res;
+	void		*mapbase;
+	unsigned int	skpcr_mask;
+	unsigned int	irq[6];
+};
+
 /* TODO: driver interface */
 /*------------------------*/
-extern int sa1101_probe(unsigned long phys_addr);
+extern int sa1101_probe(struct device *dev);
 
 extern void sa1101_wake(void);
 extern void sa1101_doze(void);
@@ -45,16 +54,6 @@ extern int sa1101_vga_shutdown(void);
 #define SA1101_DEVID_INT	7
 #define SA1101_DEVID_PCMCIA	8
 #define SA1101_DEVID_KEYPAD	9
-
-struct sa1101_dev {
-	struct device	dev;
-	unsigned int	devid;
-	struct resource	res;
-	void		*mapbase;
-	unsigned int	skpcr_mask;
-	unsigned int	irq[6];
-	u64		dma_mask;
-};
 
 #define SA1101_DEV(_d)	container_of((_d), struct sa1101_dev, dev)
 

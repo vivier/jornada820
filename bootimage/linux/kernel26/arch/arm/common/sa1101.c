@@ -12,7 +12,7 @@
  *
  * Created for the Jornada820 port.
  *
- * $Id: sa1101.c,v 1.10 2004/07/09 14:28:33 oleg820 Exp $
+ * $Id: sa1101.c,v 1.11 2004/07/10 18:58:19 fare Exp $
  */
 
 #include <linux/module.h>
@@ -32,7 +32,7 @@
 #include <asm/arch/SA-1101.h>
 #include <asm/hardware/sa1101.h>
 #include <asm/mach/irq.h>
-#include <asm/arch/irq.h>
+#include <asm/arch/irqs.h>
 #include <asm/uaccess.h>
 #include <asm/io.h>
 
@@ -44,6 +44,146 @@
  * anchor point for all the other drivers.
  */
 
+static int sa1101_match(struct device *_dev, struct device_driver *_drv);
+static int sa1101_bus_suspend(struct device *dev, u32 state);
+static int sa1101_bus_resume(struct device *dev);
+
+struct bus_type sa1101_bus_type = {
+	.name           = "sa1101-bus",
+	.match          = sa1101_match,
+	.suspend        = sa1101_bus_suspend,
+	.resume         = sa1101_bus_resume,
+};
+
+struct sa1101_dev_info {
+	unsigned long	offset;
+	unsigned long	skpcr_mask;
+	unsigned int	devid;
+	unsigned int	irq[6];
+};
+
+static struct sa1101_dev_info sa1101_devices[] = {
+#if 0
+	{
+		.offset		= SA1111_USB,
+		.skpcr_mask	= SKPCR_UCLKEN,
+		.devid		= SA1111_DEVID_USB,
+		.irq = {
+			IRQ_USBPWR,
+			IRQ_HCIM,
+			IRQ_HCIBUFFACC,
+			IRQ_HCIRMTWKP,
+			IRQ_NHCIMFCIR,
+			IRQ_USB_PORT_RESUME
+		},
+	},
+	{
+		.offset		= 0x0600,
+		.skpcr_mask	= SKPCR_I2SCLKEN | SKPCR_L3CLKEN,
+		.devid		= SA1111_DEVID_SAC,
+		.irq = {
+			AUDXMTDMADONEA,
+			AUDXMTDMADONEB,
+			AUDRCVDMADONEA,
+			AUDRCVDMADONEB
+		},
+	},
+	{
+		.offset		= 0x0800,
+		.skpcr_mask	= SKPCR_SCLKEN,
+		.devid		= SA1111_DEVID_SSP,
+	},
+	{
+		.offset		= SA1111_KBD,
+		.skpcr_mask	= SKPCR_PTCLKEN,
+		.devid		= SA1111_DEVID_PS2,
+		.irq = {
+			IRQ_TPRXINT,
+			IRQ_TPTXINT
+		},
+	},
+	{
+		.offset		= SA1111_MSE,
+		.skpcr_mask	= SKPCR_PMCLKEN,
+		.devid		= SA1111_DEVID_PS2,
+		.irq = {
+			IRQ_MSRXINT,
+			IRQ_MSTXINT
+		},
+	},
+#endif
+	{
+		.offset		= 0x1e0000,
+		.skpcr_mask	= 0,
+		.devid		= SA1101_DEVID_PCMCIA,
+		.irq = {
+			IRQ_S0_READY_NINT,
+			IRQ_S0_CD_VALID,
+			IRQ_S0_BVD1_STSCHG,
+			IRQ_S1_READY_NINT,
+			IRQ_S1_CD_VALID,
+			IRQ_S1_BVD1_STSCHG,
+		},
+	},
+};
+
+static void sa1101_dev_release(struct device *_dev)
+{
+	struct sa1101_dev *dev = SA1101_DEV(_dev);
+
+	release_resource(&dev->res);
+	kfree(dev);
+}
+
+static int
+sa1101_init_one_child(struct device *parent, struct resource *parent_res,
+		      struct sa1101_dev_info *info)
+{
+	struct sa1101_dev *dev;
+	int ret;
+
+	dev = kmalloc(sizeof(struct sa1101_dev), GFP_KERNEL);
+	if (!dev) {
+		ret = -ENOMEM;
+		goto out;
+	}
+	memset(dev, 0, sizeof(struct sa1101_dev));
+
+	snprintf(dev->dev.bus_id, sizeof(dev->dev.bus_id),
+		 "%4.4lx", info->offset);
+
+	dev->devid	 = info->devid;
+	dev->dev.parent  = parent;
+	dev->dev.bus     = &sa1101_bus_type;
+	dev->dev.release = sa1101_dev_release;
+	dev->dev.coherent_dma_mask = 0xffffffff;
+	dev->res.start   = 0x18000000 + info->offset;
+	dev->res.end     = dev->res.start + 0x1ffff;
+	dev->res.name    = dev->dev.bus_id;
+	dev->res.flags   = IORESOURCE_MEM;
+	dev->mapbase     = (u8 *)0xf4000000 + info->offset;
+	dev->skpcr_mask  = info->skpcr_mask;
+	memmove(dev->irq, info->irq, sizeof(dev->irq));
+#if 0
+	ret = request_resource(parent_res, &dev->res);
+	if (ret) {
+		printk("SA1101: failed to allocate resource for %s\n",
+			dev->res.name);
+		kfree(dev);
+		goto out;
+	}
+#endif
+	ret = device_register(&dev->dev);
+	if (ret) {
+		release_resource(&dev->res);
+		kfree(dev);
+		goto out;
+	}
+
+out:
+	return ret;
+}
+
 static struct resource sa1101_resource = {
   .name   = "SA1101"
 };
@@ -52,24 +192,23 @@ static struct resource sa1101_resource = {
  * Figure out whether we can see the SA1101
  */
 
-int __init sa1101_probe(unsigned long phys_addr)
+int sa1101_probe(struct device * _dev)
 {
-	int ret = -ENODEV;
+	struct sa1101_dev *dev = SA1101_DEV(_dev);
+	/* should check */
+	int i;
+	u32 has_devs;
 
-	sa1101_resource.start = phys_addr;
-	sa1101_resource.end = phys_addr + 0x00400000;
+	sa1101_wake();
+	sa1101_init_irq(GPIO_JORNADA820_SA1101_CHAIN_IRQ);
 
-	if (request_resource(&iomem_resource, &sa1101_resource)) {
-		printk(KERN_INFO "Failed to map SA1101 chip.\n");
-		ret = -EBUSY;
-		goto out;
-	}
+	has_devs = 0xffffffff;
 
-	printk(KERN_INFO "SA1101 Microprocessor Companion Chip mapped.\n");
-        ret=0;
+	for (i = 0; i < ARRAY_SIZE(sa1101_devices); i++)
+		if (has_devs & (1 << i))
+			sa1101_init_one_child(&dev->dev, &dev->res, &sa1101_devices[i]);
 
- out:
-	return ret;
+	return 0;
 }
 
 /*
@@ -122,7 +261,6 @@ sa1101_irq_handler(unsigned int irq, struct irqdesc *desc, struct pt_regs *regs)
 
 static void sa1101_ack_irq(unsigned int irq)
 {
-//	printk("Got SA1101 interrupt %d.\n", irq); // DEBUG
 }
 
 static void mask_low_irq(unsigned int irq)
@@ -251,10 +389,8 @@ void sa1101_init_irq(int sa1101_irq)
 {
 	unsigned int irq;
 
-	// printk("initializing sa1101...\n"); // DEBUG
-
 	alloc_irq_space(64); /* XXX - still needed??? */
-	request_mem_region(_INTTEST0, 512, "irqs"); // XXX - still needed???
+	request_mem_region(_INTTEST0, 512, "irqs-1101"); // XXX - still needed???
 
 	/* disable all IRQs */
 	INTENABLE0 = 0;
@@ -290,8 +426,10 @@ void sa1101_init_irq(int sa1101_irq)
 	 */
 //	request_irq(sa1101_irq, debug_sa1101_irq_handler, SA_INTERRUPT,
 //		    "SA1101 chain interrupt", NULL); // DEBUG
-	set_irq_chained_handler(sa1101_irq, sa1101_irq_handler); // NORMAL
+	
 	set_irq_type(sa1101_irq, IRQT_RISING);
+	set_irq_data(sa1101_irq, (void *)_INTTEST0);
+	set_irq_chained_handler(sa1101_irq, sa1101_irq_handler); // NORMAL
 }
 
 extern void sa1101_wake(void)
@@ -373,22 +511,6 @@ void sa1101_doze(void)
 
 /*********************************************************************************/
 
-int sa1101_driver_register(struct sa1101_driver *driver)
-{
-//	WARN_ON(driver->drv.suspend || driver->drv.resume || driver->drv.probe || driver->drv.remove);
-//	driver->drv.probe = sa1101_bus_probe;
-//	driver->drv.remove = sa1101_bus_remove;
-//	driver->drv.bus = &sa1101_bus_type;
-	printk("registering sa1101 driver %s\n",driver->drv.name);
-	return driver_register(&driver->drv);
-}
-
-void sa1101_driver_unregister(struct sa1101_driver *driver)
-{
-	driver_unregister(&driver->drv);
-}
-
-
 EXPORT_SYMBOL_GPL(sa1101_wake);
 EXPORT_SYMBOL_GPL(sa1101_doze);
 EXPORT_SYMBOL_GPL(sa1101_usb_init);
@@ -400,12 +522,116 @@ EXPORT_SYMBOL_GPL(sa1101_vga_shutdown);
 EXPORT_SYMBOL_GPL(sa1101_enable_device);
 EXPORT_SYMBOL_GPL(sa1101_disable_device);
 EXPORT_SYMBOL_GPL(sa1101_pll_clock);
-EXPORT_SYMBOL_GPL(sa1101_driver_register);
-EXPORT_SYMBOL_GPL(sa1101_driver_unregister);
+#endif
+
+static int sa1101_match(struct device *_dev, struct device_driver *_drv)
+{
+	struct sa1101_dev *dev = SA1101_DEV(_dev);
+	struct sa1101_driver *drv = SA1101_DRV(_drv);
+	
+	return dev->devid == drv->devid;
+}
+
+static int sa1101_bus_suspend(struct device *dev, u32 state)
+{
+	struct sa1101_dev *sadev = SA1101_DEV(dev);
+	struct sa1101_driver *drv = SA1101_DRV(dev->driver);
+	int ret = 0;
+	
+	if (drv && drv->suspend)
+		ret = drv->suspend(sadev, state);
+	return ret;
+}
+
+static int sa1101_bus_resume(struct device *dev)
+{
+	struct sa1101_dev *sadev = SA1101_DEV(dev);
+	struct sa1101_driver *drv = SA1101_DRV(dev->driver);
+	int ret = 0;
+	
+	if (drv && drv->resume)
+		ret = drv->resume(sadev);
+	return ret;
+}
+
+static int sa1101_bus_probe(struct device *dev)
+{
+	struct sa1101_dev *sadev = SA1101_DEV(dev);
+	struct sa1101_driver *drv = SA1101_DRV(dev->driver);
+	int ret = -ENODEV;
+
+	if (drv->probe)
+		ret = drv->probe(sadev);
+	return ret;
+}
+
+static int sa1101_bus_remove(struct device *dev)
+{
+	struct sa1101_dev *sadev = SA1101_DEV(dev);
+	struct sa1101_driver *drv = SA1101_DRV(dev->driver);
+	int ret = -ENODEV;
+	
+	if (drv->remove)
+		ret = drv->remove(sadev);
+	return ret;
+}
+
+static int sa1101_suspend(struct device *dev, u32 state, u32 level) {
+	return 0;
+}
+
+static int sa1101_resume(struct device *dev, u32 level) {
+	return 0;
+}
+
+static int sa1101_remove(struct device *dev)
+{
+	return 0;
+}
+	
+static struct device_driver sa1101_device_driver = {
+	.name       = "sa1101-bus",
+	.bus        = &platform_bus_type,
+	.probe      = sa1101_probe,
+	.remove     = sa1101_remove,
+	.suspend    = sa1101_suspend,
+	.resume     = sa1101_resume,
+};
+
+int sa1101_driver_register(struct sa1101_driver *driver)
+{
+	WARN_ON(driver->drv.suspend || driver->drv.resume || driver->drv.probe || driver->drv.remove);
+	driver->drv.probe = sa1101_bus_probe;
+	driver->drv.remove = sa1101_bus_remove;
+	driver->drv.bus = &sa1101_bus_type;
+	return driver_register(&driver->drv);
+}
+
+void sa1101_driver_unregister(struct sa1101_driver *driver)
+{
+	driver_unregister(&driver->drv);
+}
+
+static int __init sa1101_init(void)
+{
+	int ret = bus_register(&sa1101_bus_type);
+
+	if (ret == 0)
+		driver_register(&sa1101_device_driver);
+	return ret;
+}
+
+static void __exit sa1101_exit(void)
+{
+	driver_unregister(&sa1101_device_driver);
+	bus_unregister(&sa1101_bus_type);
+}
 
 module_init(sa1101_init);
 module_exit(sa1101_exit);
-#endif
+
+EXPORT_SYMBOL_GPL(sa1101_driver_register);
+EXPORT_SYMBOL_GPL(sa1101_driver_unregister);
 
 MODULE_DESCRIPTION("Main driver for SA-1101 companion chip.");
 MODULE_LICENSE("GPL");

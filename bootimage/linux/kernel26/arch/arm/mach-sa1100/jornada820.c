@@ -4,7 +4,7 @@
  * 2004/01/22 George Almasi (galmasi@optonline.net)
  * Modelled after the Jornada 720 code.
  * 
- * $Id: jornada820.c,v 1.7 2004/07/08 16:21:17 oleg820 Exp $
+ * $Id: jornada820.c,v 1.8 2004/07/10 18:58:19 fare Exp $
  */
 
 #include <linux/init.h>
@@ -16,7 +16,36 @@
 #include <asm/irq.h>
 #include <asm/hardware.h>
 #include <asm/delay.h>
+#include <linux/device.h>
 #include "generic.h"
+
+
+static struct resource sa1101_resources[] = {
+	[0] = {
+		.start  = 0x18000000,
+		.end    = 0x1bffffff,
+		.flags  = IORESOURCE_MEM,
+	},
+/* 
+	[1] = {
+		.start  = ,
+		.end    = IRQ_NEPONSET_SA1111,
+		.flags  = IORESOURCE_IRQ,
+	},
+*/
+};
+
+static struct platform_device sa1101_device = {
+	.name       = "sa1101-bus",
+	.id     = 0,
+	.num_resources  = ARRAY_SIZE(sa1101_resources),
+	.resource   = sa1101_resources,
+};
+
+static struct platform_device *devices[] __initdata = {
+	&sa1101_device,
+};
+
 
 /* *********************************************************************** */
 /* Initialize the Jornada 820.                                             */
@@ -58,9 +87,13 @@ static int __init jornada820_init(void)
   /* TODO: remove. */
   /* Initialize the 1101. */
 
-  sa1101_probe(SA1101_BASE);
-  sa1101_wake();
-  sa1101_init_irq(GPIO_JORNADA820_SA1101_CHAIN_IRQ);
+//  sa1101_probe(SA1101_BASE);
+//  sa1101_wake();
+//  sa1101_init_irq(GPIO_JORNADA820_SA1101_CHAIN_IRQ);
+
+
+  return platform_add_devices(devices, ARRAY_SIZE(devices));
+
 
   return 0;
 }
