@@ -1,16 +1,20 @@
 #!/bin/sh
-# $Id: functions,v 1.17 2004/06/30 14:04:56 fare Exp $
+# $Id: functions,v 1.18 2004/06/30 19:19:11 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
+localfunctions () {
+  [ -f /etc/functions.local ] && . /etc/functions.local
+}
 re () {
   # RE-REad RenE's Runtime-Environment
   . /etc/functions
-  [ -f /mnt/linux/etc/functions ] && . /mnt/linux/etc/functions
+  localfunctions
 }
 
 ping () {
   # avoid uninterruptible ping when console is broken
+  # unhappily, busybox's ash has the builtin take precedence over the function!
   /bin/ping -c 5 $@
 }
 
@@ -100,14 +104,6 @@ ascii_table () {
   fi
   export ASCII_TABLE
   echo "$ASCII_TABLE"
-}
-
-nbdswap () {
-  # See http://www.it.uc3m.es/~ptb/nbd/
-  mknod /dev/nb0 b 43 0
-  nbd-client 192.168.0.3 665 /dev/nb0 -swap
-  swapon /dev/nb0
-  : nbd-client -d /dev/nb0
 }
 
 link_applets () {
@@ -200,9 +196,6 @@ standalone () {
 rootfs () {
   try_pivot_root
 }
-lisp () {
-  clisp -E iso-8859-1 -repl -ansi /mnt/linux/foo.lisp $@
-}
 
 linkme () {
   cd /mnt/linux
@@ -215,6 +208,7 @@ linkme () {
 }
 CET () { export TZ=CET-1CEST ; }
 nameserver () { for i ; do echo nameserver $i ; done > /etc/resolv.conf ; }
+
 net0 () {
   hostname mildendo
   ifconfig eth0 192.168.0.16 netmask 255.255.255.0 broadcast 192.168.0.255
@@ -225,32 +219,21 @@ net0 () {
   CET
   export DISTCC_HOSTS=192.168.0.3 CC="distcc arm-linux-gcc" CFLAGS="-Os -fomit-frame-pointer"
 }
-net0a () {
-  hostname mildendo
-  ifconfig eth0 10.31.0.16 netmask 255.255.255.0 broadcast 10.31.0.255
-  ifconfig lo 127.0.0.1
-  route add default gw 10.31.0.1
-  rdate 10.31.0.1
-  nameserver 10.31.0.1
-  CET
-  export DISTCC_HOSTS=10.31.0.1 CC="distcc arm-linux-gcc" CFLAGS="-Os -fomit-frame-pointer"
+nbdswap () {
+  # See http://www.it.uc3m.es/~ptb/nbd/
+  mknod /dev/nb0 b 43 0
+  nbd-client 192.168.0.3 665 /dev/nb0 -swap
+  swapon /dev/nb0
+  : nbd-client -d /dev/nb0
 }
-net0c () {
-  hostname mildendo
-  ifconfig eth0 192.103.2.240 netmask 255.255.255.0 broadcast 192.103.2.255
-  ifconfig lo 127.0.0.1
-  route add default gw 192.103.2.50
-  rdate 192.103.2.73
-  nameserver 192.103.2.25 192.103.2.130
-  CET
-}
+
 
 udhcp () {
   # http://udhcp.busybox.net/README.udhcpc
   DEVICE=${1:-eth0}
   ifconfig lo 127.0.0.1
   ifconfig $DEVICE > /dev/urandom
-  udhcpc -H mildendo -n -f -q -s /etc/udhcpc.sh -i $DEVICE
+  udhcpc -H ${hostname:-j820} -n -f -q -s /etc/udhcpc.sh -i $DEVICE
 }
 
 change_root () {
@@ -467,6 +450,7 @@ banner () {
 }
 sysinit () {
   # replaces the /etc/init.d/rcS script -- see /etc/inittab
+  hostname ${hostname:-j820}
   #banner
   klogd -c 1
   syslogd -O /dev/vc/11
@@ -506,10 +490,4 @@ getdate () {
 }
 mnt1 () {
   mount /dev/hda1 /mnt
-}
-getk () {
-  wget -O j820 http://samaris.tunes.org/tmp/j820
-}
-getk26 () {
-  wget -O j820-26 http://samaris.tunes.org/tmp/j820-26
 }
