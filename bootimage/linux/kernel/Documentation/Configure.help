@@ -23214,6 +23214,15 @@ CONFIG_SA1100_JORNADA720
   handheld computer.  See <http://www.hp.com/jornada/products/720>
   for details.
 
+HP Jornada 820
+CONFIG_SA1100_JORNADA820
+  The HP Jornada 820 computer is a no-compromise PDA from 1998,
+  with full-size keyboard and full-size VGA LCD.
+  Read Documentation/arm/SA1100/Jornada820 for details.
+
+  If you compile a kernel specifically for the HP Jornada 820, say Y.
+  Otherwise, say N.
+
 InHand Electronics OmniMeter
 CONFIG_SA1100_OMNIMETER
   Say Y here if you are using the inhand electronics OmniMeter.  See
