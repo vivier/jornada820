@@ -24,6 +24,8 @@
 
 #include <asm/io.h>
 
+#include "sa1101.h"
+
 struct resource sa1101_resource = {
   .name   = "SA1101"
 };
