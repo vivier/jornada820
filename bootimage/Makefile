@@ -5,7 +5,7 @@ PATH:=$(TOPDIR)/gcc-3.3.x/toolchain_arm/bin:$(PATH)
 
 export PATH
 
-.PHONY: ramdisk
+.PHONY: ramdisk force
 
 # ------------- programs ---------------------------------------------------
 
@@ -151,7 +151,7 @@ do-j820-26:
 
 config: kbuildtree do-config
 do-config: ${KBUILDDIR}/.config
-${KBUILDDIR}/.config:
+${KBUILDDIR}/.config: force
 	cd ${KBUILDDIR} && \
 	cp arch/arm/def-configs/jornada820 .config && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- oldconfig && \
@@ -159,7 +159,7 @@ ${KBUILDDIR}/.config:
 	cat .config > arch/arm/def-configs/jornada820 )
 
 menuconfig: kbuildtree do-menuconfig
-do-menuconfig:
+do-menuconfig: force
 	cd ${KBUILDDIR} && \
 	cp arch/arm/def-configs/jornada820 .config && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- menuconfig && \
@@ -169,12 +169,12 @@ do-menuconfig:
 
 depend: config do-depend
 do-depend: ${KBUILDDIR}/.depend
-${KBUILDDIR}/.depend:
+${KBUILDDIR}/.depend: force
 	cd ${KBUILDDIR} && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- depend
 
 menuconfig26: kbuildtree26 do-menuconfig26
-do-menuconfig26:
+do-menuconfig26: force
 	cd ${KBUILDDIR26} && \
 	cp arch/arm/def-configs/jornada820 .config && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- menuconfig && \
@@ -183,7 +183,7 @@ do-menuconfig26:
 
 config26: kbuildtree26 do-config26
 do-config26: ${KBUILDDIR26}/.config
-${KBUILDDIR26}/.config: 
+${KBUILDDIR26}/.config: force
 	cd ${KBUILDDIR26} && \
 	cp arch/arm/def-configs/jornada820 .config && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- oldconfig && \
