@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.12 2004/05/10 07:51:53 fare Exp $
+# $Id: functions,v 1.13 2004/06/24 17:15:30 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -441,4 +441,12 @@ sysinit () {
   # replaces the /etc/init.d/rcS script -- see /etc/inittab
   echo -ne '\033[?2c\033(?B\033[m\033[1m'
   echo -e 'Welcome to Linux for the HP Jornada 820.\033[m'
+}
+
+setdate () {
+(  eval $@
+  : ${DAY:=4} ${MONTH:=7} ${YEAR:=2004} ${HOUR:=23} ${MINUTE:=5} ${SECOND:=42}
+  busybox date -s $(printf %02d%02d%02d%02d%04d $MONTH $DAY $HOUR $MINUTE $SECOND $YEAR)
+  # GNU date -s $(printf "%04d-%02d-%02d %02d:%02d:%02d" $YEAR $MONTH $DAY $HOUR $MINUTE $SECOND)
+)
 }
