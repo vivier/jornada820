@@ -1,5 +1,5 @@
 # Jornada820 version based on Kconfig 1.12 from cvs.handhelds.org
-# $Id: Kconfig,v 1.1 2004/06/24 16:58:36 fare Exp $
+# $Id: Kconfig,v 1.2 2004/06/30 13:59:24 fare Exp $
 
 if ARCH_SA1100
 
@@ -167,6 +167,7 @@ config SA1100_JORNADA720
 config SA1100_JORNADA820
 	bool "HP Jornada 820"
 	depends on ARCH_SA1100
+	select SA1100_SSP
 	help
 	  The HP Jornada 820 computer is a no-compromise PDA from late 1998,
 	  with full-size keyboard and full-size VGA LCD.
