@@ -4,7 +4,7 @@
  * Modelled after the file sa1111.c
  *
  * Created for the Jornada820 port.
- * $Id: sa1101.c,v 1.2 2004/06/24 19:57:37 fare Exp $
+ * $Id: sa1101.c,v 1.3 2004/06/27 13:35:30 oleg820 Exp $
  */
 
 #include <linux/module.h>
@@ -28,10 +28,6 @@
 #include <asm/uaccess.h>
 
 #include <asm/io.h>
-
-/* TODO: remove */
-static void jornada820_init_proc (void);
-
 
 static struct resource sa1101_resource = {
   .name   = "SA1101"
@@ -328,9 +324,6 @@ void sa1101_wake(void)
 
   local_irq_restore(flags);
 
-   /* TODO: remove */
-  jornada820_init_proc();
-
 }
 
 
@@ -342,91 +335,6 @@ void sa1101_doze(void)
 {
   /* not implemented */
 	printk("SA1101 doze mode not implemented\n");
-}
-
-/* TODO: remove **********************************************************************************/
-
-int j820_apm_get_power_status(u_char *ac_line_status, u_char *battery_status, u_char *battery_flag, 
-                              u_char *battery_percentage, u_short *battery_life)
-{
-	*ac_line_status=(PBDRR & (1<<5)) ? 0:1;
-
-	/* TODO: */
-	*battery_status=0xff;
-	*battery_flag=0xff;
-	*battery_percentage=0xff;
-	*battery_life=0xff;
-
- return 0;
-}
-
-/* *********************************************************************** */
-/* machine specific proc file system                                       */
-/* *********************************************************************** */
-
-#include <linux/proc_fs.h>
-#include <asm/uaccess.h>
-
-static struct proc_dir_entry *j820_dir, *parent_dir = NULL;
-
-
-#define PROC_NAME "j820"
-
-static int j820_read_proc(char *buf,
-			  char **start,
-			  off_t pos,
-			  int count,
-			  int *eof,
-			  void *data)
-{
-  char *p = buf;
-  p += sprintf(p, "\t Contrast  = %u\n", DAC_JORNADA820_CONTRAST);
-  p += sprintf(p, "\t Brightness= %u\n", DAC_JORNADA820_BRIGHTNESS);
-  p += sprintf(p, "\t PADRR     = %08x\n", PADRR);
-  p += sprintf(p, "\t PBDRR     = %08x\n", PBDRR);
-  return (p-buf);
-}
-
-static int j820_write_proc (struct file *file,
-			    const char *buffer,
-			    unsigned long count,
-			    void *data)
-{
-  char buf[260];
-  if (count > 258) return -EINVAL;
-  if (copy_from_user(buf, buffer, count)) return -EFAULT;
-  if (!strncmp(buf, "Contrast", 8))
-    {
-      unsigned val;
-      sscanf(buf+8, "%d", &val);
-      DAC_JORNADA820_CONTRAST = val;
-    }
-  if (!strncmp(buf, "Brightness", 10))
-    {
-      unsigned val;
-      sscanf (buf+10, "%d", &val);
-      DAC_JORNADA820_BRIGHTNESS = val;
-    }
-  if (!strncmp(buf, "Backlight", 9))
-    {
-      unsigned val;
-      sscanf (buf+9, "%d", &val);
-      if (val) GPSR = GPIO_JORNADA820_BACKLIGHTON;
-      else     GPCR = GPIO_JORNADA820_BACKLIGHTON;
-    }
-  return count;
-}
-
-static void jornada820_init_proc (void)
-{
-  j820_dir = create_proc_entry ("j820", 0, parent_dir);
-  if (j820_dir == NULL)
-    {
-      printk("jornada820_init_proc failed\n");
-      return;
-    }
-  j820_dir->read_proc = j820_read_proc;
-  j820_dir->write_proc = j820_write_proc;
 }
 
 /*********************************************************************************/
