@@ -4,7 +4,7 @@
  * 2004/01/22 George Almasi (galmasi@optonline.net)
  * Modelled after the Jornada 720 code.
  * 
- * $Id: jornada820.c,v 1.3 2004/06/27 13:32:13 oleg820 Exp $
+ * $Id: jornada820.c,v 1.4 2004/06/30 14:00:05 fare Exp $
  */
 
 #include <linux/init.h>
@@ -29,19 +29,19 @@ static int __init jornada820_init(void)
 #if 0
   /* allow interrupts: */
   /* audio et al. */
-  set_GPIO_IRQ_edge(GPIO_JORNADA820_UCB1200,      GPIO_RISING_EDGE);
+  set_irq_type(GPIO_JORNADA820_UCB1200,      IRQT_RISING);
   /* sa1101 mux */
-  set_GPIO_IRQ_edge(GPIO_JORNADA820_SA1101_CHAIN, GPIO_RISING_EDGE);
+  set_irq_type(GPIO_JORNADA820_SA1101_CHAIN,      IRQT_RISING);
 
   /* TODO: write the drivers to use these events */
   /*  ser1 */
-  set_GPIO_IRQ_edge(GPIO_JORNADA820_POWERD,       GPIO_RISING_EDGE|GPIO_FALLING_EDGE);
+  set_irq_type(GPIO_JORNADA820_POWERD,      IRQT_BOTHEDGE);
   /*  serial port */
-  set_GPIO_IRQ_edge(GPIO_JORNADA820_SERIAL,       GPIO_RISING_EDGE|GPIO_FALLING_EDGE);
+  set_irq_type(GPIO_JORNADA820_SERIAL,      IRQT_BOTHEDGE);
   /*  serial what ? */
-  set_GPIO_IRQ_edge(GPIO_GPIO(18),                GPIO_RISING_EDGE|GPIO_FALLING_EDGE);
+  set_irq_type(GPIO_GPIO(18),               IRQT_BOTHEDGE);
   /*  ledbutton */
-  set_GPIO_IRQ_edge(GPIO_JORNADA820_LEDBUTTON,    GPIO_RISING_EDGE);
+  set_irq_type(GPIO_JORNADA820_LEDBUTTON,   IRQT_RISING);
 #endif
 
   /* ------------------- */
