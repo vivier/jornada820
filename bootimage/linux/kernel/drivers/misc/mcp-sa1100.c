@@ -17,6 +17,7 @@
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/spinlock.h>
+#include <linux/ioport.h>
 
 #include <asm/dma.h>
 #include <asm/hardware.h>
@@ -141,10 +142,15 @@ static int mcp_sa1100_init(void)
 	    machine_is_adsbitsy()       || machine_is_assabet()        ||
 	    machine_is_cerf()           || machine_is_flexanet()       ||
 	    machine_is_freebird()       || machine_is_graphicsclient() ||
-	    machine_is_graphicsmaster() || machine_is_lart()           ||
+	    machine_is_graphicsmaster() || machine_is_jornada820()     ||
+	    machine_is_lart()           ||
 	    machine_is_omnimeter()      || machine_is_pfs168()         ||
 	    machine_is_shannon()        || machine_is_simpad()         ||
 	    machine_is_simputer()       || machine_is_yopy()) {
+
+	if (!request_mem_region(0x80060000, 0x60, "MCP"))
+		return -EBUSY;
+
 		/*
 		 * Setup the PPC unit correctly.
 		 */
@@ -167,6 +173,9 @@ static int mcp_sa1100_init(void)
 				  mcp->sclk_rate;
 
 		ret = mcp_register(mcp);
+
+	if (ret != 0)
+		release_mem_region(0x80060000, 0x60);
 	}
 
 	return ret;

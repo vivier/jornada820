@@ -459,6 +459,7 @@ bad:
  *	freebird	IRQ_GPIO_FREEBIRD_UCB1300_IRQ
  *	graphicsclient	ADS_EXT_IRQ(8)
  *	graphicsmaster	ADS_EXT_IRQ(8)
+ *	jornada820	IRQ_GPIO1
  *	lart		LART_IRQ_UCB1200
  *	omnimeter	IRQ_GPIO23
  *	pfs168		IRQ_GPIO_UCB1300_IRQ

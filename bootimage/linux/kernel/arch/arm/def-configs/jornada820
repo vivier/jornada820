@@ -299,7 +299,7 @@ CONFIG_MTD_ROM=y
 # Self-contained MTD device drivers
 #
 # CONFIG_MTD_PMC551 is not set
-# CONFIG_MTD_SLRAM is not set
+CONFIG_MTD_SLRAM=m
 # CONFIG_MTD_MTDRAM is not set
 # CONFIG_MTD_BLKMTD is not set
 
@@ -1030,7 +1030,7 @@ CONFIG_FONT_6x11=y
 #
 # Sound
 #
-CONFIG_SOUND=y
+CONFIG_SOUND=m
 # CONFIG_SOUND_BT878 is not set
 # CONFIG_SOUND_CMPCI is not set
 # CONFIG_SOUND_EMU10K1 is not set
@@ -1067,11 +1067,11 @@ CONFIG_SOUND=y
 #
 # Multimedia Capabilities Port drivers
 #
-# CONFIG_MCP is not set
-# CONFIG_MCP_SA1100 is not set
-# CONFIG_MCP_UCB1200 is not set
-# CONFIG_MCP_UCB1200_AUDIO is not set
-# CONFIG_MCP_UCB1200_TS is not set
+CONFIG_MCP=y
+CONFIG_MCP_SA1100=y
+CONFIG_MCP_UCB1200=m
+CONFIG_MCP_UCB1200_AUDIO=m
+CONFIG_MCP_UCB1200_TS=m
 # CONFIG_MCP_UCB1400_TS is not set
 
 #

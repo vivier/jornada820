@@ -325,10 +325,10 @@ static int __init ucb1x00_audio_init(void)
 
 	a = ucb1x00_audio_alloc(ucb);
 	if (a) {
-		a->state.input_dma  = ucb->mcp->dma_audio_rd;
-		a->state.input_id   = "UCB1x00 audio in";
-		a->state.output_dma = ucb->mcp->dma_audio_wr;
-		a->state.output_id  = "UCB1x00 audio out";
+		a->input_stream.dma_dev  = ucb->mcp->dma_audio_rd;
+		a->input_stream.id   = "UCB1x00 audio in";
+		a->output_stream.dma_dev = ucb->mcp->dma_audio_wr;
+		a->output_stream.id  = "UCB1x00 audio out";
 		a->dev_id = register_sound_dsp(&a->fops, -1);
 		a->mix_id = register_sound_mixer(&a->mops, -1);
 		a->ctrl_a = 0;
@@ -348,10 +348,10 @@ static int __init ucb1x00_audio_init(void)
 #endif
 
 		a->telecom = 1;
-		a->state.input_dma  = ucb->mcp->dma_telco_rd;
-		a->state.input_id   = "UCB1x00 telco in";
-		a->state.output_dma = ucb->mcp->dma_telco_wr;
-		a->state.output_id  = "UCB1x00 telco out";
+		a->input_stream.dma_dev  = ucb->mcp->dma_telco_rd;
+		a->input_stream.id   = "UCB1x00 telco in";
+		a->output_stream.dma_dev = ucb->mcp->dma_telco_wr;
+		a->output_stream.id  = "UCB1x00 telco out";
 		a->dev_id = register_sound_dsp(&a->fops, -1);
 		a->mix_id = register_sound_mixer(&a->mops, -1);
 		a->ctrl_a = 0;
