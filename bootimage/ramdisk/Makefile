@@ -36,12 +36,21 @@ ramdiskimage: cmdfile
 ramdiskimage.gz: ramdiskimage
 	gzip -9 < $< > $@
 
+ramdisk26: ramdiskimage26.gz
+ramdiskimage26: cmdfile26
+	dd if=/dev/zero of=ramdiskimage26 count=4096 bs=1024
+	$(MKE2FS) -F ramdiskimage26
+	$(DEBUGFS) -f cmdfile26
+	$(E2FSCK) -f -y ramdiskimage26 ; :
+ramdiskimage26.gz: ramdiskimage26
+	gzip -9 < $< > $@
+
 # ----------------- ramdiskimage command file ------------------------------
 
 cmdfile: cmdfile.in busybox pcmcia
 	cat cmdfile.in > $@
-	#sed "s'.*'ln /bin/busybox &'" < busybox/busybox.links >> $@
 	echo "cd /" >> $@
+	echo write modules.tar.bz2 modules.tar.bz2 >> $@
 	for d in `find etc -type d | grep -v CVS` ; do \
 	  echo "mkdir /$$d" >> $@; \
 	done
@@ -61,6 +70,23 @@ cmdfile: cmdfile.in busybox pcmcia
 	#  echo "cd /$$dir" >> $@; \
 	#  echo "write $$f $$file" >> $@; \
 	#done
+
+
+cmdfile26: cmdfile.in busybox pcmcia
+	cat cmdfile.in > $@
+	echo "cd /" >> $@
+	echo write modules26.tar.bz2 modules.tar.bz2 >> $@
+	for d in `find etc -type d | grep -v CVS` ; do \
+	  echo "mkdir /$$d" >> $@; \
+	done
+	for f in `find etc -type f | grep -v CVS` ; do \
+	  dir=`dirname $$f`; \
+	  file=`basename $$f`; \
+	  echo "cd /$$dir" >> $@; \
+	  echo "write $$f $$file" >> $@; \
+	done
+	echo "cd /" >> $@
+
 
 # ---------------------------  busybox  -------------------------------------
 

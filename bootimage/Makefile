@@ -50,6 +50,9 @@ kbuildtree:: $(KUPSTREAMDIR)/Makefile
 	cp -fal $(KUPSTREAMDIR) linux/build/
 	cp -fal $(KERNELDIR) linux/build/
 
+ourtree:
+	cp -fal $(KERNELDIR) linux/build/
+
 $(KUPSTREAMDIR)/CVS/Root $(KUPSTREAMDIR)/CVS/Repository:
 	mkdir -p $(KUPSTREAMDIR)/CVS ; cd $(KUPSTREAMDIR)/CVS || exit 2 ; \
 	echo :pserver:anoncvs@cvs.handhelds.org:/cvs > Root ; \
@@ -68,6 +71,9 @@ $(KUPSTREAMDIR)/Makefile: $(KUPSTREAMDIR)/CVS/Root
 
 kbuildtree26:: $(KUPSTREAMDIR26)/Makefile
 	cp -fal $(KUPSTREAMDIR26) linux/build/
+	cp -fal $(KERNELDIR26) linux/build/
+
+ourtree26:
 	cp -fal $(KERNELDIR26) linux/build/
 
 $(KUPSTREAMDIR26)/CVS/Root $(KUPSTREAMDIR26)/CVS/Repository:
@@ -109,7 +115,8 @@ toolchain: gcc-3.3.x/toolchain_arm/bin/arm-linux-gcc
 #                    build the boot image
 # --------------------------------------------------------------------------
 
-j820: config depend ramdisk kbuildtree
+j820: config depend ramdisk do-j820
+do-j820:
 	export RDIMAGE=$(TOPDIR)/ramdisk/ramdiskimage.gz && \
 	cd ${KBUILDDIR} && \
 	${MAKE} \
@@ -122,7 +129,8 @@ j820: config depend ramdisk kbuildtree
 sandisk: j820
 	mount /mnt/sandisk/; cp j820 /mnt/sandisk/; umount /mnt/sandisk/
 
-j820-26: config depend ramdisk kbuildtree
+j820-26: config26 depend26 modules26 ramdisk do-j820-26
+do-j820-26:
 	export RDIMAGE=$(TOPDIR)/ramdisk/ramdiskimage.gz && \
 	cd ${KBUILDDIR26} && \
 	${MAKE} \
@@ -153,7 +161,7 @@ ${KBUILDDIR}/.config: kbuildtree
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- oldconfig
 
 menuconfig26: kbuildtree26
-	cd ${KBUILDDIR} && \
+	cd ${KBUILDDIR26} && \
 	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- menuconfig
 
 depend26: config26 ${KBUILDDIR26}/.depend
@@ -176,7 +184,7 @@ modules: config depend ramdisk/modules.tar.bz2
 ramdisk/modules.tar.bz2: ramdisk/lib/modules
 	cd ramdisk && tar jcf modules.tar.bz2 lib/modules
 
-ramdisk/lib/modules: kbuildtree
+ramdisk/lib/modules:
 	export MODDIR=$(TOPDIR)/ramdisk/ && \
 	echo $${MODDIR} && \
 	cd ${KBUILDDIR} && \
@@ -190,10 +198,10 @@ modules26: config26 depend26 ramdisk/modules26.tar.bz2
 
 ramdisk/modules26.tar.bz2: $(KBUILDDIR26)/target/lib/modules
 	cd $(KBUILDDIR26)/target && \
-	tar jcf $(TOPDIR)/ramdisk/modules26.tar.bz2 lib/modules && \
-	ln -f modules26.tar.bz2 $(TOPDIR)/ramdisk/modules.tar.bz2
+	tar jcf $(TOPDIR)/ramdisk/modules.tar.bz2 lib/modules && \
+	ln -f modules.tar.bz2 $(TOPDIR)/ramdisk/modules26.tar.bz2
 
-$(KBUILDDIR26)/target/lib/modules: kbuildtree26
+$(KBUILDDIR26)/target/lib/modules:
 	export MODDIR=$(KBUILDDIR26)/target/ && \
 	echo $${MODDIR} && \
 	cd ${KBUILDDIR26} && \
@@ -209,3 +217,6 @@ $(KBUILDDIR26)/target/lib/modules: kbuildtree26
 
 ramdisk: modules
 	${MAKE} -C ramdisk TARGET=${TARGET} OS=${OS}
+
+ramdisk26: modules26
+	${MAKE} -C ramdisk26 TARGET=${TARGET} OS=${OS}
