@@ -2,7 +2,7 @@
 # Makefile for the linux kernel.
 #
 # Jornada820 version based on Makefile 1.9 from cvs.handhelds.org
-# $Id: Makefile,v 1.1 2004/06/24 16:58:36 fare Exp $
+# $Id: Makefile,v 1.2 2004/06/27 13:29:55 oleg820 Exp $
 
 
 # Common support
@@ -57,7 +57,7 @@ obj-$(CONFIG_SA1100_HUW_WEBPANEL)	+= huw_webpanel.o
 obj-$(CONFIG_SA1100_ITSY)		+= itsy.o
 
 obj-$(CONFIG_SA1100_JORNADA720)		+= jornada720.o
-obj-$(CONFIG_SA1100_JORNADA820)		+= jornada820.o sa1101.o
+obj-$(CONFIG_SA1100_JORNADA820)		+= jornada820.o # sa1101.o
 obj-$(CONFIG_SA1100_JORNADA56X)		+= jornada56x.o
 
 obj-$(CONFIG_SA1100_LART)		+= lart.o
