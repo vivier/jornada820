@@ -14,29 +14,18 @@
  */
 
 #include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/tty.h>
-#include <linux/delay.h>
-#include <linux/ioport.h>
 #include <linux/mm.h>
-
-#include <asm/hardware.h>
 #include <asm/setup.h>
-
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/serial_sa1100.h>
-#include <asm/mach-types.h>
-
-#include <asm/pgtable.h>
-#include <asm/pgalloc.h>
-#include <asm/page.h>
-#include <asm/setup.h>
 #include <asm/irq.h>
-
+#include <asm/hardware.h>
+#include <asm/hardware/ssp.h>
 #include "generic.h"
+#include "sa1101.h"
 
-#include <linux/linux_logo.h>
+static void jornada820_init_proc (void);
 
 /* *********************************************************************** */
 /* Initialize the Jornada 820.                                             */
@@ -84,7 +73,7 @@ static int __init jornada820_init(void)
   GPDR &= ~GPIO_GPIO11;
 
   if (ssp_init()) printk("ssp_init() failed.\n");
-  
+
     /* 8 bit, Motorola, enable, 460800 bit rate */
   Ser4SSCR0 = SSCR0_DataSize(8)+SSCR0_Motorola+SSCR0_SSE+SSCR0_SerClkDiv(8);
 //  Ser4SSCR1 = SSCR1_RIE | SSCR1_SClkIactH | SSCR1_SClk1_2P;
@@ -120,6 +109,22 @@ static int __init jornada820_init(void)
 
 __initcall(jornada820_init);
 
+static void setup_memory(struct meminfo *mi)
+{
+	int bank = 0;
+	SET_BANK( bank++, 0xc0000000, 16<<20 ); /* 16MB of RAM in bank 0 */
+#ifdef CONFIG_JORNADA820_GRAB_VRAM
+	/* What's wrong with putting these 2MB of VRAM to good use? */
+	SET_BANK( bank++, 0xc8000000,  2<<20 ); /* 2MB of RAM in bank 1 */
+	/* UNTESTED */
+#endif
+#ifdef CONFIG_JORNADA820_F1267A
+	/* F1267A memory expansion module to 32MB total memory */
+	SET_BANK( bank++, 0xd0000000, 16<<20 ); /* 16 MB in bank 2 */
+#endif
+	mi->nr_banks = bank;
+}
+
 /* *********************************************************************** */
 /*           temporary: setup the ramdisk                                  */
 /* *********************************************************************** */
@@ -128,10 +133,9 @@ static void __init
 fixup_jornada820(struct machine_desc *desc, struct param_struct *params,
 		 char **cmdline, struct meminfo *mi)
 {
-  SET_BANK( 0, 0xc0000000, 16*1024*1024 );
-  mi->nr_banks = 1;
+  setup_memory(mi);
 
-  printk("fixup_jornada820: initrd at %x, %d bytes\n",
+  printk("fixup_jornada820: initrd at %lx, %ld bytes\n",
 	 params->u1.s.initrd_start,
 	 params->u1.s.initrd_size);
   setup_initrd(params->u1.s.initrd_start, params->u1.s.initrd_size);
@@ -203,7 +207,7 @@ static int j820_write_proc (struct file *file,
 			    unsigned long count,
 			    void *data)
 {
-  char buf[260]; int val;
+  char buf[260];
   if (count > 258) return -EINVAL;
   if (copy_from_user(buf, buffer, count)) return -EFAULT;
   if (!strncmp(buf, "Contrast", 8))
@@ -228,7 +232,7 @@ static int j820_write_proc (struct file *file,
   return count;
 }
 
-static void jornada820_init_proc ()
+static void jornada820_init_proc (void)
 {
   j820_dir = create_proc_entry ("j820", 0, parent_dir);
   if (j820_dir == NULL)
@@ -239,3 +243,4 @@ static void jornada820_init_proc ()
   j820_dir->read_proc = j820_read_proc;
   j820_dir->write_proc = j820_write_proc;
 }
+
