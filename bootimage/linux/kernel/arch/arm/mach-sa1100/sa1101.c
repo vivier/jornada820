@@ -22,21 +22,33 @@
 #include <asm/arch/irq.h>
 #include <asm/uaccess.h>
 
-/* TODO: export */
 struct resource sa1101_resource = {
-  .name   = "SA1101",
-  .start  = SA1101_BASE,
-  .end    = SA1101_BASE+0x00400000,
+  .name   = "SA1101"
 };
+
+EXPORT_SYMBOL_GPL(sa1101_resource);
 
 /*
  * Figure out whether we can see the SA1101
- * Not implemented.
  */
 
-int __init sa1101_probe()
+int __init sa1101_probe(unsigned long phys_addr)
 {
-  return 0;
+	int ret = -ENODEV;
+
+	sa1101_resource.start = phys_addr;
+	sa1101_resource.end = phys_addr + 0x00400000;
+
+	if (request_resource(&iomem_resource, &sa1101_resource)) {
+		ret = -EBUSY;
+		goto out;
+	}
+
+	printk(KERN_INFO "SA1101 Microprocessor Companion Chip mapped.\n");
+        ret=0;
+
+ out:
+	return ret;
 }
 
 /*
@@ -56,10 +68,16 @@ void sa1101_IRQ_demux(int irq, void *dev_id, struct pt_regs *regs)
       if (stat0 == 0 && stat1 == 0) break;
       
       for (i = IRQ_SA1101_START; stat0; i++, stat0 >>= 1)
-	if (stat0 & 1) do_IRQ(i, regs);
+	if (stat0 & 1) 
+	{
+	 do_IRQ(i, regs);
+	}
       
       for (i = IRQ_SA1101_START + 32; stat1; i++, stat1 >>= 1)
-	if (stat1 & 1) do_IRQ(i, regs);
+	if (stat1 & 1) 
+	{
+	 do_IRQ(i, regs);
+	}
     }
 }
 
@@ -143,17 +161,17 @@ void __init sa1101_init_irq(int irq_nr)
   INTSTATCLR1 = -1;
   
   for (irq = IRQ_SA1101_GPAIN0; irq <= IRQ_SA1101_KPYIn7; irq++) {
-    irq_desc[irq].valid	= 1;
+    irq_desc[irq].valid		= 1;
     irq_desc[irq].probe_ok	= 0;
     irq_desc[irq].mask_ack	= sa1101_mask_and_ack_lowirq;
-    irq_desc[irq].mask	= sa1101_mask_lowirq;
+    irq_desc[irq].mask		= sa1101_mask_lowirq;
     irq_desc[irq].unmask	= sa1101_unmask_lowirq;
   }
   for (irq = IRQ_SA1101_KPYIn8; irq <= IRQ_SA1101_USBRESUME; irq++) {
-    irq_desc[irq].valid	= 1;
+    irq_desc[irq].valid		= 1;
     irq_desc[irq].probe_ok	= 0;
     irq_desc[irq].mask_ack	= sa1101_mask_and_ack_highirq;
-    irq_desc[irq].mask	= sa1101_mask_highirq;
+    irq_desc[irq].mask		= sa1101_mask_highirq;
     irq_desc[irq].unmask	= sa1101_unmask_highirq;
   }
   
@@ -167,17 +185,11 @@ void __init sa1101_init_irq(int irq_nr)
  * wake up the 1101
  */
 
-void sa1101_wake(int base)
+void sa1101_wake()
 {
   unsigned long flags;
   extern int sa1101_init_proc();
 
-  if (request_resource(&iomem_resource, &sa1101_resource))
-    {
-      printk("Cannot get iomem_resource\n");
-      return;
-    }
-  
   local_irq_save(flags);
 
   /* Control register setup */
@@ -208,13 +220,6 @@ void sa1101_wake(int base)
   SKPCR=0xFFFFFFFF;
   VMCCR=0x100;
   SMCR = 0x1E;
-  SNPR=0;
-
-
-  /* don't need USB */
-  /* don't need parallel port */
-  /* don't need keypad clock */
-  /* should have enabled PS/2 clock as well */
 
   local_irq_restore(flags);
 }
@@ -227,4 +232,11 @@ void sa1101_wake(int base)
 void sa1101_doze(void)
 {
   /* not implemented */
+	printk("SA1101 doze mode not implemented\n");
 }
+
+EXPORT_SYMBOL_GPL(sa1101_wake);
+EXPORT_SYMBOL_GPL(sa1101_doze);
+
+MODULE_DESCRIPTION("Main driver for SA-1101.");
+MODULE_LICENSE("GPL");
