@@ -17,7 +17,7 @@
 #include <linux/timer.h>
 
 #include <asm/hardware.h>
-#include "asm/hardware/sa1101.h"
+#include <asm/hardware/sa1101.h>
 #include <asm/irq.h>
 #include <asm/mach/irq.h>
 #include <asm/arch/irq.h>
