@@ -22,7 +22,7 @@ obj-  :=
 export-objs :=	assabet.o badge4.o dma-sa1100.o dma-sa1111.o \
 		flexanet.o freebird.o frodo.o generic.o h3600.o \
 		huw_webpanel.o irq.o pcipool.o pm-sa1100.o sa1111.o sa1111-pcibuf.o \
-		system3.o yopy.o usb_ctl.o usb_recv.o usb_send.o simputer.o ssp.o
+		system3.o yopy.o usb_ctl.o usb_recv.o usb_send.o simputer.o ssp.o sa1101.o
 
 ifeq ($(CONFIG_SA1100_JORNADA720),y)
 obj-y += dma-jornada720.o
