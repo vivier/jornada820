@@ -98,6 +98,8 @@ case "$ACTION" in
 	    log "/sbin/dhclient $DEVICE >/dev/null 2>&1" || exit 1
 	elif [ -x /sbin/pump ] ; then
 	    log "/sbin/pump $HN -i $DEVICE > /dev/null" || exit 1
+	elif [ -x /etc/foo ] ; then
+	    log "/etc/foo udhcp $DEVICE > /dev/null" || exit 1
 	else
 	    exit 1
 	fi

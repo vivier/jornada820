@@ -14,20 +14,20 @@ case "$ADDRESS" in
     # Use BOOTP (via /sbin/bootpc, or /sbin/pump)? [y/n]
     BOOTP="n"
     # Use DHCP (via /sbin/dhcpcd, /sbin/dhclient, or /sbin/pump)? [y/n]
-    DHCP="n"
+    DHCP="y"
     # If you need to explicitly specify a hostname for DHCP requests
     DHCP_HOSTNAME=""
     # Host's IP address, netmask, network address, broadcast address
-    IPADDR="192.168.2.20"
+    IPADDR="10.31.0.16"
     NETMASK="255.255.255.0"
-    NETWORK="192.168.2.0"
-    BROADCAST="192.168.2.255"
+    NETWORK="10.31.0.0"
+    BROADCAST="10.31.0.255"
     # Gateway address for static routing
-    GATEWAY="192.168.2.1"
+    GATEWAY="10.31.0.1"
     # Things to add to /etc/resolv.conf for this interface
     DOMAIN=""
     SEARCH=""
-    DNS_1="192.168.2.1"
+    DNS_1="10.31.0.1"
     DNS_2=""
     DNS_3=""
     # NFS mounts, should be listed in /etc/fstab

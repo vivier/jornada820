@@ -1,6 +1,6 @@
 ::respawn:/bin/sh
 ::sysinit:/etc/init.d/rcS
 ::ctrlaltdel:/bin/umount -a -r
-#vc/2::askfirst:-/bin/sh
-#vc/3::askfirst:-/bin/sh
+vc/2::askfirst:-/bin/sh
+vc/3::askfirst:-/bin/sh
 #vc/4::askfirst:-/bin/sh

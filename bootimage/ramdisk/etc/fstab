@@ -1,2 +1,5 @@
-proc            /proc   proc    defaults    0   0
-devfs           /dev    devfs   defaults    0   0
+proc		/proc	proc	defaults	0	0
+devfs           /dev    devfs	defaults	0	0
+/dev/hda2	swap	swap	defaults	0	0
+/dev/hda3	/mnt	ext2	user,noauto,noatime,umask=0	0	0
+/dev/sda1	/mnt/usbstick	vfat	user,noauto,umask=0	0	0

@@ -3,4 +3,7 @@
 echo
 echo "We all know Linux is great... It does infinite loops in 5 seconds."
 echo " --Linus Torvalds"
-echo
+echo -e '\33[?2c'
+
+. /etc/functions
+
