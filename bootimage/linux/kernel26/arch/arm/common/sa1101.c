@@ -12,7 +12,7 @@
  *
  * Created for the Jornada820 port.
  *
- * $Id: sa1101.c,v 1.4 2004/07/03 19:04:19 fare Exp $
+ * $Id: sa1101.c,v 1.5 2004/07/03 19:43:32 fare Exp $
  */
 
 #include <linux/module.h>
@@ -192,15 +192,15 @@ static struct irqchip low_irq = {
 
 static void mask_high_irq(unsigned int irq)
 {
-	INTENABLE1 &= ~SA1101_IRQMASK_LO(irq);
+	INTENABLE1 &= ~SA1101_IRQMASK_HI(irq);
 }
 static void unmask_high_irq(unsigned int irq)
 {
-	INTENABLE1 |= SA1101_IRQMASK_LO(irq);
+	INTENABLE1 |= SA1101_IRQMASK_HI(irq);
 }
 static int retrigger_high_irq(unsigned int irq)
 {
-	unsigned int mask = SA1101_IRQMASK_LO(irq);
+	unsigned int mask = SA1101_IRQMASK_HI(irq);
 	unsigned long ip1;
 	int i;
 
@@ -218,7 +218,7 @@ static int retrigger_high_irq(unsigned int irq)
 }
 static int type_high_irq(unsigned int irq, unsigned int flags)
 {
-	unsigned int mask = SA1101_IRQMASK_LO(irq);
+	unsigned int mask = SA1101_IRQMASK_HI(irq);
 	unsigned long ip1;
 
 	if (flags == IRQT_PROBE)
@@ -292,7 +292,7 @@ void sa1101_init_irq(int sa1101_irq)
 	/*
 	 * Register SA1101 interrupt
 	 */
-	request_irq(sa1101_irq, debug_sa1101_irq_handler, 0,
+	request_irq(sa1101_irq, debug_sa1101_irq_handler, SA_INTERRUPT,
 		    "SA1101 chain interrupt", NULL); // DEBUG
 //	set_irq_chained_handler(sa1101_irq, sa1101_irq_handler); // NORMAL
 	set_irq_type(sa1101_irq, IRQT_RISING);
@@ -314,7 +314,6 @@ extern void sa1101_wake(void)
 	 */
 
 	/* Snoop register */
-
 	SNPR &= ~SNPR_SnoopEn;	/* snoop		off */
 
 	/* Set up clocks */
@@ -329,7 +328,7 @@ extern void sa1101_wake(void)
 	/* reset clock divider */
 	SKCDR = 0x30000027;
 
-	/* reset  video memory controller */
+	/* reset video memory controller */
 	VMCCR=0x100;
 
 	/* setup shared memory controller */
