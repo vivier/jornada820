@@ -11,7 +11,7 @@
  *
  * Depends on Russel King's SSP driver to work.
  *
- * $Id: j820_keyb.c,v 1.2 2004/06/30 20:28:53 fare Exp $
+ * $Id: j820_keyb.c,v 1.3 2004/07/01 21:50:54 fare Exp $
  */
 
 #include <linux/kernel.h>
@@ -127,9 +127,9 @@ static int __init j820_kbd_init(void)
 	
 	input_register_device(&dev);
 
-	set_irq_type(GPIO_JORNADA820_KEYBOARD_IRQ, IRQT_FALLING);
 	request_irq(GPIO_JORNADA820_KEYBOARD_IRQ, j820_kbd_irq, 0,
 		    "j820_kbd_irq", NULL);
+	set_irq_type(GPIO_JORNADA820_KEYBOARD_IRQ, IRQT_FALLING);
 
 	init_timer(&timer);
 	timer.function = j820_kbd_timer;
