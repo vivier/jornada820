@@ -1,4 +1,4 @@
-$Id: TODO,v 1.13 2004/06/30 19:19:44 fare Exp $
+$Id: TODO,v 1.14 2004/06/30 21:25:18 fare Exp $
 
 Kernel 2.4
 * move on, dude!
@@ -109,14 +109,8 @@ conversion to 2.6 style done by Matan Ziv-Av
  Recognize as such the special button on the back?
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
-make a serio/sa1101ps2.c ???
-
- take inspiration from sa1111ps2.c
- glue the code together, including psmouse. Howsitdone?
- Apparently, when registering the struct serio *serio, we have
- serio->type == SERIO_8042 or SERIO_PS_PSTHRU, and in the keyboard and
- mouse driver, in .connect, we switch (serio->type & SERIO_TYPE).
- serio/serio.c#serio_find_dev() will do the rest...
+test the sa1101ps2.c device
+it depends on sa1101.c being updated.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 Add sleep/wakeup functions for all our drivers,
