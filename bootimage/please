@@ -1,0 +1,80 @@
+#!/bin/zsh -f
+
+# Script to ease hacking with the build trees.
+# To have all the dependencies, try that:
+#	apt-get install zsh realpath
+
+PROG=$@
+TOPDIR=$(dirname $(realpath $0))
+
+DBG () { print -r "$*" >&2 }
+abort () { DBG "$1" ; exit ${2:-42} }
+
+get_command () {
+  COMMAND=()
+  ARGUMENTS=()
+  SEPARATOR=--
+  case $1 in
+    -*) SEPARATOR=$1 ; shift ;;
+  esac
+  while [ $# -gt 0 ]; do
+    if [ "x$1" = "x$SEPARATOR" ] ; then
+	shift ; ARGUMENTS=( $@ ) ; return
+    else
+	COMMAND=($COMMAND $1) ; shift
+    fi
+  done
+}
+
+op () {
+  COMMAND=$1 ; shift
+  operate_on_files $COMMAND -- $@
+}
+operate_on_files () {
+  get_command $@
+  for i in $ARGUMENTS ; do
+    ( do_operate_on_file $i )
+  done
+}
+do_operate_on_file () {
+  file=$(realpath $1)
+  case $file in
+    $TOPDIR/linux/build/kernel*) base=$TOPDIR/linux/build/ ;;
+    $TOPDIR/linux/upstream/kernel*) base=$TOPDIR/linux/upstream/ ;;
+    $TOPDIR/linux/kernel*) base=$TOPDIR/linux/ ;;
+    *) return 1 ;;
+  esac
+  rel=${file#$base}
+  upstream=$TOPDIR/linux/upstream/$rel
+  work=$TOPDIR/linux/$rel
+  build=$TOPDIR/linux/build/$rel
+  $COMMAND
+}
+create () {
+  if [ -f $work ] ; then
+    abort "file $work already exists"
+  else
+    mkdir -p $(dirname $work)
+    cp -fa $upstream $work
+  fi
+}
+difforigver () {
+  diff -u $upstream $work 2>&1
+}
+showorigver () {
+  if [ ! -f $upstream ] ; then
+    abort "file $upstream doesn't exist"
+  else
+    base=$(basename $upstream)
+    cvs=$(dirname $upstream)/CVS
+    SER=$(perl -npe 's,^:[^:]*:([^:]*@)?(.*):.*,$2,' < $cvs/Root)
+    VER=$(grep "^/$base/" < $cvs/Entries |
+		cut -d/ -f3)
+    echo "/* Jornada820 version based on $base $VER from $SER
+ * \$Id\$
+ */"
+  fi
+}
+
+
+$@
