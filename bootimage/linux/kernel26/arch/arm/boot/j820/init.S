@@ -9,6 +9,8 @@
  *
  *  Header file for providing proper boot parameters to kernel.
  *  See http://www.arm.linux.org.uk/developer/booting.php
+ *
+ * $Id: init.S,v 1.2 2004/06/24 17:02:01 fare Exp $
  */
 #define __ASSEMBLY__ 1
 #include <asm/mach-types.h>

@@ -1,6 +1,8 @@
 #
 # linux/arch/arm/boot/j820/Makefile
 #
+# $Id: Makefile,v 1.2 2004/06/24 17:02:01 fare Exp $
+#
 extra-$(CONFIG_SA1100_JORNADA820) := j820
 
 ZIMAGE		= arch/arm/boot/zImage

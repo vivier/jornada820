@@ -7,6 +7,9 @@
 #
 # Copyright (C) 1995-2002 Russell King
 #
+# Jornada820 version based on Makefile 1.5 from cvs.handhelds.org
+# $Id: Makefile,v 1.2 2004/06/24 17:01:55 fare Exp $
+
 
 MKIMAGE         := $(srctree)/scripts/mkuboot.sh
 
