@@ -113,7 +113,6 @@ CONFIG_SA1100_SSP=m
 # Linux As Bootloader
 #
 # CONFIG_LAB is not set
-# CONFIG_SA1101 is not set
 
 #
 # Processor Type
@@ -175,7 +174,7 @@ CONFIG_PM=y
 CONFIG_PREEMPT=y
 # CONFIG_APM is not set
 # CONFIG_ARTHUR is not set
-CONFIG_CMDLINE="root=/dev/ram0 init=/linuxrc rw"
+CONFIG_CMDLINE="root=/dev/ram init=/linuxrc rw"
 # CONFIG_LEDS is not set
 CONFIG_ALIGNMENT_TRAP=y
 
@@ -694,7 +693,7 @@ CONFIG_EXT2_FS=y
 # CONFIG_REISERFS_FS is not set
 # CONFIG_JFS_FS is not set
 # CONFIG_XFS_FS is not set
-# CONFIG_MINIX_FS is not set
+CONFIG_MINIX_FS=y
 # CONFIG_ROMFS_FS is not set
 # CONFIG_QUOTA is not set
 # CONFIG_AUTOFS_FS is not set
@@ -719,7 +718,9 @@ CONFIG_VFAT_FS=y
 #
 CONFIG_PROC_FS=y
 CONFIG_SYSFS=y
-# CONFIG_DEVFS_FS is not set
+CONFIG_DEVFS_FS=y
+CONFIG_DEVFS_MOUNT=y
+# CONFIG_DEVFS_DEBUG is not set
 # CONFIG_DEVPTS_FS_XATTR is not set
 CONFIG_TMPFS=y
 # CONFIG_HUGETLB_PAGE is not set
@@ -870,10 +871,7 @@ CONFIG_FONT_SUN12x22=y
 #
 # Logo configuration
 #
-CONFIG_LOGO=y
-# CONFIG_LOGO_LINUX_MONO is not set
-# CONFIG_LOGO_LINUX_VGA16 is not set
-CONFIG_LOGO_LINUX_CLUT224=y
+# CONFIG_LOGO is not set
 
 #
 # Sound
@@ -930,25 +928,7 @@ CONFIG_BATTERY_MONITOR=m
 #
 # USB Gadget Support
 #
-CONFIG_USB_GADGET=m
-
-#
-# USB Device Controller drivers
-#
-CONFIG_USB_GADGET_SA1100=m
-CONFIG_USB_SA1100=y
-# CONFIG_USB_GADGET_DUALSPEED is not set
-
-#
-# USB Gadget Drivers
-#
-# CONFIG_USB_ZERO is not set
-CONFIG_USB_ETH=m
-CONFIG_USB_ETH_RNDIS=y
-# CONFIG_USB_GADGETFS is not set
-# CONFIG_USB_FILE_STORAGE is not set
-# CONFIG_USB_G_SERIAL is not set
-# CONFIG_USB_G_CHAR is not set
+# CONFIG_USB_GADGET is not set
 
 #
 # Kernel hacking
