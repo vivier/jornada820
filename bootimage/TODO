@@ -1,4 +1,4 @@
-$Id: TODO,v 1.9 2004/06/29 23:43:14 fare Exp $
+$Id: TODO,v 1.10 2004/06/30 01:22:33 fare Exp $
 
 Kernel 2.4
 * move on, dude!
@@ -102,5 +102,12 @@ j820kbd.c:
 convert to 2.6 style
 make a serio/sa1101ps2.c ???
 what about the mouse ???
+
+1) make a driver for the SPI, and put it in serio/spi.c or something.
+ make the name based on a better identifier.
+2) make a driver for the keyboard based on keyboard/atkbd.c.
+ Maybe special-case the Alt+arrow = PgUp, PgDn, Beg, End mappings? (?)
+ Maybe special-case the On/Off key (?)
+3) glue the code together, including psmouse. Howsitdone?
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
