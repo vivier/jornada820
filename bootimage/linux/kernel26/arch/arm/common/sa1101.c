@@ -12,7 +12,7 @@
  *
  * Created for the Jornada820 port.
  *
- * $Id: sa1101.c,v 1.9 2004/07/07 17:26:18 oleg820 Exp $
+ * $Id: sa1101.c,v 1.10 2004/07/09 14:28:33 oleg820 Exp $
  */
 
 #include <linux/module.h>
@@ -99,8 +99,9 @@ sa1101_irq_handler(unsigned int irq, struct irqdesc *desc, struct pt_regs *regs)
 	stat0 = INTSTATCLR0;
 	stat1 = INTSTATCLR1;
 	INTSTATCLR0 = stat0;
-	desc->chip->ack(irq);
 	INTSTATCLR1 = stat1;
+
+	desc->chip->ack(irq);
 
 	if (stat0 == 0 && stat1 == 0) {
 		do_bad_IRQ(irq, desc, regs);
