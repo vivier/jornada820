@@ -1,5 +1,5 @@
 /*
- * Jornada 820 keyboard driver.
+ * Jornada 820 keyboard driver (USAR 1855A01 chip - undocumented).
  *
  * 2004/06/30 Matan Ziv-Av <matan@svgalib.org>
  * port to kernel 2.6
@@ -7,11 +7,7 @@
  * 2004/01/22 George Almasi (galmasi@optonline.net)
  * Modelled after gc_keyb.c
  *
- * Cannot (yet) handle Fn key combinations and Power On/Off
- *
- * Depends on Russel King's SSP driver to work.
- *
- * $Id: j820_keyb.c,v 1.4 2004/07/07 16:29:54 oleg820 Exp $
+ * $Id: j820_keyb.c,v 1.5 2004/07/07 16:39:21 oleg820 Exp $
  */
 
 #include <linux/kernel.h>
@@ -64,10 +60,12 @@ static irqreturn_t j820_kbd_irq(int irq, void *dev_id, struct pt_regs *regs)
 	
 	disable_irq(irq);
 	
+	/* we can hang the kernel here, because the ssp driver does not support timeouts (yet) */
 	ssp_write_word(0x8200);
 	scancode = ssp_read_word();
+
 	key = kbmap[scancode&0x7f];
-	if(key) {
+	if(key != KEY_RESERVED) {
 		input_report_key(&dev, key, (scancode & 0x80) ? 0 : 1);
 	}
 	
