@@ -105,6 +105,35 @@ showorigver () {
  */"
   fi
 }
+showver () {
+  if [ ! -f $work ] ; then
+    abort "file $work doesn't exist"
+  else
+    base=$(basename $work)
+    cvs=$(dirname $work)/CVS
+    SER=$(perl -npe 's,^:[^:]*:([^:]*@)?(.*):.*,$2,' < $cvs/Root)
+    VER=$(grep "^/$base/" < $cvs/Entries |
+		cut -d/ -f3)
+    echo "version $VER"
+  fi
+}
+decrement_version () {
+  echo $1 | perl -ne 's/([0-9]+)\.([0-9]+)/print "$1.".($2-1)."\n"/e'
+}
+diffprev () {
+  if [ ! -f $work ] ; then
+    abort "file $work doesn't exist"
+  else
+    base=$(basename $work)
+    cvs=$(dirname $work)/CVS
+    SER=$(perl -npe 's,^:[^:]*:([^:]*@)?(.*):.*,$2,' < $cvs/Root)
+    VER=$(grep "^/$base/" < $cvs/Entries |
+		cut -d/ -f3)
+    (cd $TOPDIR ; file=linux/$rel
+    A="cvs -z9 diff -u -r $(decrement_version $VER) $file"
+    echo $A ; eval $A)
+  fi
+}
 ensure_build_file () {
   if [ -f $work ] ; then
     cp -laf $work $build
