@@ -26,7 +26,7 @@ busybox-dir: ${BUSYBOXTAR}
 	@bunzip2 -c ${BUSYBOXTAR} | tar xf - && \
 	touch $@
 
-src/CVS/Root src/CVS/Repository:
+src/CVS/Root:
 	mkdir -p src/CVS ; cd src/CVS || exit 2 ; \
 	echo :pserver:anonymous@busybox.net:/var/cvs > Root ; \
 	echo busybox > Repository ; \
@@ -34,17 +34,21 @@ src/CVS/Root src/CVS/Repository:
 	grep -q ':pserver:anonymous@busybox.net:/var/cvs' ~/.cvspass || \
 	echo '/1 :pserver:anonymous@busybox.net:/var/cvs A' >> ~/.cvspass
 
-busybox-cvs: src/CVS/Root	
+busybox-cvs: src/CVS/Root
 	cd src && cvs -z9 update -dfP
+	touch $@
 
-compile:
+compile: ${BUSYBOXDIR}/_install/bin/busybox
+	@cd ${BUSYBOXDIR} && \
+	cp busybox.links .. && \
+	cp _install/bin/busybox ..
+
+_install/bin/busybox:
 	@cd ${BUSYBOXDIR} && \
 	cp ../busybox.cfg .config && \
 	${MAKE}	CROSS=${TARGET}- oldconfig && \
 	${MAKE} CROSS=${TARGET}- busybox && \
-	${MAKE} CROSS=${TARGET}- install && \
-	cp busybox.links .. && \
-	cp _install/bin/busybox ..
+	${MAKE} CROSS=${TARGET}- install
 
 busybox: busybox-cvs compile
 
