@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.8 2004/04/27 16:27:55 fare Exp $
+# $Id: functions,v 1.9 2004/05/02 11:01:54 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -218,8 +218,8 @@ ensure_linuxpartition () {
   CHECK '[ -d /mnt/linux ]' \
 	'mkdir -p /mnt/linux' \
 	'Cannot make /mnt/linux directory.'
-  CHECK 'grep -q "$PART /mnt/linux" /proc/mounts' \
-	'mount $PART /mnt/linux -o noatime,rw' \
+  CHECK "grep -q '$PART /mnt/linux' /proc/mounts" \
+	"mount $PART /mnt/linux -o noatime,rw" \
 	"Cannot mount the target partition $PART to /mnt/linux."
   PARTNUM="$(echo $PART | cut -c9-)"
   change_root $PARTNUM # necessary if we're not PID=1
@@ -259,13 +259,16 @@ ensure_partition_bootable () {
 	"cp -a /$i $i" \
 	"Cannot ensure /$i on target partition."
   done
+  CHECK "grep -q pivot_root_part2 etc/functions" \
+	"cp -af /etc/functions etc/functions" \
+	"Cannot ensure pivot_root_part2 in target /etc/functions"
   LOGT "Ensuring a working bin/sh..."
   CHECK "[ -x bin/sh ]" \
 	"chroot . /bin/busybox --install -s" \
 	"Cannot ensure a working /bin/sh on target."
   LOGT "Installing kernel modules..."
-  MODULES=lib/modules/$(uname -r)
-  CHECK '[ -d $MODULES ]' 'cp -a /$MODULES $MODULES' \
+  MODULES="lib/modules/$(uname -r)"
+  CHECK "[ -d $MODULES ]" "cp -a /$MODULES $MODULES" \
 	"Cannot ensure kernel modules on target partition"
 }
 
@@ -330,14 +333,15 @@ pivot_root_part2 () {
   LOG "Cleaning filedescriptors"
   cd /
   exec < dev/console > dev/console 2>&1
-  LOG "Status:"
-  cat proc/mounts
-  ps
+  LOGT "mounts:
+$(cat proc/mounts)"
+  LOGT "ps:
+$(ps)"
   LOG "Unmounting dev and proc from initrd"
-  umount /initrd/proc
-  umount /initrd/dev
+  umount initrd/dev
+  umount initrd/proc
   LOG "Freeing resources occupied by the initrd..."
-  umount /initrd
+  umount initrd
   # problem: blockdev (part of the util-linux debian package) isn't in busybox
   blockdev --flushbufs /dev/rd/0 # /dev/ram0
   if [ 1 = $$ ] ; then
