@@ -25,13 +25,16 @@ CANONICAL_PATH          = /bin:/usr/bin
 
 RAMDISKIMAGE=ramdiskimage
 
-all: ramdiskimage
+all: ramdiskimage.gz
 
 ramdiskimage: cmdfile
 	dd if=/dev/zero of=ramdiskimage count=3072 bs=1024
 	$(MKE2FS) -F ramdiskimage
 	$(DEBUGFS) -f cmdfile
 	$(E2FSCK) -f -y ramdiskimage ; :
+
+ramdiskimage.gz: ramdiskimage
+	gzip -9 < $< > $@
 
 # ----------------- ramdiskimage command file ------------------------------
 
@@ -69,8 +72,14 @@ pcmcia:
 
 # ---------------------------------------------------------------------------
 
-clean:
-	$(RM) ramdiskimage *~ cmdfile
+localclean:
+	$(RM) ramdiskimage* *~ cmdfile
+	$(RM) -rf lib/modules
+
+clean: localclean
 	${MAKE} -C busybox clean
 	${MAKE} -C pcmcia clean
-	$(RM) -rf lib/modules
+
+distclean mrproper: localclean
+	${MAKE} -C busybox distclean
+	${MAKE} -C pcmcia distclean

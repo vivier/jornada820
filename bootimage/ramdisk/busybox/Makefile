@@ -35,6 +35,11 @@ busybox: busybox-dir
 	cp busybox.links .. && \
 	cp _install/bin/busybox ..
 
-clean:
-	$(RM) -rf ${BUSYBOXTAR} ${BUSYBOXDIR}
+localclean:
+	$(RM) -rf ${BUSYBOXDIR}
 	$(RM) busybox-dir busybox.links busybox
+
+clean:	localclean
+
+distclean veryclean mrproper:: localclean
+	$(RM) ${BUSYBOXTAR}

@@ -22,21 +22,23 @@ KERNELDIR		= linux/kernel
 # --------------------------------------------------------------------------
 all:: j820
 
-
-clean::
+localclean::
 	-${RM} vmlinux j820
+
+clean:: localclean
 	${MAKE} -C ${KERNELDIR} ARCH=arm clean
 	${MAKE} -C ramdisk clean
 
-distclean:: clean
+distclean:: localclean
 	${MAKE} -C ${KERNELDIR} ARCH=arm mrproper
+	${MAKE} -C ramdisk ARCH=arm mrproper
 
 # -------------------------------------------------------------------------- 
 #                    build the boot image
 # --------------------------------------------------------------------------
 
 j820: config depend ramdisk
-	export RDIMAGE=`pwd`/ramdisk/ramdiskimage && \
+	export RDIMAGE=`pwd`/ramdisk/ramdiskimage.gz && \
 	cd ${KERNELDIR} && \
 	${MAKE} \
 	    ARCH=arm \

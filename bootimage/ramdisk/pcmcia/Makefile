@@ -43,9 +43,11 @@ cardmgr cardctl:
 	$(CC) $(CFLAGS) cardmgr.c lex_config.c yacc_config.c -o cardmgr && \
 	cp cardctl cardmgr ../..
 
-clean:
+localclean:
 	$(RM) -rf ${PCMCIADIR}
 	$(RM) pcmcia-dir cardmgr cardctl
 
-veryclean mrproper: clean
+clean:	localclean
+
+distclean veryclean mrproper:: localclean
 	$(RM) ${PCMCIATAR}
