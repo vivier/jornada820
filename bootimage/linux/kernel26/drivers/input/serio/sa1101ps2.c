@@ -5,7 +5,7 @@
  *
  * Based on rmk's sa1111ps2.c from 2.6 and galmasi's j820_keyb.c from 2.4
  *
- * $Id: sa1101ps2.c,v 1.2 2004/07/03 15:54:38 fare Exp $
+ * $Id: sa1101ps2.c,v 1.3 2004/07/10 20:17:48 oleg820 Exp $
  */
 #include <linux/module.h>
 #include <linux/init.h>
@@ -207,7 +207,7 @@ static int __init ps2_test(struct ps2if *ps2if)
 	unsigned int stat;
 	int ret = 0;
 
-	printk("ps2_test base=%x, ps2cr=%x\n", ps2if->base, ps2if->base+SA1101_PS2CR); // DEBUG
+	printk("ps2_test base=%lx, ps2cr=%lx\n", ps2if->base, ps2if->base+SA1101_PS2CR); // DEBUG
 	stat = ps2_test_one(ps2if, PS2CR_FKC);
 	if (stat != PS2STAT_KBD) {
 		printk("PS/2 interface test failed[1]: %02x\n", stat);
@@ -306,7 +306,7 @@ static int __init ps2_probe(void)
 //	sa1101_disable_device(ps2if->dev);
 //	release_mem_region(dev->res.start,
 //			   dev->res.end - dev->res.start + 1);
- free:
+// free:
 	kfree(ps2if);
 	return ret;
 }
