@@ -94,14 +94,10 @@ static int __init jornada820_init(void)
 
   jornada820_init_proc();
 
-  /* Until I'm sure that the 1ms 16-bit counter setup by Wince at 0xc05c080
-   * has been disabled, I'm keeping this page out of Linux' memory pool -- fare
-   */
-  // request_mem_region (0xc005c000, 0x1000, "memory fux0red by 1 kHz clock");
-  /* galmasi declares the whole first 2 MBytes of RAM as dead */
-  // request_mem_region (0xc0000000, 0x200000, "dead-memory");
-  /* Actually, to be surer, he does it in a #ifdef CONFIG_SA1100_JORNADA820
-   * within arch/arm/mm/init.c -- an ugly hack, but it's done early on
+  /* Until we're sure that the 1kHz 16-bit counter at 0xc05c080 is disabled
+   * (as enabled by WinCE, or maybe hpcboot, or an interaction between them),
+   * we'll keeping the page out of the Linux memory pool.
+   * This is done in arch/arm/mm/init.c -- it's an ugly hack, but it works.
    */
 
   return 0;
@@ -109,43 +105,11 @@ static int __init jornada820_init(void)
 
 __initcall(jornada820_init);
 
-static void setup_memory(struct meminfo *mi)
-{
-	int bank = 0;
-	SET_BANK( bank, 0xc0000000, 16<<20 ); /* 16MB of RAM in bank 0 */
-	bank++;
-#ifdef CONFIG_JORNADA820_GRAB_VRAM
-	/* DON'T USE THIS, IT DOESN'T WORK.
-	 * Somehow, we can't use the 2MB of VRAM as normal RAM.
-	 * Maybe it's a matter of bad timings?
-	 * Ideally, we should have either a video driver for the external VGA,
-	 * or a driver for a block device that could be used as swap.
-	 */
-	SET_BANK( bank, 0xc8000000,  2<<20 ); /* 2MB of RAM in bank 1 */
-	bank++;
-#endif
-#ifdef CONFIG_JORNADA820_F1267A
-	/* F1267A memory expansion module to 32MB total memory */
-	SET_BANK( bank, 0xd0000000, 16<<20 ); /* 16 MB in bank 2 */
-	bank++;
-#endif
-	mi->nr_banks = bank;
-}
-
-/* *********************************************************************** */
-/*           temporary: setup the ramdisk                                  */
-/* *********************************************************************** */
-
 static void __init
 fixup_jornada820(struct machine_desc *desc, struct param_struct *params,
 		 char **cmdline, struct meminfo *mi)
 {
-  setup_memory(mi);
-
-  printk("fixup_jornada820: initrd at %lx, %ld bytes\n",
-	 params->u1.s.initrd_start,
-	 params->u1.s.initrd_size);
-  setup_initrd(params->u1.s.initrd_start, params->u1.s.initrd_size);
+/* Nothing to fixup - everything is now done in arch/arm/j820/init.S */
 }
 
 /* *********************************************************************** */
