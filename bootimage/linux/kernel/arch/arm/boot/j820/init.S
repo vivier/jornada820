@@ -130,7 +130,7 @@ setup_kernel_params:
 copy_loop:
 	        ldmia   r4!, {r7-r10}	@ copy 4 words at a time
 	        stmia   r5!, {r7-r10}
-	        cmp     r4, r6		@ it's ok if we copy a bit more
+	        cmp     r4, r6		@ it is ok if we copy a bit more
 	        ble     copy_loop
 
 @ set machine type and jump into (relocated) arch/arm/boot/compressed/head.S
