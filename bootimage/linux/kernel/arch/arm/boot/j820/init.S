@@ -33,19 +33,21 @@ _start:
 
 #if 0
 @ turn off interrupts, just in case. (hpcboot already did it.)
-		mrs	r2, cpsr
-		orr	r2, r2, #0xc0
-		msr	cpsr_c, r2
+	mrs	r2, cpsr
+	orr	r2, r2, #0xc0
+	msr	cpsr_c, r2
 #endif
 
-@ setup a minimal stack for our hacks
-		adr	r0, stuff
-		ldmia	r0, {r5-r9}
+@ initialize registers with appropriate values for our detection hack
+	mov	r5, #0xd0000000		@ memory address being tested
+	mov	r6, #0			@ size found up to now
+	mov	r7, #4*1024*1024	@ size increment
+	mov	r8, #128*1024*1024	@ maximum size for expansion board
+	mov	r9, #0xd0000000		@ base address for alias detection
 
 detection_loop:
 @ is there RAM at considered address?
 		bl	testram
-		@cmp	r0, #0
 		bne	detection_done
 @ is it but an alias to the base address?
 		cmp	r5, r9
@@ -72,17 +74,10 @@ detection_done:
 @ jump to the rest of the operations
 		b	setup_kernel_params
 
-stuff:
-		.word	0xd0000000	@ r5 memory address being tested
-		.word	0		@ r6 size found up to now
-		.word	4*1024*1024	@ r7 size increment
-		.word	128*1024*1024	@ r8 maximum size for expansion board
-		.word	0xd0000000	@ r9 base address for alias detection
-
 @ Originally taken from blob/src/blob/memtest.S
-        @ r5 = address to test
-        @ returns eq = ram present, ne = no ram
-        @ clobbers r1 - r4
+	@ r5 = address to test
+	@ returns eq = ram present, ne = no ram
+	@ clobbers r1 - r4
 testram:
 	ldmia	r5, {r1, r2}    @ store current value in r1 and r2
 	mov	r3, #0x55       @ write 0x55 to first word
@@ -104,9 +99,9 @@ bad:    stmia	r5, {r1, r2}    @ in any case, restore old data
         mov     pc, lr
 
 @ tests whether two valid RAM addresses are aliases one for the other
-        @ r5, r9 = addresses to test
-        @ returns r0 = 0 - no alias, r0 = 1 - alias
-        @ clobbers r1 - r2
+	@ r5, r9 = addresses to test
+	@ returns r0 = 0 - no alias, r0 = 1 - alias
+	@ clobbers r1 - r2
 testalias:
 	mov	r0, #0
 	ldr	r1, [r5]	@ get current values at r5 and r9
@@ -133,8 +128,7 @@ copy_loop:
 	        cmp     r4, r6		@ it is ok if we copy a bit more
 	        ble     copy_loop
 
-@ set machine type and jump into (relocated) arch/arm/boot/compressed/head.S
-		mov	r1, #MACH_TYPE_JORNADA820
+@ jump into (relocated) arch/arm/boot/compressed/head.S
 		b       _kernel_start
 
 data:
