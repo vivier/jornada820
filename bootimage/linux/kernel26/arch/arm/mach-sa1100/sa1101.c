@@ -9,7 +9,7 @@
  *
  * Created for the Jornada820 port.
  *
- * $Id: sa1101.c,v 1.5 2004/07/01 21:49:25 fare Exp $
+ * $Id: sa1101.c,v 1.6 2004/07/02 00:02:08 fare Exp $
  */
 
 #include <linux/module.h>
@@ -161,15 +161,6 @@ void __init sa1101_init_irq(int irq_nr)
   INTENABLE0 = 0;
   INTENABLE1 = 0;
   
-  /*
-   * detect on rising edge.  Note: Feb 2001 Errata for SA1101
-   * specifies that S0ReadyInt and S1ReadyInt should be '1'.
-   */
-  INTPOL0 = 0;
-  INTPOL1 = 
-    SA1101_IRQMASK_HI(IRQ_SA1101_S0_READY_NIREQ) |
-    SA1101_IRQMASK_HI(IRQ_SA1101_S1_READY_NIREQ);
-
   INTSTATCLR0 = -1;
   INTSTATCLR1 = -1;
 
@@ -192,61 +183,6 @@ void __init sa1101_init_irq(int irq_nr)
   } else {
 	  printk(KERN_ERR "SA1101: unable to claim IRQ %d\n", irq_nr);
   }
-}
-
-/*
- * Initialize the PCMCIA subsystem: turn on interrupts, reserve memory
- */
-
-static struct sa1101_pcmcia_irqs 
-{
-  int irq;
-  const char *str;
-} sa1101_pcmcia_irqs[] = {
-  { IRQ_SA1101_S0_CDVALID,     "PCMCIA card detect" },
-  { IRQ_SA1101_S0_BVD1_STSCHG, "PCMCIA BVD1" },
-  { IRQ_SA1101_S1_CDVALID,     "CF card detect" },
-  { IRQ_SA1101_S1_BVD1_STSCHG, "CF BVD1" },
-};
-
-int sa1101_pcmcia_init(void *handler)
-{
-  int i, ret;
-
-  if (!request_mem_region(_PCCR, 512, "PCMCIA")) return -1;
-  
-  for (i = ret = 0; i < ARRAY_SIZE(sa1101_pcmcia_irqs); i++)
-  {
-      ret = request_irq(sa1101_pcmcia_irqs[i].irq,
-			handler,
-			SA_INTERRUPT,
-			sa1101_pcmcia_irqs[i].str,
-			NULL);
-      if (ret) break;
-      set_irq_type(sa1101_pcmcia_irqs[i].irq, IRQT_RISING);
-		   /* XXX - are we sure it's RISING and not BOTHEDGE ??? */
-  }
-
-  if (i < ARRAY_SIZE(sa1101_pcmcia_irqs)) 
-  {
-	  printk(KERN_ERR "sa1101_pcmcia: unable to grab IRQ%d (%d)\n",
-		 sa1101_pcmcia_irqs[i].irq, ret);
-	  while (i--)
-		  free_irq(sa1101_pcmcia_irqs[i].irq, NULL);
-	  release_mem_region(_PCCR, 16);
-  }
-
-  return ret ? -1 : 2;
-}
-
-int sa1101_pcmcia_shutdown(void)
-{
-  int i;
-  for (i = 0; i < ARRAY_SIZE(sa1101_pcmcia_irqs); i++) 
-   free_irq(sa1101_pcmcia_irqs[i].irq, NULL);
-
-  release_mem_region(_PCCR, 512);
-  return 0;
 }
 
 extern int sa1101_usb_shutdown(void)
@@ -338,8 +274,6 @@ void sa1101_doze(void)
 
 EXPORT_SYMBOL_GPL(sa1101_wake);
 EXPORT_SYMBOL_GPL(sa1101_doze);
-EXPORT_SYMBOL_GPL(sa1101_pcmcia_init);
-EXPORT_SYMBOL_GPL(sa1101_pcmcia_shutdown);
 EXPORT_SYMBOL_GPL(sa1101_usb_init);
 EXPORT_SYMBOL_GPL(sa1101_usb_shutdown);
 EXPORT_SYMBOL_GPL(sa1101_vga_init);

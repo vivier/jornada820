@@ -30,7 +30,7 @@
     
 ======================================================================*/
 /* Jornada820 version based on sa1100_generic.c 1.3 from cvs.handhelds.org
- * $Id: sa1100_generic.c,v 1.1 2004/06/24 16:58:51 fare Exp $
+ * $Id: sa1100_generic.c,v 1.2 2004/07/02 00:02:07 fare Exp $
  */
 /*
  * Please see linux/Documentation/arm/SA1100/PCMCIA for more information
@@ -71,7 +71,7 @@ static int (*sa11x0_pcmcia_hw_init[])(struct device *dev) = {
 	pcmcia_jornada56x_init,
 #endif
 #ifdef CONFIG_SA1100_JORNADA820
-	pcmcia_jornada820_init,
+	pcmcia_sa1101_init,
 #endif
 #ifdef CONFIG_SA1100_PANGOLIN
 	pcmcia_pangolin_init,
