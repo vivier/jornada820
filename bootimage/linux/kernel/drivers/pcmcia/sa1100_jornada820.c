@@ -15,74 +15,6 @@
 
 #include "sa1100_generic.h"
 
-#define SA1101_IRQMASK_LO(x)    (1 << (x - IRQ_SA1101_START))
-#define SA1101_IRQMASK_HI(x)    (1 << (x - IRQ_SA1101_START - 32))
-
-static struct irqs 
-{
-  int irq;
-  const char *str;
-} irqs[] = {
-  { IRQ_SA1101_S0_CDVALID,     "PCMCIA card detect" },
-  { IRQ_SA1101_S0_BVD1_STSCHG, "PCMCIA BVD1" },
-  { IRQ_SA1101_S1_CDVALID,     "CF card detect" },
-  { IRQ_SA1101_S1_BVD1_STSCHG, "CF BVD1" },
-};
-
-/* ************************************************************************* */
-/*  Initialize the PCMCIA subsystem: turn on interrupts, reserve memory      */
-/* ************************************************************************* */
-
-int jornada820_pcmcia_init(struct pcmcia_init *init)
-{
-  int i, ret;
-
-  if (!request_mem_region(_PCCR, 512, "PCMCIA")) return -1;
-  
-  for (i = ret = 0; i < ARRAY_SIZE(irqs); i++)
-    {
-      ret = request_irq(irqs[i].irq, 
-			init->handler, 
-			SA_INTERRUPT,
-			irqs[i].str, 
-			NULL);
-      if (ret)break;
-    }
-
-
-  if (i < ARRAY_SIZE(irqs)) 
-    {
-      printk(KERN_ERR "Jornada820_pcmcia: unable to grab IRQ%d (%d)\n",
-	     irqs[i].irq, ret);
-      while (i--) free_irq(irqs[i].irq, NULL);
-      release_mem_region(_PCCR, 16);
-    }
-
-  INTPOL1 |= (SA1101_IRQMASK_HI(IRQ_SA1101_S0_CDVALID) |
-              SA1101_IRQMASK_HI(IRQ_SA1101_S1_CDVALID) |
-              SA1101_IRQMASK_HI(IRQ_SA1101_S0_BVD1_STSCHG) |
-              SA1101_IRQMASK_HI(IRQ_SA1101_S0_BVD1_STSCHG));
-
-  return ret ? -1 : 2;
-}
-
-/* ************************************************************************* */
-/*      Shut down PCMCIA: release memory, interrupts.                        */
-/* ************************************************************************* */
-
-int jornada820_pcmcia_shutdown(void)
-{
-  int i;
-  for (i = 0; i < ARRAY_SIZE(irqs); i++) free_irq(irqs[i].irq, NULL);
-
-  INTPOL1 &= ~(SA1101_IRQMASK_HI(IRQ_SA1101_S0_CDVALID) |
-	       SA1101_IRQMASK_HI(IRQ_SA1101_S1_CDVALID) |
-	       SA1101_IRQMASK_HI(IRQ_SA1101_S0_BVD1_STSCHG) |
-	       SA1101_IRQMASK_HI(IRQ_SA1101_S0_BVD1_STSCHG));
-
-  release_mem_region(_PCCR, 512);
-  return 0;
-}
 
 /* ************************************************************************* */
 /*             return socket status                                          */
@@ -99,7 +31,7 @@ int jornada820_pcmcia_socket_state(struct pcmcia_state_array *state)
   state->state[0].ready  = (status & PCSR_S0_ready)        ? 1 : 0;
   state->state[0].vs_3v  = (status & PCSR_S0_VS1)          ? 0 : 1;
   state->state[0].vs_Xv  = (status & PCSR_S0_VS2)          ? 0 : 1;
-  state->state[0].bvd1   = (status & PCSR_S0_BVD1_nSTSCHG) ? 1 : 0;
+  state->state[0].bvd1   = (status & PCSR_S0_BVD1_nSTSCHG) ? 1 : 0 ;
   state->state[0].bvd2   = (status & PCSR_S0_BVD2_nSPKR)   ? 1 : 0;
   state->state[0].wrprot = (status & PCSR_S0_WP)           ? 1 : 0;
   
@@ -111,7 +43,6 @@ int jornada820_pcmcia_socket_state(struct pcmcia_state_array *state)
   state->state[1].bvd2   = (status & PCSR_S1_BVD2_nSPKR)   ? 1 : 0;
   state->state[1].wrprot = (status & PCSR_S1_WP)           ? 1 : 0;
 
-  // printk ("pcmcia %x %x\n", state->state[0], state->state[1]);
   return 0;
 }
 
@@ -192,6 +123,16 @@ int jornada820_pcmcia_configure_socket(const struct pcmcia_configure *conf)
   if (conf->irq)  enable_irq(irq);
   else            disable_irq(irq);
   return 0;
+}
+
+int jornada820_pcmcia_init(struct pcmcia_init *init)
+{
+  return sa1101_pcmcia_init(init->handler);
+}
+
+int jornada820_pcmcia_shutdown(void)
+{
+  return sa1101_pcmcia_shutdown();
 }
 
 int jornada820_pcmcia_socket_init(int sock)
