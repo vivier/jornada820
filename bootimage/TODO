@@ -1,4 +1,4 @@
-$Id: TODO,v 1.5 2004/06/25 17:51:17 fare Exp $
+$Id: TODO,v 1.6 2004/06/29 06:14:54 fare Exp $
 
 Kernel 2.4
 * move on, dude!
@@ -105,4 +105,20 @@ make[2]: *** [drivers/input/serio/i8042.o] Error 1
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 drivers/misc/mcp-core.c: In function `mcp_host_unregister':
 drivers/misc/mcp-core.c:193: warning: implicit declaration of function `device_unregister_wait'
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+Why are we experiencing problems with uncompressing a compressed ramdiskimage,
+whereas we used not to? Maybe upstream bug? Maybe a build glitch?
+For kernel 2.4, somehow we can survive with a non-compressed
+   ramdiskimage, or sometimes by rebuilding. Why is there this bug?
+For kernel 2.6, maybe we should investigate what happens with kinit...
+	http://tree.celinuxforum.org/pubwiki/moin.cgi/EarlyUserSpace
+	Documentation/early-userspace/README
+Somehow with 2.6, the kernel says
+"checking if image is initramfs...it isn't (ungzip failed); looks like
+   an initrd
+Freeing initrd memory: 4096K"
+There's a bug to be traced in init/do_mounts_rd.c or init/initramfs.c
+-- somehow, the ramdisk isn't loaded properly.
+
+
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
