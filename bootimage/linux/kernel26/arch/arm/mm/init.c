@@ -8,7 +8,7 @@
  * published by the Free Software Foundation.
  */
 /* Jornada820 version based on init.c 1.3 from cvs.handhelds.org
- * $Id: init.c,v 1.2 2004/06/27 13:42:08 oleg820 Exp $
+ * $Id: init.c,v 1.3 2004/07/01 21:53:02 fare Exp $
  */
 
 #include <linux/config.h>
@@ -645,6 +645,7 @@ void free_initmem(void)
 
 #ifdef CONFIG_BLK_DEV_INITRD
 
+#if 0
 static int keep_initrd;
 
 void free_initrd_mem(unsigned long start, unsigned long end)
@@ -660,4 +661,13 @@ static int __init keepinitrd_setup(char *__unused)
 }
 
 __setup("keepinitrd", keepinitrd_setup);
+#else
+void free_initrd_mem(unsigned long start, unsigned long end)
+{
+        if (start < end)
+                free_area(start, end, "initrd");
+}
+
+#endif
+
 #endif
