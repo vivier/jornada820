@@ -16,24 +16,26 @@ and tell it where to find the bootimage
 <b><a href="files/j820">j820</a></b>.
 </p>
 <p align="justify">
-The bootimage runs the Linux kernel off a ramdisk
-with a minimal yet functional userland,
-that includes busybox, pcmcia_cs binaries, a few scripts,
+The bootimage runs the Linux kernel with a ramdisk
+containing a minimal yet functional userland:
+the ramdisk includes busybox, pcmcia_cs binaries, a few scripts,
 and compressed kernel modules.
-From there, you already have a working Linux environment,
-and you can setup and chain into
-a full-fledged Linux distribution of your choice,
-as installed in a CF card of by NFS.
+From there, you already have an interactive Linux environment,
+and you can setup a full-fledged Linux distribution of your choice,
+as installed in a CF card of by NFS,
+and chain-boot into it.
 </p>
 <!-- required stuff -->
-<br><center><A href="http://sourceforge.net"> <IMG src="http://sourceforge.net/sflogo.php?group_id=102135&amp;type=5" width="105" height="31" border="0" alt="SourceForge.net Logo" /></A></center>
-<br><center><script LANGUAGE="JavaScript">
+<p align="right">
+<a href="http://sourceforge.net"> <img src="http://sourceforge.net/sflogo.php?group_id=102135&amp;type=5" width="105" height="31" border="0" alt="SourceForge.net Logo" /></a>
+      <script language="JavaScript">
          lastModDate  = new Date(document.lastModified)
          lastModMonth = lastModDate.getMonth() + 1
          lastModDay   = lastModDate.getDate()
          lastModYear  = lastModDate.getYear()
-         document.write("<I><SMALL>Last updated: " + lastModMonth
-         + "/" + lastModDay + "/" + lastModYear + "</SMALL></I>")
-</script></center>
+         document.write("<i><small>Last updated: " + lastModMonth
+         + "/" + lastModDay + "/" + lastModYear + "</small></i>")
+      </script>
+</p>
 </body>
 </html>
