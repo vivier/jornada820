@@ -130,6 +130,8 @@ do-j820:
 
 sandisk: j820
 	mount /mnt/sandisk/; cp j820 /mnt/sandisk/; umount /mnt/sandisk/
+sandisk-fare:
+	( mount /dev/sda1 /mnt && ( ls -l j820-26; cp -f j820-26 /mnt ; umount /mnt ) ; echo -e '\007' )
 
 j820-26: config26 modules26 ramdisk26 do-j820-26
 do-j820-26:

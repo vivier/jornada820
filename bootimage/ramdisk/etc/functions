@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.18 2004/06/30 19:19:11 fare Exp $
+# $Id: functions,v 1.19 2004/07/03 15:53:58 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -20,7 +20,7 @@ ping () {
 
 mcs () {
   # my console settings: visible cursor, latin1 encoding, normal colors, bold.
-  echo -ne '\033[?2c\033(?B\033[m' # \033[1m ]])]
+  echo -ne '\033[?2c\033(B\033[m' # \033[1m ]])]
 }
 mcsv () { # my console settings for vt #n
   mcs > /dev/vc/${1:-1}
@@ -445,7 +445,7 @@ pivot_root_part2 () {
 }
 
 banner () {
-  echo -ne '\033[?2c\033(?B\033[m\033[1m'
+  echo -e '\033[?2c\033(B\033[m\033[1m'
   echo -e 'Welcome to Linux for the HP Jornada 820.\033[m'
 }
 sysinit () {
