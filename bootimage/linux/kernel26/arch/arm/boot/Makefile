@@ -8,7 +8,7 @@
 # Copyright (C) 1995-2002 Russell King
 #
 # Jornada820 version based on Makefile 1.5 from cvs.handhelds.org
-# $Id: Makefile,v 1.3 2004/06/28 12:40:44 fare Exp $
+# $Id: Makefile,v 1.4 2004/06/29 23:14:36 fare Exp $
 
 
 MKIMAGE         := $(srctree)/scripts/mkuboot.sh
@@ -67,6 +67,7 @@ params_phys-$(CONFIG_ARCH_VERSATILE_PB)	:= 0x00000100
 initrd_phys-$(CONFIG_ARCH_VERSATILE_PB)	:= 0x00800000
    zreladdr-$(CONFIG_SA1100_JORNADA820)	:= 0xc0208000
 # ztextaddr-$(CONFIG_SA1100_JORNADA820)	:= 0xc0800000
+#  zbssaddr-$(CONFIG_SA1100_JORNADA820)	:= 0xc0600000
 params_phys-$(CONFIG_SA1100_JORNADA820)	:= 0xc0200100
 initrd_phys-$(CONFIG_SA1100_JORNADA820)	:= 0xc0a00000
 
@@ -85,6 +86,10 @@ ZBSSADDR	:= $(CONFIG_ZBOOT_ROM_BSS)
 else
 ZTEXTADDR	:= 0
 ZBSSADDR	:= ALIGN(4)
+endif
+ifeq ($(CONFIG_SA1100_JORNADA820),y)
+ZTEXTADDR	:= 0xc0800000
+ZBSSADDR	:= 0xc0600000
 endif
 
 export	ZTEXTADDR ZBSSADDR ZRELADDR INITRD_PHYS PARAMS_PHYS
