@@ -1,5 +1,5 @@
 # Jornada820 version based on Kconfig 1.13 from cvs.handhelds.org
-# $Id: Kconfig,v 1.5 2004/07/10 18:58:19 fare Exp $
+# $Id: Kconfig,v 1.6 2004/07/10 19:51:47 oleg820 Exp $
 
 
 if ARCH_SA1100
@@ -168,8 +168,8 @@ config SA1100_JORNADA720
 config SA1100_JORNADA820
 	bool "HP Jornada 820"
 	depends on ARCH_SA1100
-	select SA1100_SSP
-	select SA1101
+#	select SA1100_SSP
+#	select SA1101
 	help
 	  The HP Jornada 820 computer is a no-compromise PDA from late 1998,
 	  with full-size keyboard and full-size VGA LCD.
@@ -341,7 +341,7 @@ config SA1100_STORK
 #	  :: write me ::
 
 config SA1101
-	bool "SA1101 companion chip"
+	tristate "SA1101 companion chip"
 	depends on SA1100_JORNADA820
 	help
 	  Say Y here to enable support for the generic sa1101 driver.
@@ -356,7 +356,7 @@ config SA1100_SSP
 	  720 touchscreen support.
 
 config REGISTERS
-	tristate "SA110/SA1101 Register access through /proc file system."
+	tristate "SA1100/SA1101 Register access through /proc file system."
 	depends on ARCH_SA1100
 
 config SA1100_USB
