@@ -22,6 +22,8 @@
 #include <asm/arch/irq.h>
 #include <asm/uaccess.h>
 
+#include <asm/io.h>
+
 struct resource sa1101_resource = {
   .name   = "SA1101"
 };
@@ -217,9 +219,10 @@ void sa1101_wake()
     SKPCR_DCLKEn;              /* DACs */
   
   SKCDR = 0x30000027;
-  SKPCR=0xFFFFFFFF;
-  VMCCR=0x100;
-  SMCR = 0x1E;
+  VMCCR=0x100; /* 0x86 */
+
+  /* why ? */
+  SMCR=SMCR_ColAdrBits(10)+SMCR_RowAdrBits(12)+SMCR_ArbiterBias;
 
   local_irq_restore(flags);
 }
@@ -233,6 +236,20 @@ void sa1101_doze(void)
 {
   /* not implemented */
 	printk("SA1101 doze mode not implemented\n");
+}
+
+int j820_apm_get_power_status(u_char *ac_line_status, u_char *battery_status, u_char *battery_flag, 
+                              u_char *battery_percentage, u_short *battery_life)
+{
+	*ac_line_status=(PBDRR & (1<<5)) ? 0:1;
+
+	/* TODO: */
+	*battery_status=0xff;
+	*battery_flag=0xff;
+	*battery_percentage=0xff;
+	*battery_life=0xff;
+
+ return 0;
 }
 
 EXPORT_SYMBOL_GPL(sa1101_wake);

@@ -168,6 +168,9 @@ static int apm_get_power_status(u_char *ac_line_status,
 #ifdef CONFIG_IPAQ_HANDHELD
             h3600_apm_get_power_status(ac_line_status, battery_status, battery_flag, battery_percentage, battery_life);
 #endif
+#ifdef CONFIG_SA1100_JORNADA820
+            j820_apm_get_power_status(ac_line_status, battery_status, battery_flag, battery_percentage, battery_life);
+#endif
 	return APM_SUCCESS;
 }
 
