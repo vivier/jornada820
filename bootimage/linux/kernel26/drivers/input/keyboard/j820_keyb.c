@@ -7,7 +7,7 @@
  * 2004/01/22 George Almasi (galmasi@optonline.net)
  * Modelled after gc_keyb.c
  *
- * $Id: j820_keyb.c,v 1.6 2004/07/09 16:42:04 oleg820 Exp $
+ * $Id: j820_keyb.c,v 1.7 2004/07/15 09:24:56 fare Exp $
  */
 
 #include <linux/kernel.h>
@@ -134,4 +134,5 @@ static void __exit j820_kbd_exit(void)
 
 module_init(j820_kbd_init);
 module_exit(j820_kbd_exit);
-
+MODULE_DESCRIPTION("Jornada 820 keyboard driver");
+MODULE_LICENSE("GPL");

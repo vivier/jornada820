@@ -372,3 +372,5 @@ static void __exit ohci_hcd_sa1101_cleanup (void)
 
 module_init (ohci_hcd_sa1101_init);
 module_exit (ohci_hcd_sa1101_cleanup);
+MODULE_DESCRIPTION("SA1101 USB OHCI driver");
+MODULE_LICENSE("GPL");

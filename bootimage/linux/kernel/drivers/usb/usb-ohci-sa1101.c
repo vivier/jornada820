@@ -108,3 +108,5 @@ static void __exit sa1101_ohci_exit(void)
 
 module_init(sa1101_ohci_init);
 module_exit(sa1101_ohci_exit);
+MODULE_DESCRIPTION("SA1101 USB driver");
+MODULE_LICENSE("GPL");
