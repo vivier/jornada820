@@ -8,9 +8,7 @@
  * re-initialize everything, but lazily allow certain pre-set WinCE
  * things to continue functioning.
  *
- * However, one important thing we have to reset is the coprocessor's
- * PID register - setting this to 0 allows us to use normal Linux-ish
- * paging.
+ * This dependance will removed soon (?).
  */
 
 #include <linux/init.h>
@@ -32,14 +30,6 @@
 static int __init jornada820_init(void)
 {
   printk("In jornada820_init\n");
-
-  /* TODO: move all asm to init.S */
-
-  /* we need to fix the PID register, which was left on by WinCE */
-  asm volatile ("mov r0, #0; mcr p15, 0, r0, c13, c0, 0;");
-
-  /* enable clock switching */
-  asm volatile ("mov r0, #0; mcr p15, 0, r0, c15, c1, 2;");
 
   /* allow interrupts: */
   /* audio et al. */
@@ -107,13 +97,6 @@ static int __init jornada820_init(void)
 
 __initcall(jornada820_init);
 
-static void __init
-fixup_jornada820(struct machine_desc *desc, struct param_struct *params,
-		 char **cmdline, struct meminfo *mi)
-{
-/* Nothing to fixup - everything is now done in arch/arm/boot/j820/init.S */
-}
-
 /* *********************************************************************** */
 /*              map Jornada 820-specific IO (think SA1101)                 */
 /* *********************************************************************** */
@@ -139,7 +122,6 @@ static void __init jornada820_map_io(void)
 MACHINE_START(JORNADA820, "HP Jornada 820")
      BOOT_MEM(0xc0000000, 0x80000000, 0xf8000000)
      BOOT_PARAMS(0xc0200100)
-     FIXUP(fixup_jornada820)
      MAPIO(jornada820_map_io)
      INITIRQ(sa1100_init_irq)
      SOFT_REBOOT
