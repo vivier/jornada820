@@ -52,6 +52,7 @@ obj-$(CONFIG_SA1100_PT_SYSTEM3) += cpu-sa1110.o
 obj-$(CONFIG_SA1100_IPAQ) += cpu-sa1110.o
 obj-$(CONFIG_SA1100_SIMPUTER) += cpu-sa1110.o
 obj-$(CONFIG_SA1100_LART) += cpu-sa1100.o
+obj-$(CONFIG_SA1100_JORNADA820) += cpu-sa1100.o
 endif
 
 # Next, the SA1111 stuff.
