@@ -111,7 +111,7 @@ static void __init
 fixup_jornada820(struct machine_desc *desc, struct param_struct *params,
 		 char **cmdline, struct meminfo *mi)
 {
-/* Nothing to fixup - everything is now done in arch/arm/j820/init.S */
+/* Nothing to fixup - everything is now done in arch/arm/boot/j820/init.S */
 }
 
 /* *********************************************************************** */
