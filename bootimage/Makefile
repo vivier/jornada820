@@ -201,7 +201,7 @@ do-modules: ramdisk/modules.tar.bz2
 ramdisk/modules.tar.bz2: ramdisk/lib/modules
 	cd ramdisk && tar jcf modules.tar.bz2 lib/modules
 
-ramdisk/lib/modules:
+ramdisk/lib/modules: force
 	export MODDIR=$(TOPDIR)/ramdisk/ && \
 	echo $${MODDIR} && \
 	cd ${KBUILDDIR} && \
@@ -220,7 +220,7 @@ ramdisk/modules26.tar.bz2: $(KBUILDDIR26)/target/lib/modules
 	tar jcf modules.tar.bz2 lib/modules && \
 	ln -f modules.tar.bz2 $(TOPDIR)/ramdisk/modules26.tar.bz2
 
-$(KBUILDDIR26)/target/lib/modules:
+$(KBUILDDIR26)/target/lib/modules: force
 	export MODDIR=$(TOPDIR)/$(KBUILDDIR26)/target/ && \
 	mkdir -p $${MODDIR} && \
 	echo $${MODDIR} && \
