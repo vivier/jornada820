@@ -1,6 +1,6 @@
 /*
  *  linux/arch/arm/boot/j820/init.S
- *  George Almasi (galmasi@optonline.net)
+ *  George Almasi (galmasi@optonline.net) and Fare Rideau (fare@tunes.org)
  *  Based on Russel King's bootp/init.S
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,9 @@
 		.type	_start, #function
 		.globl	_start
 _start:
+
+#define CONFIG_JORNADA820_F1267A_AUTODETECT 1
+/* It's been tested to work, so we enable it by default. */
 
 #ifdef CONFIG_JORNADA820_F1267A_AUTODETECT
 @ detect whether or not we have memory expansion on RAM bank 2
@@ -63,11 +66,8 @@ detection_loop:
 detection_done:	
 @ if we did find RAM, update the tags.
 		cmp	r6, #0
-		beq	1f
-		str	r6, expansion_mem
-		mov	r1, #4
-		str	r1, expansion_tag
-1:
+		streq	r6, expansion_tag	@ mark as end of tags
+		strne	r6, expansion_mem	@ fill the size
 
 @ jump to the rest of the operations
 		b	setup_kernel_params
@@ -79,7 +79,7 @@ stuff:
 		.word	128*1024*1024	@ r8 maximum size for expansion board
 		.word	0xd0000000	@ r9 base address for alias detection
 
-@ Stolen from blob/src/blob/memtest.S
+@ Originally taken from blob/src/blob/memtest.S
         @ r5 = address to test
         @ returns eq = ram present, ne = no ram
         @ clobbers r1 - r4
@@ -144,13 +144,12 @@ data:
 		.word	params, end_of_tags
 		@ tags
 		.word	2, 0x54410001		@ ATAG_CORE
-		.word   4, 0x54410002		@ ATAG_MEM: main memory
-		.word	16*1024*1024, 0xC0000000
 		.word	4, 0x54420005		@ ATAG_INITRD2
 		.word	initrd_start, initrd_size
-
+		.word   4, 0x54410002		@ ATAG_MEM: main memory
+		.word	16*1024*1024, 0xC0000000
 #ifdef CONFIG_JORNADA820_F1267A_AUTODETECT
-expansion_tag:	.word   0, 0x54410002		@ ATAG_MEM: expansion board
+expansion_tag:	.word   4, 0x54410002		@ ATAG_MEM: expansion board
 expansion_mem:	.word	16*1024*1024, 0xD0000000
 #endif
 		.word	0,0			@ ATAG_NONE: end marker
