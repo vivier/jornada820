@@ -1,25 +1,24 @@
-$Id: TODO,v 1.14 2004/06/30 21:25:18 fare Exp $
+$Id: TODO,v 1.15 2004/07/01 20:12:31 fare Exp $
 
 Kernel 2.4
 * move on, dude!
 * maybe fix issues (that may reappear in 2.6?):
  * the APM kill-the-machine-if-kapmd-killed bug if still present
- * make the cursor visible by default
 
 Kernel 2.6
 * port the keyboard driver
 * ensure the mouse driver works
 * port the sa1101 driver
-* port and fix the apm driver
 * port and fix the PCMCIA driver
-* ensure that backlight control works on fb
-* fix the above issues from kernel 2.4 if they are still there.
 * make the USB driver work
+* port and fix the apm driver
+* add sleep/wakeup functions to all our drivers, so as to support swsusp.
 * make the sound driver work
-* play nicer with booting to/from WinCE
+* ensure that backlight control works on fb
 * get external VGA working and/or some swap-on-VRAM
 * get modem working?
 * get some spiffy 802.11g card working!
+* play nicer with booting to/from WinCE
 
 Bootdisk
 * have pcmcia and busybox from CVS.
@@ -31,13 +30,14 @@ Bootdisk
 Userland
 * gather a sensible base for userland (?)
 * maybe based on OE? on uwoody?
+* get a small distribution that includes xemacs and some extensions
 
 Web site
 * have a cron job update the web site from CVS.
 
 Bootloader
 * build a gcc toolchain for arm-wince-pe ???
-* we imported the linexec source code as j820boot, to be ported to gcc
+* we imported the linexec source code as j820boot, now port it to gcc
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 apm: do something
@@ -79,6 +79,7 @@ arch/arm/mach-sa1100/sa1101.c
 update IRQ handling to new API... read Documentation/arm/Interrupts
 avoid use of irq_desc and use request_irq() instead???
 call set_irq_flags(irq,IRQF_VALID|...)???
+get inspiration from jornada56x.c
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 pcmcia:
@@ -110,10 +111,7 @@ conversion to 2.6 style done by Matan Ziv-Av
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 test the sa1101ps2.c device
+we need a gpm?
 it depends on sa1101.c being updated.
-
------->8------>8------>8------>8------>8------>8------>8------>8------>8------
-Add sleep/wakeup functions for all our drivers,
-so as to support swsusp.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
