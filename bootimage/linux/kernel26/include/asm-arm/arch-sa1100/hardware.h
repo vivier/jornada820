@@ -9,7 +9,7 @@
  *      Definitions for SA1111 added.
  */
 /* Jornada820 version based on hardware.h 1.1.1.1 from cvs.handhelds.org
- * $Id: hardware.h,v 1.1 2004/06/24 19:57:38 fare Exp $
+ * $Id: hardware.h,v 1.2 2004/06/30 20:29:48 fare Exp $
  */
 
 #ifndef __ASM_ARCH_HARDWARE_H
@@ -122,7 +122,7 @@ extern void set_GPIO_IRQ_edge( int gpio_mask, int edge_mask );
  */
 
 #if defined(CONFIG_SA1100_JORNADA820)
-#include "jornada820.h"
+#include <asm/arch/jornada820.h>
 #endif
 
 #ifdef CONFIG_SA1101
@@ -135,8 +135,10 @@ extern void set_GPIO_IRQ_edge( int gpio_mask, int edge_mask );
 #define SA1101_p2v( x )         ((x) - SA1101_BASE + 0xf4000000)
 #define SA1101_v2p( x )         ((x) - 0xf4000000  + SA1101_BASE)
 
-#include "SA-1101.h"
-#include "sa1101.h"
+#include <asm/arch/SA-1101.h>
+#ifndef __ASSEMBLY__
+#include <asm/hardware/sa1101.h>
+#endif
 
 #endif
 

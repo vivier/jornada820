@@ -8,7 +8,7 @@
  *
  */
 /* Jornada820 version based on SA-1101.h 1.1.1.1 from cvs.handhelds.org
- * $Id: SA-1101.h,v 1.2 2004/06/27 17:36:12 oleg820 Exp $
+ * $Id: SA-1101.h,v 1.3 2004/06/30 20:29:48 fare Exp $
  */
 
 /* Be sure that virtual mapping is defined right */
@@ -634,157 +634,72 @@
 /*
  * PS/2 Trackpad and Mouse Interfaces
  *
- * Registers   (prefix kbd applies to trackpad interface, mse to mouse)
- *    KBDCR		Control Register
- *    KBDSTAT		Status Register
- *    KBDDATA		Transmit/Receive Data register
- *    KBDCLKDIV		Clock Division Register
- *    KBDPRECNT		Clock Precount Register
- *    KBDTEST1		Test register 1
- *    KBDTEST2		Test register 2
- *    KBDTEST3		Test register 3
- *    KBDTEST4		Test register 4
- *    MSECR	
- *    MSESTAT
- *    MSEDATA
- *    MSECLKDIV
- *    MSEPRECNT
- *    MSETEST1
- *    MSETEST2
- *    MSETEST3
- *    MSETEST4
- *     
+ * Registers
+ *    PS2CR		Control Register
+ *    PS2STAT		Status Register
+ *    PS2DATA		Transmit/Receive Data register
+ *    PS2CLKDIV		Clock Division Register
+ *    PS2PRECNT		Clock Precount Register
+ *    PS2TEST1		Test register 1
+ *    PS2TEST2		Test register 2
+ *    PS2TEST3		Test register 3
+ *    PS2TEST4		Test register 4
  */
 
-#define _KBD( x )	_SA1101( ( x ) + __TRACK_INTERFACE )
-#define _MSE( x )	_SA1101( ( x ) + __MOUSE_INTERFACE )
-
-#define _KBDCR		_KBD( 0x0000 )
-#define _KBDSTAT	_KBD( 0x0400 )
-#define _KBDDATA	_KBD( 0x0800 )
-#define _KBDCLKDIV	_KBD( 0x0c00 )
-#define _KBDPRECNT	_KBD( 0x1000 )
-#define	_KBDTEST1	_KBD( 0x2000 )
-#define _KBDTEST2	_KBD( 0x2400 )
-#define _KBDTEST3	_KBD( 0x2800 )
-#define _KBDTEST4	_KBD( 0x2c00 )
-#define _MSECR		_MSE( 0x0000 )
-#define _MSESTAT	_MSE( 0x0400 )
-#define _MSEDATA	_MSE( 0x0800 )
-#define _MSECLKDIV	_MSE( 0x0c00 )
-#define _MSEPRECNT	_MSE( 0x1000 )
-#define	_MSETEST1	_MSE( 0x2000 )
-#define _MSETEST2	_MSE( 0x2400 )
-#define _MSETEST3	_MSE( 0x2800 )
-#define _MSETEST4	_MSE( 0x2c00 )
+/*
+ * These are offsets from the above bases.
+ *  e.g. __MOUSE_INTERFACE + SA1101_PS2CR
+ */
+#define SA1101_PS2CR        0x000000
+#define SA1101_PS2STAT      0x000400
+#define SA1101_PS2DATA      0x000800
+#define SA1101_PS2CLKDIV    0x000c00
+#define SA1101_PS2PRECNT    0x001000
 
 #if ( LANGUAGE == C )
 
-#define KBDCR	    (*((volatile Word *) SA1101_p2v (_KBDCR)))
-#define KBDSTAT	    (*((volatile Word *) SA1101_p2v (_KBDSTAT)))
-#define KBDDATA	    (*((volatile Word *) SA1101_p2v (_KBDDATA)))
-#define KBDCLKDIV   (*((volatile Word *) SA1101_p2v (_KBDCLKDIV)))
-#define KBDPRECNT   (*((volatile Word *) SA1101_p2v (_KBDPRECNT)))
-#define KBDTEST1    (*((volatile Word *) SA1101_p2v (_KBDTEST1)))
-#define KBDTEST2    (*((volatile Word *) SA1101_p2v (_KBDTEST2)))
-#define KBDTEST3    (*((volatile Word *) SA1101_p2v (_KBDTEST3)))
-#define KBDTEST4    (*((volatile Word *) SA1101_p2v (_KBDTEST4)))
-#define MSECR	    (*((volatile Word *) SA1101_p2v (_MSECR)))
-#define MSESTAT	    (*((volatile Word *) SA1101_p2v (_MSESTAT)))
-#define MSEDATA	    (*((volatile Word *) SA1101_p2v (_MSEDATA)))
-#define MSECLKDIV   (*((volatile Word *) SA1101_p2v (_MSECLKDIV)))
-#define MSEPRECNT   (*((volatile Word *) SA1101_p2v (_MSEPRECNT)))
-#define MSETEST1    (*((volatile Word *) SA1101_p2v (_MSETEST1)))
-#define MSETEST2    (*((volatile Word *) SA1101_p2v (_MSETEST2)))
-#define MSETEST3    (*((volatile Word *) SA1101_p2v (_MSETEST3)))
-#define MSETEST4    (*((volatile Word *) SA1101_p2v (_MSETEST4)))
+#define PS2CR_ENA		 0x08
+#define PS2CR_FKD		 0x02
+#define PS2CR_FKC		 0x01
 
+#define PS2STAT_TXE		 0x80
+#define PS2STAT_TXB		 0x40
+#define PS2STAT_RXF		 0x20
+#define PS2STAT_RXB		 0x10
+#define PS2STAT_ENA		 0x08
+#define PS2STAT_RXP		 0x04
+#define PS2STAT_KBD		 0x02
+#define PS2STAT_KBC		 0x01
 
-#define KBDCR_ENA		 0x08
-#define KBDCR_FKD		 0x02
-#define KBDCR_FKC		 0x01
+#define PS2CLKDIV_DivVal	 Fld(4,0)
 
-#define KBDSTAT_TXE		 0x80
-#define KBDSTAT_TXB		 0x40
-#define KBDSTAT_RXF		 0x20
-#define KBDSTAT_RXB		 0x10
-#define KBDSTAT_ENA		 0x08
-#define KBDSTAT_RXP		 0x04
-#define KBDSTAT_KBD		 0x02
-#define KBDSTAT_KBC		 0x01
-
-#define KBDCLKDIV_DivVal	 Fld(4,0)
-
-#define MSECR_ENA		 0x08
-#define MSECR_FKD		 0x02
-#define MSECR_FKC		 0x01
-
-#define MSESTAT_TXE		 0x80
-#define MSESTAT_TXB		 0x40
-#define MSESTAT_RXF		 0x20
-#define MSESTAT_RXB		 0x10
-#define MSESTAT_ENA		 0x08
-#define MSESTAT_RXP		 0x04	
-#define MSESTAT_MSD		 0x02
-#define MSESTAT_MSC		 0x01
-
-#define MSECLKDIV_DivVal	 Fld(4,0)
-
-#define KBDTEST1_CD		 0x80
-#define KBDTEST1_RC1		 0x40
-#define KBDTEST1_MC		 0x20
-#define KBDTEST1_C		 Fld(2,3)
-#define KBDTEST1_T2		 0x40
-#define KBDTEST1_T1		 0x20
-#define KBDTEST1_T0		 0x10
-#define KBDTEST2_TICBnRES	 0x08
-#define KBDTEST2_RKC		 0x04
-#define KBDTEST2_RKD		 0x02
-#define KBDTEST2_SEL		 0x01
-#define KBDTEST3_ms_16		 0x80
-#define KBDTEST3_us_64		 0x40
-#define KBDTEST3_us_16		 0x20
-#define KBDTEST3_DIV8		 0x10
-#define KBDTEST3_DIn		 0x08
-#define KBDTEST3_CIn		 0x04
-#define KBDTEST3_KD		 0x02
-#define KBDTEST3_KC		 0x01
-#define KBDTEST4_BC12		 0x80
-#define KBDTEST4_BC11		 0x40
-#define KBDTEST4_TRES		 0x20
-#define KBDTEST4_CLKOE		 0x10
-#define KBDTEST4_CRES		 0x08
-#define KBDTEST4_RXB		 0x04
-#define KBDTEST4_TXB		 0x02
-#define KBDTEST4_SRX		 0x01
-
-#define MSETEST1_CD		 0x80
-#define MSETEST1_RC1		 0x40
-#define MSETEST1_MC		 0x20
-#define MSETEST1_C		 Fld(2,3)
-#define MSETEST1_T2		 0x40
-#define MSETEST1_T1		 0x20
-#define MSETEST1_T0		 0x10
-#define MSETEST2_TICBnRES	 0x08
-#define MSETEST2_RKC		 0x04
-#define MSETEST2_RKD		 0x02
-#define MSETEST2_SEL		 0x01
-#define MSETEST3_ms_16		 0x80
-#define MSETEST3_us_64		 0x40
-#define MSETEST3_us_16		 0x20
-#define MSETEST3_DIV8		 0x10
-#define MSETEST3_DIn		 0x08
-#define MSETEST3_CIn		 0x04
-#define MSETEST3_KD		 0x02
-#define MSETEST3_KC		 0x01
-#define MSETEST4_BC12		 0x80
-#define MSETEST4_BC11		 0x40
-#define MSETEST4_TRES		 0x20
-#define MSETEST4_CLKOE		 0x10
-#define MSETEST4_CRES		 0x08
-#define MSETEST4_RXB		 0x04
-#define MSETEST4_TXB		 0x02
-#define MSETEST4_SRX		 0x01
+#define PS2TEST1_CD		 0x80
+#define PS2TEST1_RC1		 0x40
+#define PS2TEST1_MC		 0x20
+#define PS2TEST1_C		 Fld(2,3)
+#define PS2TEST1_T2		 0x40
+#define PS2TEST1_T1		 0x20
+#define PS2TEST1_T0		 0x10
+#define PS2TEST2_TICBnRES	 0x08
+#define PS2TEST2_RKC		 0x04
+#define PS2TEST2_RKD		 0x02
+#define PS2TEST2_SEL		 0x01
+#define PS2TEST3_ms_16		 0x80
+#define PS2TEST3_us_64		 0x40
+#define PS2TEST3_us_16		 0x20
+#define PS2TEST3_DIV8		 0x10
+#define PS2TEST3_DIn		 0x08
+#define PS2TEST3_CIn		 0x04
+#define PS2TEST3_KD		 0x02
+#define PS2TEST3_KC		 0x01
+#define PS2TEST4_BC12		 0x80
+#define PS2TEST4_BC11		 0x40
+#define PS2TEST4_TRES		 0x20
+#define PS2TEST4_CLKOE		 0x10
+#define PS2TEST4_CRES		 0x08
+#define PS2TEST4_RXB		 0x04
+#define PS2TEST4_TXB		 0x02
+#define PS2TEST4_SRX		 0x01
 
 #endif  /* LANGUAGE == C */
 
@@ -793,11 +708,11 @@
  * General-Purpose I/O Interface
  *
  * Registers
- *    PADWR	Port A Data Write Register
+ *    PS2WR	Port A Data Write Register
  *    PBDWR	Port B Data Write Register
- *    PADRR	Port A Data Read Register
+ *    PS2RR	Port A Data Read Register
  *    PBDRR	Port B Data Read Register
- *    PADDR	Port A Data Direction Register
+ *    PS2DR	Port A Data Direction Register
  *    PBDDR	Port B Data Direction Register
  *    PASSR	Port A Sleep State Register
  *    PBSSR	Port B Sleep State Register
@@ -806,11 +721,11 @@
 
 #define _PIO( x )      _SA1101( ( x ) + __GPIO_INTERFACE )
 
-#define _PADWR	       _PIO( 0x0000 )
+#define _PS2WR	       _PIO( 0x0000 )
 #define _PBDWR	       _PIO( 0x0400 )
-#define _PADRR	       _PIO( 0x0000 )
+#define _PS2RR	       _PIO( 0x0000 )
 #define _PBDRR	       _PIO( 0x0400 )
-#define _PADDR	       _PIO( 0x0800 )
+#define _PS2DR	       _PIO( 0x0800 )
 #define _PBDDR	       _PIO( 0x0c00 )
 #define _PASSR	       _PIO( 0x1000 )
 #define _PBSSR	       _PIO( 0x1400 )
@@ -818,12 +733,11 @@
 
 #if ( LANGUAGE == C )
 
-
-#define PADWR	    (*((volatile Word *) SA1101_p2v (_PADWR)))
+#define PS2WR	    (*((volatile Word *) SA1101_p2v (_PS2WR)))
 #define PBDWR	    (*((volatile Word *) SA1101_p2v (_PBDWR)))
-#define PADRR	    (*((volatile Word *) SA1101_p2v (_PADRR)))
+#define PS2RR	    (*((volatile Word *) SA1101_p2v (_PS2RR)))
 #define PBDRR	    (*((volatile Word *) SA1101_p2v (_PBDRR)))
-#define PADDR	    (*((volatile Word *) SA1101_p2v (_PADDR)))
+#define PS2DR	    (*((volatile Word *) SA1101_p2v (_PS2DR)))
 #define PBDDR	    (*((volatile Word *) SA1101_p2v (_PBDDR)))
 #define PASSR	    (*((volatile Word *) SA1101_p2v (_PASSR)))
 #define PBSSR	    (*((volatile Word *) SA1101_p2v (_PBSSR)))

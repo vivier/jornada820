@@ -2,7 +2,7 @@
 # Makefile for the linux kernel.
 #
 # Jornada820 version based on Makefile 1.9 from cvs.handhelds.org
-# $Id: Makefile,v 1.2 2004/06/27 13:29:55 oleg820 Exp $
+# $Id: Makefile,v 1.3 2004/06/30 20:29:48 fare Exp $
 
 
 # Common support
@@ -57,7 +57,7 @@ obj-$(CONFIG_SA1100_HUW_WEBPANEL)	+= huw_webpanel.o
 obj-$(CONFIG_SA1100_ITSY)		+= itsy.o
 
 obj-$(CONFIG_SA1100_JORNADA720)		+= jornada720.o
-obj-$(CONFIG_SA1100_JORNADA820)		+= jornada820.o # sa1101.o
+obj-$(CONFIG_SA1100_JORNADA820)		+= jornada820.o
 obj-$(CONFIG_SA1100_JORNADA56X)		+= jornada56x.o
 
 obj-$(CONFIG_SA1100_LART)		+= lart.o
@@ -98,7 +98,11 @@ obj-$(CONFIG_LEDS) += $(led-y)
 # SA1110 USB client support
 obj-$(CONFIG_SA1100_USB)		+= usb/
 
-obj-$(CONFIG_REGISTERS) += regs-sa1100.o gpio.o regs-sa1101.o
+obj-$(CONFIG_REGISTERS) += regs-sa1100.o gpio.o
+obj-$(CONFIG_SA1101)			+= sa1101.o
+ifeq ($(CONFIG_SA1101),y)
+obj-$(CONFIG_REGISTERS) += regs-sa1101.o
+endif
 
 # Miscelaneous functions
 obj-$(CONFIG_PM)			+= pm.o sleep.o
