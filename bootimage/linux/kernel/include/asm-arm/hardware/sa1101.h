@@ -20,11 +20,11 @@ extern void sa1101_IRQ_demux(int irq, void *dev_id, struct pt_regs *regs);
 extern int sa1101_pcmcia_init(void *handler);
 extern int sa1101_pcmcia_shutdown(void);
 
-static int sa1101_usb_init(void);
-static int sa1101_usb_shutdown(void);
+//static int sa1101_usb_init(void);
+//static int sa1101_usb_shutdown(void);
 
-static int sa1101_vga_init(void);
-static int sa1101_vga_shutdown(void);
+//static int sa1101_vga_init(void);
+//static int sa1101_vga_shutdown(void);
 
 #define sa1101_writereg(val,addr)	({ *(volatile unsigned int *)(addr) = (val); })
 #define sa1101_readreg(addr)	(*(volatile unsigned int *)(addr))
