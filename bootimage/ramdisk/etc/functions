@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.13 2004/06/24 17:15:30 fare Exp $
+# $Id: functions,v 1.14 2004/06/28 11:21:13 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -11,12 +11,12 @@ re () {
 
 ping () {
   # avoid uninterruptible ping when console is broken
-  /bin/ping -c 10 $@
+  /bin/ping -c 5 $@
 }
 
 mcs () {
   # my console settings: visible cursor, latin1 encoding, normal colors, bold.
-  echo -ne '\033[?2c\033(?B\033[m\033[1m' # ]])]
+  echo -ne '\033[?2c\033(?B\033[m' # \033[1m ]])]
 }
 mcsv () { # my console settings for vt #n
   mcs > /dev/vc/${1:-1}
@@ -214,6 +214,7 @@ net0 () {
   ifconfig lo 127.0.0.1
   route add default gw 192.168.0.1
   rdate 192.168.0.3
+  export TZ=CET-1CEST
   export DISTCC_HOSTS=192.168.0.3 CC="distcc arm-linux-gcc" CFLAGS="-Os -fomit-frame-pointer"
 }
 net0a () {
@@ -222,7 +223,16 @@ net0a () {
   ifconfig lo 127.0.0.1
   route add default gw 10.31.0.1
   rdate 10.31.0.1
+  export TZ=CET-1CEST
   export DISTCC_HOSTS=10.31.0.1 CC="distcc arm-linux-gcc" CFLAGS="-Os -fomit-frame-pointer"
+}
+net0c () {
+  hostname mildendo
+  ifconfig eth0 192.103.2.93 netmask 255.255.255.0 broadcast 192.103.2.255
+  ifconfig lo 127.0.0.1
+  route add default gw 192.103.2.50
+  rdate 192.103.2.73
+  export TZ=CET-1CEST
 }
 
 udhcp () {
@@ -339,6 +349,9 @@ ensure_partition_bootable () {
     CHECK "[ -h $i -o -d $i ]" "mkdir -p $i" \
 	"Cannot ensure directory /$i on target partition"
   done
+  if [ -f etc/functions ] && ! cmp -s etc/functions /etc/functions ; then
+    cp /etc/functions etc/functions.new
+  fi
   for i in bin/busybox sbin/cardmgr sbin/cardctl \
 	etc/functions etc/please etc/udhcpc.sh \
 	etc/passwd etc/group etc/fstab etc/inittab \
@@ -449,4 +462,9 @@ setdate () {
   busybox date -s $(printf %02d%02d%02d%02d%04d $MONTH $DAY $HOUR $MINUTE $SECOND $YEAR)
   # GNU date -s $(printf "%04d-%02d-%02d %02d:%02d:%02d" $YEAR $MONTH $DAY $HOUR $MINUTE $SECOND)
 )
+}
+getdate () {
+  DATE="$(date +"YEAR=%Y MONTH=%m DAY=%d HOUR=%H MINUTE=%M SECOND=%S TZ=$TZ")"
+  echo "$DATE"
+  eval "$DATE"
 }
