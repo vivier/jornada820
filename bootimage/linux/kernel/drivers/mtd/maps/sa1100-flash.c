@@ -3,7 +3,6 @@
  * 
  * (C) 2000 Nicolas Pitre <nico@cam.org>
  * 
- * $Id: sa1100-flash.c,v 1.1 2004/02/22 03:49:22 galmasi Exp $
  */
 
 #include <linux/config.h>
@@ -542,6 +541,19 @@ static void jornada720_set_vpp(int vpp)
 
 #endif
 
+#ifdef CONFIG_SA1100_JORNADA820
+#define JORNADA820_FLASH_SIZE		0x01000000
+static struct mtd_partition jornada820_partitions[] = {
+	{
+		.name =		"JORNADA820 boot firmware",
+		.size =		JORNADA820_FLASH_SIZE,
+		.offset =	0,
+		.mask_flags =	MTD_WRITEABLE,  /* force read-only */
+	}
+};
+
+#endif
+
 #ifdef CONFIG_SA1100_JORNADA56X
 static unsigned long jornada_max_flash_size = 0x02000000;
 static struct mtd_partition jornada_partitions[] = {
@@ -878,6 +890,14 @@ int __init sa1100_mtd_init(void)
 		sa1100_map.set_vpp = jornada720_set_vpp;
 	}
 #endif
+#ifdef CONFIG_SA1100_JORNADA820
+	if (machine_is_jornada820()) {
+		parts = jornada820_partitions;
+		nb_parts = ARRAY_SIZE(jornada820_partitions);
+		sa1100_map.size = JORNADA820_FLASH_SIZE;
+		base=0x00000000;
+	}
+#endif
 #ifdef CONFIG_SA1100_PANGOLIN
 	if (machine_is_pangolin()) {
 		parts = pangolin_partitions;
@@ -951,6 +971,13 @@ int __init sa1100_mtd_init(void)
 	simple_map_init(&sa1100_map);
 
 	mymtd = do_map_probe("cfi_probe", &sa1100_map);
+
+#ifdef CONFIG_SA1100_JORNADA820
+	/* when the flash was not found, try rom */
+	if (!mymtd)
+	 mymtd = do_map_probe("map_rom", &sa1100_map);
+#endif
+
 	ret = -ENXIO;
 	if (!mymtd)
 		goto out_err;
