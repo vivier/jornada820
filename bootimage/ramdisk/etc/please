@@ -1,0 +1,6 @@
+#!/bin/sh
+
+. /etc/functions
+[ -f /mnt/linux/functions ] && . /mnt/linux/functions
+
+$@

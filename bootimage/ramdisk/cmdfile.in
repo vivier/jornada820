@@ -16,7 +16,7 @@ cd bin
 write busybox/busybox busybox
 write pcmcia/cardmgr cardmgr
 write pcmcia/cardctl cardctl
-ln /bin/busybox /linuxrc
 
 cd /
+write linuxrc linuxrc
 

@@ -28,7 +28,7 @@ RAMDISKIMAGE=ramdiskimage
 all: ramdiskimage.gz
 
 ramdiskimage: cmdfile
-	dd if=/dev/zero of=ramdiskimage count=3584 bs=1024
+	dd if=/dev/zero of=ramdiskimage count=4096 bs=1024
 	$(MKE2FS) -F ramdiskimage
 	$(DEBUGFS) -f cmdfile
 	$(E2FSCK) -f -y ramdiskimage ; :
@@ -40,7 +40,7 @@ ramdiskimage.gz: ramdiskimage
 
 cmdfile: cmdfile.in busybox pcmcia
 	cat cmdfile.in > $@
-	sed "s'.*'ln /bin/busybox &'" < busybox/busybox.links >> $@
+	#sed "s'.*'ln /bin/busybox &'" < busybox/busybox.links >> $@
 	echo "cd /" >> $@
 	for d in `find etc -type d | grep -v CVS` ; do \
 	  echo "mkdir /$$d" >> $@; \

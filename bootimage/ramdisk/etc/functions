@@ -1,11 +1,93 @@
-# /etc/functions: useful functions
+#!/bin/sh
+# Functions defined by Faré
 
-# functions defined by Faré
+ascii_table () {
+  i=32 ; while [ $i -lt 256 ] ; do
+    case $i in
+      ?|[12][0-9]|3[01]|127|155) j=" " ;;
+      *) j=$(eval "echo -ne '\\$(printf %03o $i)'") ;;
+    esac
+    printf "%02x:%c " "$i" "$j"
+    i=$(($i+1))
+    #if [ $(($i % 16)) = 0 ] ; then echo ; fi 
+  done
+}
 
+re () {
+  # RE-REad RenE's Runtime-Environment
+  [ -x /mnt/linux/functions ] && . /mnt/linux/functions
+}
+
+mcs () { # my console settings
+  echo -ne '\033[?2c\033(?B\033[m\033[1m' # ]])]
+}
+mcsv () { # my console settings for vt #n
+  mcs > /dev/vc/${1:-1}
+}
+
+latin () { # ???
+  # See /usr/src/linux/Documentation/unicode.txt
+  # magic letter: B (latin1) 0 (DEC VT100 gfx) U (ibm cp437) K (user defined)
+  # for some reason, this puts the terminal in black on black, so we reset it.
+  echo -ne "\\033(?${1:-B}\\033[m"
+}
 cursor () {
   # See http://www.linux.org/docs/ldp/howto/Framebuffer-HOWTO-5.html#ss5.9
-  echo -ne '\033[?2c'
+  echo -ne "\\033[?${1:-2}c"
 }
+
+nbdswap () {
+  # See http://www.it.uc3m.es/~ptb/nbd/
+  mknod /dev/nb0 b 43 0
+  nbd-client 192.168.0.3 665 /dev/nb0 -swap
+  swapon /dev/nb0
+  : nbd-client -d /dev/nb0
+}
+
+link_applets () {
+  /bin/busybox --install -s
+
+  # APPS="$( busybox 2>&1 | ( while read A B ; [ "$A" != "Currently" ] ; do : ; done ; cat ) | sed -e "s/,/ /g" )"
+  # for app in $APPS ; do
+  #  [ -n $(which $app) ] || ln -s busybox $app
+  #done
+}
+
+my_linuxrc () {
+  # mount /proc and /dev
+  mount none /proc -t proc
+  mount none /dev -t devfs
+
+  # make symlinks for all those busybox applications
+  rm -f /linuxrc
+  link_applets
+
+  exec /linuxrc
+
+  #TODO INSTEAD:
+  # Detect if we can mount hda and be done.
+  # if we can, see if the user created a file /mnt/noautomount
+  # if he didn't, try to mount the first linux partition (fdisk tag 83)
+  # if he didn't and that didn't work, try to mount the first vfat partition
+  # if we could mount something, ensure it contains the necessary programs,
+  # and use pivot root
+  # ...
+}
+
+lisp () {
+  clisp -E iso-8859-1 -repl -ansi /mnt/linux/foo.lisp $@
+}
+
+linkme () {
+  cd /mnt/linux
+  for i in etc/* usr/* lib/* ; do
+    [ -e /$i ] || ln -s /mnt/linux/$i /$i
+  done
+  for i in bin/* ; do
+    ln -s /mnt/linux/$i /usr/bin/
+  done
+}
+
 net0 () {
   hostname mildendo
   ifconfig eth0 192.168.0.16 netmask 255.255.255.0 broadcast 192.168.0.255
@@ -20,16 +102,16 @@ net0a () {
   rdate 10.31.0.1
   export DISTCC_HOSTS=10.31.0.1 CC="distcc arm-linux-gcc" CFLAGS="-Os -fomit-frame-pointer"
 }
-nbdswap () {
-  mknod /dev/nb0 b 43 0
-  nbd-client 192.168.0.3 665 /dev/nb0 -swap
-  swapon /dev/nb0
-  : nbd-client -d /dev/nb0
+
+udhcp () {
+  # http://udhcp.busybox.net/README.udhcpc
+  DEVICE=${1:-eth0}
+  ifconfig $DEVICE > /dev/urandom
+  udhcpc -H mildendo -n -f -q -s /etc/udhcpc.sh -i $DEVICE
 }
 
-# swaproot
-# See /usr/src/linux/Documentation/initrd.txt
 change_root () {
+  # See /usr/src/linux/Documentation/initrd.txt
   PART=${1:-3} # Partition with root disk in /dev/hda. Default: hda3
   : cardmgr -o
   # /dev/hda1 = 0x301, /dev/hda2 = 0x302, etc
@@ -38,11 +120,105 @@ change_root () {
   #cat /proc/cmdline
 }
 
-# for pivot_root, see /etc/pivot_root and /etc/pivot_root.2
+ABORT () {
+  if [ -n "$2" ] ; then
+    echo >&2 $2
+  fi
+  exit ${1:-2}
+}
+CHECK () {
+  # Check whether what we want is OK
+  ERR="${3:-Something is wrong about the target filesystem.}
+Stopping before we do a big mistake."
+  eval "$1" || {
+    if [ -n "$2" ] ; then
+      # Take a corrective measure if defined
+      eval "$2"
+      eval "$1" ||
+      ABORT $ERR ${4:-42}
+    else
+      ABORT $ERR ${4:-42}
+    fi
+  }
+}
 
-udhcp () {
-  # http://udhcp.busybox.net/README.udhcpc
-  DEVICE=${1:-eth0}
-  ifconfig $DEVICE > /dev/urandom
-  udhcpc -H mildendo -n -f -q -s /etc/udhcpc.sh -i $DEVICE
+try_pivot_root () {
+# You must exec this script as the first process
+# without any other processes running so that it may free the ramdisk.
+
+cd /
+
+CHECK '[ -x /etc/please -a -f /etc/functions ]' \
+      '' \
+      "Can't find the supporting script."
+CHECK '[ -x /sbin/pivot_root ]' \
+      '' \
+      "Can't find the pivot_root binary."
+CHECK 'dd if=/dev/hda count=1 of=/dev/null 2> /dev/null' \
+      'cardmgr -o ; sleep 3' \
+      "Cannot find a CF disk."
+CHECK 'PART=$(fdisk -l /dev/hda | grep Linux | head -1 | cut -d" " -f1 )' \
+      '' \
+      "Cannot find a Linux partition. Please make one with fdisk."
+CHECK '[ -d /proc ]' \
+      'mkdir /proc' \
+      "Cannot make a /proc directory node."
+CHECK '[ -f /proc/cpuinfo ]' \
+      'mount proc proc -t proc' \
+      "Cannot mount the /proc partition."
+CHECK '[ -d /mnt ]' \
+      'mkdir /mnt' \
+      "Cannot make a /mnt directory node."
+CHECK 'grep -q "$PART /mnt" /proc/mounts' \
+      'mount $PART /mnt' \
+      "Cannot mount the target partition $PART to /mnt."
+CHECK '[ -d /mnt/dev ]' \
+      'mkdir /mnt/dev' \
+      "Cannot ensure /dev on target partition $PART."
+CHECK '[ -c /mnt/dev/console ]' \
+      'mknod /mnt/dev/console c 5 1' \
+      "Cannot ensure /dev/console on target partition $PART."
+CHECK '[ -x /mnt/bin/sh ]' \
+      '[ -x /mnt/bin/busybox ] || cp /bin/busybox /mnt/bin/busybox ; \
+      ln -s busybox /mnt/bin/sh' \
+      "Cannot ensure an executable /bin/sh on target partition $PART."
+
+# pivot the root device
+cd /mnt
+if [ ! -d initrd ] ; then
+  mkdir initrd
+fi
+/sbin/pivot_root . initrd
+
+# Now, initialize things under the new root tree
+
+# Jump into the new tree
+exec ./initrd/usr/sbin/chroot . \
+	./initrd/bin/sh ./initrd/etc/please pivot_root_part2 \
+	< dev/console > dev/console 2>&1
+}
+
+pivot_root_part2 () {
+# NOT FINISHED YET
+./initrd/bin/mount dev dev -t devfs
+./initrd/bin/mount proc proc -t proc
+
+# echo --- trying to unmount ramdisk
+# ps -ef
+# /bin/umount /initrd/dev
+# /bin/umount /initrd/proc
+# /bin/umount /initrd
+echo ---- done
+
+# mknod /dev/initrd b 1 250
+# chmod 400 /dev/initrd
+
+umount /initrd
+blockdev --flushbufs /dev/rd/0 # /dev/ram0
+
+if [ -x /mnt/sbin/init ] ; then
+   exec /sbin/init
+fi
+
+exec /bin/sh
 }

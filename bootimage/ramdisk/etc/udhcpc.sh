@@ -40,4 +40,3 @@ case "$action" in
     print_few_vars
     ;;
 esac
-
