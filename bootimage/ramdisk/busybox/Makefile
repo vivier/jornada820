@@ -17,7 +17,7 @@ RM                      = rm -f
 CANONICAL_PATH          = /bin:/usr/bin
 
 # ---------------------------------------------------------------------------
-default: busybox-install
+default: busybox
 
 ${BUSYBOXTAR}:
 	wget http://busybox.net/downloads/${BUSYBOXTAR}
@@ -26,16 +26,15 @@ busybox-dir: ${BUSYBOXTAR}
 	@bunzip2 -c ${BUSYBOXTAR} | tar xf - && \
 	touch $@
 
-busybox-install: busybox-dir
+busybox: busybox-dir
 	@cd ${BUSYBOXDIR} && \
 	cp ../busybox.cfg .config && \
 	${MAKE}	CROSS=${TARGET}- oldconfig && \
 	${MAKE} CROSS=${TARGET}- busybox && \
 	${MAKE} CROSS=${TARGET}- install && \
 	cp busybox.links .. && \
-	cp _install/bin/busybox .. && \
-	touch $@
+	cp _install/bin/busybox ..
 
 clean:
 	$(RM) -rf ${BUSYBOXTAR} ${BUSYBOXDIR}
-	$(RM) busybox-dir busybox-install busybox.links busybox
+	$(RM) busybox-dir busybox.links busybox

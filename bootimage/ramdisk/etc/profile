@@ -1,0 +1,6 @@
+# /etc/profile: system-wide .profile file for the Bourne shells
+
+echo
+echo "We all know Linux is great... It does infinite loops in 5 seconds."
+echo " --Linus Torvalds"
+echo

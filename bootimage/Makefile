@@ -1,0 +1,89 @@
+OS			= linux
+TARGET			= arm-linux
+
+.PHONY: ramdisk
+
+# ------------- programs ---------------------------------------------------
+
+LN			= ln
+MKDIR			= mkdir
+TEE			= tee
+TOUCH			= touch
+CP			= cp -f
+RM			= rm -f
+CANONICAL_PATH		= /bin:/usr/bin
+
+# ------------- directories for source code ----------------------------
+
+KERNELDIR		= linux/kernel
+
+# --------------------------------------------------------------------------
+#                       default targets                                    |
+# --------------------------------------------------------------------------
+all:: j820
+
+
+clean::
+	-${RM} vmlinux j820
+	${MAKE} -C ${KERNELDIR} ARCH=arm clean
+	${MAKE} -C ramdisk clean
+
+distclean:: clean
+
+# -------------------------------------------------------------------------- 
+#                    build the boot image
+# --------------------------------------------------------------------------
+
+j820: config depend ramdisk
+	export RDIMAGE=`pwd`/ramdisk/ramdiskimage && \
+	cd ${KERNELDIR} && \
+	${MAKE} \
+	    ARCH=arm \
+	    CROSS_COMPILE=${TARGET}- \
+	    INITRD=$${RDIMAGE} \
+	    zImage j820
+	cp ${KERNELDIR}/arch/arm/boot/j820/j820 $@
+
+sandisk: j820
+	mount /mnt/sandisk/; cp j820 /mnt/sandisk/; umount /mnt/sandisk/
+
+# -------------------------------------------------------------------------- 
+#                  Initial configuration and dependences
+# --------------------------------------------------------------------------
+
+
+menuconfig:
+	cd ${KERNELDIR} && \
+	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- menuconfig
+
+depend: config ${KERNELDIR}/.depend
+${KERNELDIR}/.depend:
+	cd ${KERNELDIR} && \
+	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- depend
+
+config: ${KERNELDIR}/.config
+${KERNELDIR}/.config:
+	cd ${KERNELDIR} && \
+	cp arch/arm/def-configs/jornada820 .config && \
+	${MAKE} ARCH=arm CROSS_COMPILE=${TARGET}- oldconfig
+
+# --------------------------------------------------------------------------
+#                     build loadable modules
+# --------------------------------------------------------------------------
+
+modules: config depend ramdisk/lib/modules
+ramdisk/lib/modules:
+	export MODDIR=`pwd`/ramdisk/ && \
+	echo $${MODDIR} && \
+	cd ${KERNELDIR} && \
+	${MAKE} ARCH=arm \
+	        CROSS_COMPILE=${TARGET}- \
+		INSTALL_MOD_PATH=$${MODDIR} \
+	        modules modules_install
+
+# --------------------------------------------------------------------------
+#                     build ramdisk image
+# --------------------------------------------------------------------------
+
+ramdisk: modules
+	${MAKE} -C ramdisk TARGET=${TARGET} OS=${OS}

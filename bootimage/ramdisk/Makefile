@@ -32,7 +32,7 @@ ramdiskimage: cmdfile
 
 # ----------------- ramdiskimage command file ------------------------------
 
-cmdfile: cmdfile.in busybox
+cmdfile: cmdfile.in busybox pcmcia
 	cat cmdfile.in > $@
 	sed "s'.*'ln /bin/busybox &'" < busybox/busybox.links >> $@
 	echo "cd /" >> $@
