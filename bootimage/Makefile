@@ -82,6 +82,7 @@ ramdisk/lib/modules:
 	${MAKE} ARCH=arm \
 	        CROSS_COMPILE=${TARGET}- \
 		INSTALL_MOD_PATH=$${MODDIR} \
+		DEPMOD=true \
 	        modules modules_install
 
 # --------------------------------------------------------------------------
