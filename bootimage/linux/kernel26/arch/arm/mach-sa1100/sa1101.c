@@ -4,7 +4,7 @@
  * Modelled after the file sa1111.c
  *
  * Created for the Jornada820 port.
- * $Id: sa1101.c,v 1.1 2004/06/24 16:58:36 fare Exp $
+ * $Id: sa1101.c,v 1.2 2004/06/24 19:57:37 fare Exp $
  */
 
 #include <linux/module.h>
@@ -20,6 +20,7 @@
 #include <linux/timer.h>
 
 #include <asm/hardware.h>
+#include <asm/arch/SA-1101.h>
 #include <asm/hardware/sa1101.h>
 #include <asm/irq.h>
 #include <asm/mach/irq.h>
@@ -30,6 +31,7 @@
 
 /* TODO: remove */
 static void jornada820_init_proc (void);
+
 
 static struct resource sa1101_resource = {
   .name   = "SA1101"

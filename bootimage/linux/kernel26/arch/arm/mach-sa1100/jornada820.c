@@ -8,7 +8,7 @@
  * Thus, we do not re-initialize everything, but lazily allow
  * certain pre-set WinCE things to continue functioning.
  *
- * $Id: jornada820.c,v 1.1 2004/06/24 16:58:36 fare Exp $
+ * $Id: jornada820.c,v 1.2 2004/06/24 19:57:37 fare Exp $
  */
 
 #include <linux/init.h>
@@ -20,6 +20,7 @@
 #include <asm/irq.h>
 #include <asm/hardware.h>
 #include <asm/hardware/ssp.h>
+#include <asm/hardware/sa1101.h>
 #include <asm/delay.h>
 #include "generic.h"
 
@@ -103,15 +104,14 @@ __initcall(jornada820_init);
 /* *********************************************************************** */
 
 static struct map_desc jornada820_io_desc[] __initdata = {
-  /* virtual     physical    length      domain     r  w  c  b */
-  { 0xf4000000, 0x18000000, 0x00400000, DOMAIN_IO, 1, 1, 0, 0 }, /* SA-1101 */
-  LAST_DESC
+  /* virtual     physical    length      type */
+  { 0xf4000000, 0x18000000, 0x00400000, MT_DEVICE } /* SA-1101 */
 };
 
 static void __init jornada820_map_io(void)
 {
   sa1100_map_io();
-  iotable_init(jornada820_io_desc);
+  iotable_init(jornada820_io_desc, ARRAY_SIZE(jornada820_io_desc));
   
   /* rs232 out */
   sa1100_register_uart(0, 3);
