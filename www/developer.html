@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<title>Linux for HP Jornada 820 Developer Information</title>
+	<META name="keywords" content="jornada,linux">
+	<META name="description" content="HP Jornada 820 Linux Project on SourceForge.net">
+</head>
+<body>
+<h1 align="center">Developer Information</h1>
+
+<h2 align="center">Linux Bootimage</h2>
+
+<p align="justify">
+The <a href="sources.html">Sources on CVS</a>
+contain scripts that will automatically fetch and compile
+all the software dependencies used while building the bootimage.
+The
+<a href="binaries.html">result bootimage plus bootloader executable</a>
+can easily fit in 4MB of a CompactFlash card.
+</p><p align="justify">
+Check our <a href="status.html">Project Status page</a>
+to see what remains to be done,
+and come discuss on our <a href="mailinglists.html">Mailing-lists</a>
+if you're doing any serious hacking with our code base.
+You may join the project if you want.
+</p>
+
+<h2 align="center">WinCE</h2>
+
+<pre>
+&gt; Incidentally, I talked to HP the other day and asked
+&gt; about detailed hardware specs, and they
+&gt; basically said, "If you're not M$ we ain't talking
+&gt; to you."
+&gt; *** Joseph Knapka ***  linux-sh mailing list (22 Aug 2000).
+</pre>
+
+
+<h3>Toolchain</h3>
+<p align="justify">
+For now, look for the old version of Embedded Visual C++ 3.0 on
+ftp.microsoft.com (hint EN_WINCE_EMBDVTOOLS30.exe),
+it includes the WinCE 2.11 SDK.
+</p>
+<p align="justify">
+GNU binutils support 'arm-wince-pe' since ages,
+and gcc-3.4.0 is supposed to have the 'arm-wince-pe' target
+(i have not tested it). The free software solution is not far away,
+but needs <em>your</em> help ;-)
+</p>
+
+<h3>TODO list</h3>
+<ol>
+<li>
+modify hpcboot to <em>really</em> take over the machine from WinCE:
+preserve just enough of the memory layout so that at startup,
+WinCE will chain into hpcboot once more when the machine restarts.
+<li>
+Write a new bootloader that replaces hpcboot,
+and allows for command-line arguments, etc., etc.
+</ol>
+
+<h3>wince kernel vmem and pmem layout</h3>
+<h4>1. static vmem and pmem allocations</h4>
+<pre>
+<tr> <td> vaddr </td>   <td> paddr </td>    <td>size</td> </tr>
+
+<tr><td> 80000000</td>  <td> 00000000</td> <td> 00000020</td>  <td> rom         32mb </td></tr>
+<tr><td> 82000000</td>  <td> 12000000</td> <td> 00000020</td>  <td> ???         32mb </td></tr>
+<tr><td> 84000000</td>  <td> 18000000</td> <td> 00000004</td>  <td> sa1101 regs  4mb </td></tr>
+<tr><td> 84800000</td>  <td> 1a000000</td> <td> 00000004</td>  <td> ???          4mb </td></tr>
+<tr><td> 84c00000</td>  <td> 1b000000</td> <td> 00000004</td>  <td> ???          4mb </td></tr>
+
+<tr><td> 90000000</td>  <td> 20000000</td> <td> 00000020</td>  <td> pcmcia s1 io 32mb</td></tr>
+<tr><td> 92000000</td>  <td> 24000000</td> <td> 00000020</td>  <td>      reserved    </td></tr>
+<tr><td> 94000000</td>  <td> 28000000</td> <td> 00000020</td>  <td>         attr     </td></tr>
+<tr><td> 96000000</td>  <td> 2c000000</td> <td> 00000020</td>  <td>         mem      </td></tr>
+
+<tr><td> 98000000</td>  <td> 30000000</td> <td> 00000020</td>  <td> pcmcia s0 io 32mb</td></tr>
+<tr><td> 9a000000</td>  <td> 34000000</td> <td> 00000020</td>  <td>      reserved    </td></tr>
+<tr><td> 9c000000</td>  <td> 38000000</td> <td> 00000020</td>  <td>         attr     </td></tr>
+<tr><td> 9e000000</td>  <td> 3c000000</td> <td> 00000020</td>  <td>         mem      </td></tr>
+
+<tr><td> 85000000</td>  <td> 80000000</td> <td> 00000004</td>  <td> sa1100 pcmr   4mb</td></tr>
+<tr><td> 85400000</td>  <td> 90000000</td> <td> 00000004</td>  <td> sa1100 scmr   4mb</td></tr>
+<tr><td> 85800000</td>  <td> a0000000</td> <td> 00000004</td>  <td> sa1100 mecm   4mb</td></tr>
+<tr><td> 85c00000</td>  <td> b0000000</td> <td> 00000004</td>  <td> sa1100 lcddma 4mb</td></tr>
+
+<tr><td> 88000000</td>  <td> c0000000</td> <td> 00000010</td>  <td> ram bank0    16mb</td></tr>
+<tr><td> 8b000000</td>  <td> c8000000</td> <td> 00000010</td>  <td> ram bank1    16mb</td></tr>
+<tr><td> 89000000</td>  <td> d0000000</td> <td> 00000010</td>  <td> ram bank2    16mb</td></tr>
+<tr><td> 8a000000</td>  <td> d8000000</td> <td> 00000010</td>  <td> ram bank3    16mb</td></tr>
+<tr><td> 8c000000</td>  <td> e0000000</td> <td> 00000010</td>  <td> zero         16mb</td></tr>
+</pre>
+
+
+<h2 align="center">Hardware</h2>
+
+<h3>Hardware types</h3>
+820 (US) <br>
+820E (DE,ES,FR, others?)
+
+<h3>Main processor</h3>
+DEC StrongARM SA1100.
+
+<h3>Battery</h3>
+Sony Energytec
+4x <br>
+TYPE V mAh LENGTHDIA/WIDTH THICK WEIGHT Wh/L Wh/kg VOL, mL<br>
+US103463 3.6 1650 10 34 62.8 58 278 102 21.4
+
+<h3>Keyboard</h3>
+???
+<h3>Trackpad</h3>
+ALPS
+
+<h3>Hardware Manuals</h3>
+
+<a href=docs/arm/SA-1100-manual.pdf>SA-1100 Manual</a><br>
+<a href=docs/arm/SA-1100-update.pdf>SA-1100 Update</a><br>
+<a href=docs/arm/SA-1110-manual.pdf>SA-1110 Manual</a><br>
+<a href=docs/arm/SA1101.pdf>SA-1101 Manual</a><br>
+<a href=docs/arm/strongARM-cpu.pdf>Strong ARM CPU Manual</a><br>
+<a href=docs/arm/strongARM.pdf>Strong ARM Evaulation Board Manual</a><br>
+<a href=docs/chips/ss_brc.pdf>RAM/ROM connectors</a><br>
+<br>
+
+
+<!-- required stuff -->
+<A href="http://sourceforge.net"> <IMG src="http://sourceforge.net/sflogo.php?group_id=102135&amp;type=5" width="105" height="31" border="0" alt="SourceForge.net Logo" /></A>
+<br><script LANGUAGE="JavaScript">
+         lastModDate  = new Date(document.lastModified)
+         lastModMonth = lastModDate.getMonth() + 1
+         lastModDay   = lastModDate.getDate()
+         lastModYear  = lastModDate.getYear()
+         document.write("<I><SMALL>Last updated: " + lastModMonth
+         + "/" + lastModDay + "/" + lastModYear + "</SMALL></I>")
+</script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<title>Linux for Jornada 820 Binary Download</title>
+	<META name="keywords" content="jornada,linux">
+	<META name="description" content="HP Jornada 820 Linux Project on SourceForge.net">
+</head>
+
+<body>
+
+<h1 align="center">Download Binaries</h1>
+
+<p align="justify">
+All you need to boot Linux is to download the following two binaries,
+put them on your Jornada 820,
+launch the bootloader executable file
+<b><a href="files/hpcbootl.exe">hpcbootl.exe</a></b>,
+and tell it where to find the bootimage
+<b><a href="files/j820">j820</a></b>.
+</p>
+<p align="justify">
+The bootimage runs the Linux kernel off a ramdisk
+with a minimal yet functional userland,
+that includes busybox, pcmcia_cs binaries, a few scripts,
+and compressed kernel modules.
+From there, you already have a working Linux environment,
+and you can setup and chain into
+a full-fledged Linux distribution of your choice,
+as installed in a CF card of by NFS.
+</p>
+<!-- required stuff -->
+<br><center><A href="http://sourceforge.net"> <IMG src="http://sourceforge.net/sflogo.php?group_id=102135&amp;type=5" width="105" height="31" border="0" alt="SourceForge.net Logo" /></A></center>
+<br><center><script LANGUAGE="JavaScript">
+         lastModDate  = new Date(document.lastModified)
+         lastModMonth = lastModDate.getMonth() + 1
+         lastModDay   = lastModDate.getDate()
+         lastModYear  = lastModDate.getYear()
+         document.write("<I><SMALL>Last updated: " + lastModMonth
+         + "/" + lastModDay + "/" + lastModYear + "</SMALL></I>")
+</script></center>
+</body>
+</html>
