@@ -12,7 +12,7 @@
  *
  * Created for the Jornada820 port.
  *
- * $Id: sa1101.c,v 1.8 2004/07/04 16:23:49 fare Exp $
+ * $Id: sa1101.c,v 1.9 2004/07/07 17:26:18 oleg820 Exp $
  */
 
 #include <linux/module.h>
@@ -37,7 +37,7 @@
 #include <asm/io.h>
 
 /*
- * We keep the following data for the overall SA1111.  Note that the
+ * We keep the following data for the overall SA1101.  Note that the
  * struct device and struct resource are "fake"; they should be supplied
  * by the bus above us.  However, in the interests of getting all SA1101
  * drivers converted over to the device model, we provide this as an
@@ -395,5 +395,16 @@ EXPORT_SYMBOL_GPL(sa1101_usb_shutdown);
 EXPORT_SYMBOL_GPL(sa1101_vga_init);
 EXPORT_SYMBOL_GPL(sa1101_vga_shutdown);
 
-MODULE_DESCRIPTION("Main driver for SA-1101.");
+#if 0
+EXPORT_SYMBOL_GPL(sa1101_enable_device);
+EXPORT_SYMBOL_GPL(sa1101_disable_device);
+EXPORT_SYMBOL_GPL(sa1101_pll_clock);
+EXPORT_SYMBOL_GPL(sa1101_driver_register);
+EXPORT_SYMBOL_GPL(sa1101_driver_unregister);
+
+module_init(sa1101_init);
+module_exit(sa1101_exit);
+#endif
+
+MODULE_DESCRIPTION("Main driver for SA-1101 companion chip.");
 MODULE_LICENSE("GPL");
