@@ -1,23 +1,30 @@
-Kernel
-* start hacking with kernel 2.6
-* do a porting pass over existing 2.4 files into 2.6
+$Id: TODO,v 1.4 2004/06/24 21:07:52 fare Exp $
+
+Kernel 2.4
+* move on, dude!
+* maybe fix issues (that may reappear in 2.6?):
+ * the APM kill-the-machine-if-kapmd-killed bug if still present
+
+Kernel 2.6
+* have the kernel compile properly (see errors below)
 * have the kernel boot properly
-* fix any issues with the initial port from 2.4 that still remains in 2.6
+* ensure that bits that weren't merged easily make it to 2.6
+* fix any issues with the initial port from 2.4 that still remain in 2.6
 * fix PCMCIA issues
 * debug USB driver
 * debug sound driver
-* fix the APM kill-the-machine-if-kapmd-killed bug if still present
 * play nicer with booting to/from WinCE
 * get external VGA working and/or some swap-on-VRAM
 * get modem working?
+* get some spiffy 802.11g card working!
 
 Bootdisk
 * have pcmcia and busybox from CVS.
-* ensure busybox sh is fixed and reads /etc/profile...
+* include kernel 2.6 module support in busybox configuration.
+* ensure busybox sh correctly reads /etc/profile at startup.
 
 Userland
 * gather a sensible base for userland (?)
-
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 
