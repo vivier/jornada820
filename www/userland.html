@@ -37,6 +37,19 @@ or see on <a href="http://handhelds.org/">handhelds.org</a>, etc.
 </p><p align="justify">
 Quick Tips:
 <ul>
+<li>If you lack space, you can do as I do:
+mount stuff from the ramdisk and have a script create symlinks
+to those few programs your CF provides
+in addition to the minimal runtime from the ramdisk.
+This way, I have XEmacs, zsh and GNU clisp on my CF,
+plus all my personal files.
+<li>If you have a bigger CF, you can save that precious RAM
+and use <code>pivot_root</code> to chain into your favorite distribution.
+The ramdisk provides hooks for that
+and will even do a <code>pivot_root</code> automatically
+if it detects the thing to be possible and unless you create
+a file or directory <code>noautomount</code>.
+Check the startup script <code>etc/functions</code> for details.
 <li>You have to choose your distribution depending on the available CF space.
 <li>If you're very tight, you might have to compile just the few programs
 you need with the uclibc toolchain
@@ -86,6 +99,6 @@ Back to <a href="http://jornada820.sourceforge.net"
          + "-" + lastModMonth + "-" + lastModDay + "</small></i>")
       </script>
 </td></tr></table>
-<!-- $Id: userland.html,v 1.11 2004/07/07 21:14:56 fare Exp $ -->
+<!-- $Id: userland.html,v 1.12 2004/12/16 18:20:53 fare Exp $ -->
 </body>
 </html>
