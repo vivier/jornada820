@@ -50,10 +50,23 @@ static int __init jornada820_init(void)
   /* we need to fix the PID register, which was left on by WinCE */
   asm volatile ("mov r0, #0; mcr p15, 0, r0, c13, c0,0;");
 
-  /* set GPIO edge detection - GPIO14 is the chained interrupt from SA-1101 */
-  set_GPIO_IRQ_edge(GPIO_JORNADA820_SA1101_CHAIN, (GPIO_FALLING_EDGE | GPIO_RISING_EDGE));
+  /* allow interrupts: */
+  /* audio et al. */
+  set_GPIO_IRQ_edge(GPIO_JORNADA820_UCB1200,      GPIO_RISING_EDGE);
+  /* sa1101 mux */
+  set_GPIO_IRQ_edge(GPIO_JORNADA820_SA1101_CHAIN, GPIO_RISING_EDGE);
 
-  set_GPIO_IRQ_edge(GPIO_JORNADA820_UCB1200, GPIO_RISING_EDGE);
+#if 0
+  /* TODO: write the drivers to use these events */
+  /*  ser1 */
+  set_GPIO_IRQ_edge(GPIO_JORNADA820_POWERD,       GPIO_RISING_EDGE|GPIO_FALLING_EDGE);
+  /*  serial port */
+  set_GPIO_IRQ_edge(GPIO_JORNADA820_SERIAL,       GPIO_RISING_EDGE|GPIO_FALLING_EDGE);
+  /*  serial what ? */
+  set_GPIO_IRQ_edge(GPIO_GPIO(18),                GPIO_RISING_EDGE|GPIO_FALLING_EDGE);
+  /*  ledbutton */
+  set_GPIO_IRQ_edge(GPIO_JORNADA820_LEDBUTTON,    GPIO_RISING_EDGE);
+#endif
 
   /* Initialize the 1101. */
   GAFR |= GPIO_32_768kHz;
@@ -74,7 +87,7 @@ static int __init jornada820_init(void)
   
     /* 8 bit, Motorola, enable, 460800 bit rate */
   Ser4SSCR0 = SSCR0_DataSize(8)+SSCR0_Motorola+SSCR0_SSE+SSCR0_SerClkDiv(8);
-  Ser4SSCR1 = SSCR1_RIE | SSCR1_SClkIactH | SSCR1_SClk1_2P;
+//  Ser4SSCR1 = SSCR1_RIE | SSCR1_SClkIactH | SSCR1_SClk1_2P;
 
   ssp_enable();
 
