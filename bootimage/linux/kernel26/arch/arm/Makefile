@@ -8,7 +8,7 @@
 # Copyright (C) 1995-2001 by Russell King
 #
 # Jornada820 version based on Makefile 1.16 from cvs.handhelds.org
-# $Id: Makefile,v 1.1 2004/06/24 16:58:34 fare Exp $
+# $Id: Makefile,v 1.2 2004/06/28 12:40:41 fare Exp $
 
 LDFLAGS_vmlinux	:=-p --no-undefined -X
 LDFLAGS_BLOB	:=--format binary
@@ -177,7 +177,7 @@ Img:;	$(Q)$(MAKE) $(build)=$(boot) $(boot)/Image
 bp:;	$(Q)$(MAKE) $(build)=$(boot) $(boot)/bootpImage
 i:;	$(Q)$(MAKE) $(build)=$(boot) install
 zi:;	$(Q)$(MAKE) $(build)=$(boot) zinstall
-j820:;	$(Q)$(MAKE) $(build)=$(boot) j820
+j820:;	$(Q)$(MAKE) $(build)=$(boot) $(boot)/j820/j820
 
 arch/$(ARCH)/kernel/asm-offsets.s: include/asm include/linux/version.h \
 				   include/asm-arm/.arch

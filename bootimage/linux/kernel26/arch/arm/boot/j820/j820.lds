@@ -4,7 +4,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
- * $Id: j820.lds,v 1.2 2004/06/24 17:02:01 fare Exp $
+ * $Id: j820.lds,v 1.3 2004/06/28 12:40:44 fare Exp $
  */
 OUTPUT_ARCH(arm)
 ENTRY(_start)
@@ -21,11 +21,11 @@ SECTIONS
    _start = .;
    *(.start)
    kernel_start = .;
-   kernel.o
+   arch/arm/boot/j820/kernel.o
    kernel_len = . - kernel_start;
    . = ALIGN(32);
    initrd_start = .;
-   initrd.o 
+   arch/arm/boot/j820/initrd.o 
    . = ALIGN(32);
    initrd_end = .;
    initrd_size = initrd_end - initrd_start - 0xc0800000 ;

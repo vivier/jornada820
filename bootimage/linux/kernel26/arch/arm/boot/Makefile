@@ -8,7 +8,7 @@
 # Copyright (C) 1995-2002 Russell King
 #
 # Jornada820 version based on Makefile 1.5 from cvs.handhelds.org
-# $Id: Makefile,v 1.2 2004/06/24 17:01:55 fare Exp $
+# $Id: Makefile,v 1.3 2004/06/28 12:40:44 fare Exp $
 
 
 MKIMAGE         := $(srctree)/scripts/mkuboot.sh
@@ -118,6 +118,9 @@ $(obj)/compressed/vmlinux: vmlinux FORCE
 
 $(obj)/bootp/bootp: $(obj)/zImage initrd FORCE
 	$(Q)$(MAKE) $(build)=$(obj)/bootp $@
+
+$(obj)/j820/j820: vmlinux FORCE
+	$(Q)$(MAKE) $(build)=$(obj)/j820 $@
 
 .PHONY: initrd
 initrd:
