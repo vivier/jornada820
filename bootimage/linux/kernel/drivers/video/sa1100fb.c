@@ -709,17 +709,18 @@ static struct sa1100fb_rgb jornada56x_rgb_16 = {
 
 #ifdef CONFIG_SA1100_JORNADA820
 static struct sa1100fb_mach_info j820_info __initdata = {
-  pixclock:       152500,          bpp:            8,
+	/* wince: 237222 - too low */
+  pixclock:       305000,          bpp:            8,
   xres:           640,        yres:           480,
   
-  hsync_len:      11,          vsync_len:      9,
+  hsync_len:      3,          vsync_len:      1,
   left_margin:    2,           upper_margin:   0,
   right_margin:   2,           lower_margin:   0,
   
   sync:           FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
   
-  lccr0:          LCCR0_LEN | LCCR0_Color | LCCR0_Dual | LCCR0_DPD,
-  lccr3:          /* LCCR3_PixClkDiv(46) | */ LCCR3_ACBsDiv(512)
+  lccr0:          LCCR0_Color | LCCR0_Dual | LCCR0_DPD | LCCR0_Pas,
+  lccr3:          LCCR3_ACBsDiv(512)
 };
 #endif
 
@@ -1669,7 +1670,7 @@ static void sa1100fb_backlight_on(struct sa1100fb_info *fbi)
 	if (machine_is_jornada56x())
 		JORNADA_GPDPCR = JORNADA_BACKLIGHT; // Turn on the front light
 #endif
-#ifdef CONFIG_SA1100_JORNADA820
+#ifdef CONFIG_SA1100_JORNADA820	
         GPSR = GPIO_JORNADA820_BACKLIGHTON;
 #endif
 }

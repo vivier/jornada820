@@ -43,7 +43,7 @@ static int proc_gpio_read(char *page, char **start, off_t off,
 
 static struct proc_dir_entry *proc_gpio;
 
-static int __init gpio_init(void)
+ int __init gpio_init(void)
 {
 	proc_gpio = create_proc_entry("gpio", 0, 0);
 	if (proc_gpio)

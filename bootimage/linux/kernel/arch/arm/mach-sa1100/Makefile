@@ -134,7 +134,7 @@ obj-$(CONFIG_H3600_MICRO) += h3600_micro.o
 obj-$(CONFIG_H3600_ASIC) += h3600_asic.o
 
 # Miscelaneous functions
-obj-$(CONFIG_REGISTERS) += registers.o
+obj-$(CONFIG_REGISTERS) += regs-sa1100.o gpio.o regs-sa1101.o
 obj-$(CONFIG_PM) += pm-sa1100.o sleep.o
 obj-$(CONFIG_APM) += apm.o
 obj-$(CONFIG_HWTIMER) += hwtimer.o
