@@ -8,7 +8,6 @@
  *
  */
 
-
 /* Be sure that virtual mapping is defined right */
 #ifndef __ASM_ARCH_HARDWARE_H
 #error You must include <asm/hardware.h> not SA-1101.h

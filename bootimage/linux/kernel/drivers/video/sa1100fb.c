@@ -709,13 +709,15 @@ static struct sa1100fb_rgb jornada56x_rgb_16 = {
 
 #ifdef CONFIG_SA1100_JORNADA820
 static struct sa1100fb_mach_info j820_info __initdata = {
-	/* Windows uses 4.17MHz pixclock */
-  pixclock:       238000,          bpp:            8,
-  xres:           640,        yres:           480,
+  /* no, we do NOT use the same settings as for WinCE.
+   * If we emulate them with pixclock: 237222, we get a lot of flicker.
+   */
+	pixclock:	305000,	bpp:		8,
+	xres:		640,	yres:		480,
   
-  hsync_len:      3,          vsync_len:      1,
-  left_margin:    2,           upper_margin:   0,
-  right_margin:   2,           lower_margin:   0,
+  hsync_len:      3,		vsync_len:      1,
+  left_margin:    2,		upper_margin:   0,
+  right_margin:   2,		lower_margin:   0,
   
   sync:           FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
   
