@@ -46,8 +46,8 @@ cmdfile: cmdfile.in busybox pcmcia
 	  echo "mkdir /$$d" >> $@; \
 	done
 	for f in `find etc -type f | grep -v CVS` ; do \
-          dir=`dirname $$f`; \
-          file=`basename $$f`; \
+	  dir=`dirname $$f`; \
+	  file=`basename $$f`; \
 	  echo "cd /$$dir" >> $@; \
 	  echo "write $$f $$file" >> $@; \
 	done
@@ -56,11 +56,11 @@ cmdfile: cmdfile.in busybox pcmcia
 	#  echo "mkdir /$$d" >> $@; \
 	#done
 	#for f in `find lib -type f | grep -v CVS` ; do \
-        #  dir=`dirname $$f`; \
-        #  file=`basename $$f`; \
-        #  echo "cd /$$dir" >> $@; \
-        #  echo "write $$f $$file" >> $@; \
-        #done
+	#  dir=`dirname $$f`; \
+	#  file=`basename $$f`; \
+	#  echo "cd /$$dir" >> $@; \
+	#  echo "write $$f $$file" >> $@; \
+	#done
 
 # ---------------------------  busybox  -------------------------------------
 

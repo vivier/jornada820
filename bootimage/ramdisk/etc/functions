@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.11 2004/05/09 22:41:26 fare Exp $
+# $Id: functions,v 1.12 2004/05/10 07:51:53 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -211,6 +211,7 @@ linkme () {
 net0 () {
   hostname mildendo
   ifconfig eth0 192.168.0.16 netmask 255.255.255.0 broadcast 192.168.0.255
+  ifconfig lo 127.0.0.1
   route add default gw 192.168.0.1
   rdate 192.168.0.3
   export DISTCC_HOSTS=192.168.0.3 CC="distcc arm-linux-gcc" CFLAGS="-Os -fomit-frame-pointer"
@@ -218,6 +219,7 @@ net0 () {
 net0a () {
   hostname mildendo
   ifconfig eth0 10.31.0.16 netmask 255.255.255.0 broadcast 10.31.0.255
+  ifconfig lo 127.0.0.1
   route add default gw 10.31.0.1
   rdate 10.31.0.1
   export DISTCC_HOSTS=10.31.0.1 CC="distcc arm-linux-gcc" CFLAGS="-Os -fomit-frame-pointer"
@@ -226,6 +228,7 @@ net0a () {
 udhcp () {
   # http://udhcp.busybox.net/README.udhcpc
   DEVICE=${1:-eth0}
+  ifconfig lo 127.0.0.1
   ifconfig $DEVICE > /dev/urandom
   udhcpc -H mildendo -n -f -q -s /etc/udhcpc.sh -i $DEVICE
 }
@@ -296,6 +299,7 @@ ensure_linuxpartition () {
 
 try_fsck () {
   FSTYPE="$(< /proc/mounts grep $PART | cut -d' ' -f 3)"
+  cd /mnt/linux
   FSCK=sbin/fsck.$FSTYPE
   ensure_dev
   ensure_proc
@@ -303,6 +307,12 @@ try_fsck () {
     LOG chroot $PWD /$FSCK -y $PART
     chroot $PWD /$FSCK -y $PART
   fi
+  umount dev
+  umount proc
+  cd /
+  umount $PART
+  sync
+  # here we should flush buffers, if only we know how to do that...
 }
 
 has_init_p () {
@@ -322,16 +332,17 @@ do_init () {
 }
 
 ensure_partition_bootable () {
-  mount -o remount,rw .
+  mount -o rw,noatime $PART /mnt/linux
+  cd /mnt/linux
   for i in bin sbin usr/bin usr/sbin etc etc/pcmcia \
 	   tmp var/run initrd lib/modules mnt ; do
     CHECK "[ -h $i -o -d $i ]" "mkdir -p $i" \
 	"Cannot ensure directory /$i on target partition"
   done
-  for i in bin/busybox bin/cardmgr bin/cardctl \
+  for i in bin/busybox sbin/cardmgr sbin/cardctl \
 	etc/functions etc/please etc/udhcpc.sh \
 	etc/passwd etc/group etc/fstab etc/inittab \
-	etc/host.conf etc/nsswitch.conf etc/resolv.conf \
+	etc/resolv.conf \
 	etc/pcmcia/shared etc/pcmcia/config etc/pcmcia/config.opts \
 	etc/pcmcia/ide etc/pcmcia/ide.opts \
 	etc/pcmcia/network etc/pcmcia/network.opts
@@ -370,8 +381,6 @@ try_pivot_root () {
 	"User requested noautomount - not trying to mount a Linux partition."
   LOG "Trying to mount a Linux partition..."
   ensure_linuxpartition
-  LOG "Trying to make the Linux partition livable..."
-  cd /mnt/linux
   LOG "Trying to fsck the Linux partition..."
   try_fsck
   LOG "Ensuring the target partition is bootable..."

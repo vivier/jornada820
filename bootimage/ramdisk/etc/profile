@@ -1,8 +1,13 @@
 # /etc/profile: system-wide .profile file for the Bourne shells
 
+# For some reason, busybox doesn't read it, though it should. Darn.
+
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
+
+. /etc/functions
+
 echo
 echo "We all know Linux is great... It does infinite loops in 5 seconds."
 echo " --Linus Torvalds"
 echo -e '\33[?2c'
 
-. /etc/functions
