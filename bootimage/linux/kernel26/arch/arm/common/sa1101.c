@@ -12,7 +12,7 @@
  *
  * Created for the Jornada820 port.
  *
- * $Id: sa1101.c,v 1.5 2004/07/03 19:43:32 fare Exp $
+ * $Id: sa1101.c,v 1.6 2004/07/03 20:01:52 fare Exp $
  */
 
 #include <linux/module.h>
@@ -92,14 +92,14 @@ int __init sa1101_probe(unsigned long phys_addr)
 static irqreturn_t debug_sa1101_irq_handler(unsigned int irq, void* dev_id, struct pt_regs *regs)
 {
 	printk("Got sa1101 interrupt (%d). Ignoring.\n", irq); // DEBUG
-        return -1;
+        return IRQ_HANDLED;
 }
 
 static void
 sa1101_irq_handler(unsigned int irq, struct irqdesc *desc, struct pt_regs *regs)
 {
 	unsigned int stat0, stat1, i;
-	printk("Got sa1101 interrupt.\n"); // DEBUG
+//	printk("Got sa1101 interrupt (%d).\n", irq); // DEBUG
 
 	stat0 = INTSTATCLR0;
 	stat1 = INTSTATCLR1;
@@ -126,7 +126,7 @@ sa1101_irq_handler(unsigned int irq, struct irqdesc *desc, struct pt_regs *regs)
 
 static void sa1101_ack_irq(unsigned int irq)
 {
-	printk("Got SA1101 interrupt %d.\n", irq); // DEBUG
+//	printk("Got SA1101 interrupt %d.\n", irq); // DEBUG
 }
 
 static void mask_low_irq(unsigned int irq)
@@ -255,7 +255,7 @@ void sa1101_init_irq(int sa1101_irq)
 {
 	unsigned int irq;
 
-	printk("initializing sa1101...\n"); // DEBUG
+	// printk("initializing sa1101...\n"); // DEBUG
 
 	alloc_irq_space(64); /* XXX - still needed??? */
 	request_mem_region(_INTTEST0, 512, "irqs"); // XXX - still needed???
@@ -292,9 +292,9 @@ void sa1101_init_irq(int sa1101_irq)
 	/*
 	 * Register SA1101 interrupt
 	 */
-	request_irq(sa1101_irq, debug_sa1101_irq_handler, SA_INTERRUPT,
-		    "SA1101 chain interrupt", NULL); // DEBUG
-//	set_irq_chained_handler(sa1101_irq, sa1101_irq_handler); // NORMAL
+//	request_irq(sa1101_irq, debug_sa1101_irq_handler, SA_INTERRUPT,
+//		    "SA1101 chain interrupt", NULL); // DEBUG
+	set_irq_chained_handler(sa1101_irq, sa1101_irq_handler); // NORMAL
 	set_irq_type(sa1101_irq, IRQT_RISING);
 }
 
