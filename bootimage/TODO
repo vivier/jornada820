@@ -1,4 +1,4 @@
-$Id: TODO,v 1.17 2004/07/10 18:58:18 fare Exp $ -*- Fundamental -*-
+$Id: TODO,v 1.18 2004/07/11 15:48:27 fare Exp $ -*- Fundamental -*-
 
 Kernel 2.4
 * move on, dude!
@@ -6,8 +6,7 @@ Kernel 2.4
  * the APM kill-the-machine-if-kapmd-killed bug if still present
 
 Kernel 2.6
-* port the sa1101 driver
-* port and fix the PCMCIA driver
+* fix the PCMCIA driver
 * make the USB driver work
 * port and fix the apm driver
 * add sleep/wakeup functions to all our drivers, so as to support swsusp.
@@ -17,14 +16,11 @@ Kernel 2.6
 * get modem working?
 * get some spiffy 802.11g card working!
 * play nicer with booting to/from WinCE (and autobooting from WinCE to Linux?)
-* get the keyboard driver to recognize on/off properly
 
 Bootdisk
-* have pcmcia and busybox from CVS.
-* include kernel 2.6 module support in busybox configuration.
-* ensure busybox sh correctly reads /etc/profile at startup.
+* have pcmcia-cs from CVS.
 * make the initrd work with udev ???
-* use early-userspace on kernel 2.6 ???
+* move to using early-userspace on kernel 2.6 ???
 
 Userland
 * gather a sensible base for userland (?)
@@ -46,23 +42,6 @@ apm: do something
    kernel/arch/arm/kernel/apm.c
 new apm_power_info structure
 
---- arch/arm/mach-sa1100/apm.c  22 Feb 2004 03:41:28 -0000
-   1.1.1.1
-+++ arch/arm/mach-sa1100/apm.c  4 Mar 2004 08:45:07 -0000       1.2
-@@ -168,6 +168,9 @@
- #ifdef CONFIG_IPAQ_HANDHELD
-             h3600_apm_get_power_status(ac_line_status,
-   battery_status, battery_
-flag, battery_percentage, battery_life);
- #endif
-+#ifdef CONFIG_SA1100_JORNADA820
-+            j820_apm_get_power_status(ac_line_status, battery_status,
-   battery_f
-lag, battery_percentage, battery_life);
-+#endif
-        return APM_SUCCESS;
- }
-
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 video/sa1100fb.c
 
@@ -75,23 +54,7 @@ there is
 #endif
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
-arch/arm/common/sa1101.c
- understand why the mouse generates an uncaught sa1101 interrupt for
- every few bytes read. These were silent in 2.4 (but present,
- incrementing the interrupt counter), but generate messages in 2.6.
-
- Maybe the sa1101ps2.c doesn't send bytes correctly?
- Or maybe the trackpad just doesn't reply?
-
------->8------>8------>8------>8------>8------>8------>8------>8------>8------
 pcmcia:
-* understand why we don't get events when cards are inserted, only when
- they are ejected.
- Hypothesis: we are mishandling an initial event and the controller is
- stuck waiting for our proper handling.
-
-* while migrating to the driver model, I broke the way
- that the driver is initialized at all! Fix that.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 j820_keyb.c:
@@ -104,5 +67,4 @@ j820_keyb.c:
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 usb:
 
- try it? forward-port the changes by Matan?
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
