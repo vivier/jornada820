@@ -12,7 +12,7 @@
  *
  * Created for the Jornada820 port.
  *
- * $Id: sa1101.c,v 1.13 2004/07/11 13:02:31 oleg820 Exp $
+ * $Id: sa1101.c,v 1.14 2004/07/12 18:32:19 fare Exp $
  */
 
 #include <linux/module.h>
@@ -68,12 +68,12 @@ static struct sa1101_dev_info sa1101_devices[] = {
 		.skpcr_mask	= SKPCR_UCLKEn,
 		.devid		= SA1101_DEVID_USB,
 		.irq = {
-			IRQ_USBPWR,
-			IRQ_HCIM,
-			IRQ_HCIBUFFACC,
-			IRQ_HCIRMTWKP,
-			IRQ_NHCIMFCIR,
-			IRQ_USB_PORT_RESUME
+			IRQ_SA1101_USBERROR,
+			IRQ_SA1101_NIRQHCIM,
+			IRQ_SA1101_IRQHCIBUFFACC,
+			IRQ_SA1101_IRQHCIRMTWKP,
+			IRQ_SA1101_NHCIMFCIR,
+			IRQ_SA1101_USBRESUME
 		},
 	},
 #if 0
@@ -475,13 +475,16 @@ extern void sa1101_wake(void)
 	VMCCR=0x100;
 
 	/* setup shared memory controller */
-	SMCR=SMCR_ColAdrBits(10)+SMCR_RowAdrBits(12)+SMCR_ArbiterBias;
+	SMCR=SMCR_ColAdrBits(10) | SMCR_RowAdrBits(12) | SMCR_ArbiterBias;
 
 	/* reset USB */
 	USBReset |= USBReset_ForceIfReset;
 	USBReset |= USBReset_ForceHcReset;
 
 	local_irq_restore(flags);
+	    
+	TUCR |= TUCR_MR; /* enable master request in the sa1100. */
+		
 }
 
 extern int sa1101_usb_shutdown(void)

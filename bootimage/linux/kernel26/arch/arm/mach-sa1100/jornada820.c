@@ -4,7 +4,7 @@
  * 2004/01/22 George Almasi (galmasi@optonline.net)
  * Modelled after the Jornada 720 code.
  * 
- * $Id: jornada820.c,v 1.9 2004/07/10 21:12:19 oleg820 Exp $
+ * $Id: jornada820.c,v 1.10 2004/07/12 18:32:22 fare Exp $
  */
 
 #include <linux/init.h>
@@ -83,6 +83,7 @@ __initcall(jornada820_init);
 
 static struct map_desc jornada820_io_desc[] __initdata = {
   /* virtual     physical    length      type */
+  { 0xf5000000, 0, 0x01000000, MT_DEVICE } /* Boot Rom */
   { 0xf4000000, JORNADA820_SA1101_BASE, 0x00400000, MT_DEVICE } /* SA-1101 */
 };
 

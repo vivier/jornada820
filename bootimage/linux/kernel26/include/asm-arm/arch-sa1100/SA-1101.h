@@ -96,7 +96,7 @@
 
 #define SMCR_DCAC	  Fld(2,0)	  /* Number of column address bits */
 #define SMCR_DRAC	  Fld(2,2)	  /* Number of row address bits */
-#define SMCR_ArbiterBias  0x0008	  /* favor video or USB */
+#define SMCR_ArbiterBias  0x0010	  /* favor video or USB */
 #define SMCR_TopVidMem	  Fld(4,5)	  /* Top 4 bits of vidmem addr. */
 
 #define SMCR_ColAdrBits( x )		  /* col. addr bits 8..11 */ \
