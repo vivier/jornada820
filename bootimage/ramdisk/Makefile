@@ -53,23 +53,23 @@ cmdfile: cmdfile.in busybox pcmcia
 	echo "cd /" ; \
 	echo write modules.tar.bz2 modules.tar.bz2 ; \
 	for d in `find etc -type d | grep -v CVS` ; do \
-	  echo "mkdir /$$d" >> $@; \
+	  echo "mkdir /$$d" ; \
 	done ; \
 	for f in `find etc -type f | grep -v CVS` ; do \
 	  dir=`dirname $$f`; \
 	  file=`basename $$f`; \
-	  echo "cd /$$dir" >> $@; \
+	  echo "cd /$$dir" ; \
 	  echo "write $$f $$file" ; \
 	done ; \
 	echo "cd /" ) > $@
 	#for d in `find lib -type d` ; do \
-	#  echo "mkdir /$$d" >> $@; \
+	#  echo "mkdir /$$d" ; \
 	#done
 	#for f in `find lib -type f | grep -v CVS` ; do \
 	#  dir=`dirname $$f`; \
 	#  file=`basename $$f`; \
-	#  echo "cd /$$dir" >> $@; \
-	#  echo "write $$f $$file" >> $@; \
+	#  echo "cd /$$dir" ; \
+	#  echo "write $$f $$file" ; \
 	#done
 
 
@@ -79,12 +79,12 @@ cmdfile26: cmdfile.in busybox pcmcia
 	echo "cd /" ; \
 	echo write modules26.tar.bz2 modules.tar.bz2 ; \
 	for d in `find etc -type d | grep -v CVS` ; do \
-	  echo "mkdir /$$d" >> $@; \
+	  echo "mkdir /$$d" ; \
 	done ; \
 	for f in `find etc -type f | grep -v CVS` ; do \
 	  dir=`dirname $$f`; \
 	  file=`basename $$f`; \
-	  echo "cd /$$dir" >> $@; \
+	  echo "cd /$$dir" ; \
 	  echo "write $$f $$file" ; \
 	done ; \
 	echo "cd /" ) > $@
