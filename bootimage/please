@@ -55,6 +55,8 @@ do_operate_on_file () {
     *) return 1 ;;
   esac
   rel=${file#$base}
+  linux=${rel%%/*}
+  sub=${rel#*/}
   upstream=$TOPDIR/linux/upstream/$rel
   work=$TOPDIR/linux/$rel
   build=$TOPDIR/linux/build/$rel
@@ -102,5 +104,17 @@ showorigver () {
  */"
   fi
 }
+ensure_build_file () {
+  if [ -f $work ] ; then
+    cp -laf $work $build
+  elif [ -f $upstream ] ; then
+    cp -laf $upstream $build
+  fi
+}
+build () {
+  ensure_build_file
+  cd ${TOPDIR}/linux/build/$linux
+  make ${sub%.c}.o
+}
 
-$@
+op $@
