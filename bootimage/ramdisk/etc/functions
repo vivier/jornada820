@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.3 2004/04/27 11:06:16 fare Exp $
+# $Id: functions,v 1.4 2004/04/27 11:26:41 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -78,7 +78,6 @@ CHECK '[ -c dev/console ]' \
       'mount none dev -t devfs' \
       "Cannot mount the $PWD/dev partition."
 }
-
 
 my_linuxrc () {
   cd /
@@ -229,8 +228,8 @@ ensure_partition_bootable () {
 	etc/pcmcia/ide etc/pcmcia/ide.opts \
 	etc/pcmcia/network etc/pcmcia/network.opts
   do
-    CHECK '[ -f $i ]' \
-	'cp -a /$i $i' \
+    CHECK "[ -f $i ]" \
+	"cp -a /$i $i" \
 	"Cannot ensure /$i on target partition."
   done
   LOGT "Installing busybox..."
@@ -290,6 +289,7 @@ pivot_root_part2 () {
   # chmod 400 /dev/initrd
   LOG "Freeing resources occupied by the initrd..."
   umount /initrd
+  # problem: blockdev (part of the util-linux debian package) isn't in busybox
   blockdev --flushbufs /dev/rd/0 # /dev/ram0
   LOG "Jumping into the rootfs' init process..."
   do_init
@@ -299,5 +299,5 @@ pivot_root_part2 () {
 sysinit () {
   # replaces the /etc/init.d/rcS script -- see /etc/inittab
   echo -ne '\033[?2c\033(?B\033[m\033[1m'
-  echo 'Welcome to the Linux initial ramdisk for HP Jornada 820'
+  echo 'Welcome to Linux for the HP Jornada 820.'
 }
