@@ -1,5 +1,5 @@
-SUMMARY OF MAKE TARGETS - see README for details
+SUMMARY OF make TARGETS -- see README for explanations, Makefile for details
 
-make toolchain	- create a uClibc toolchain to compile the bootimage
-make j820	- create a 2.4 bootimage
-make j820-26	- create a 2.6 bootimage
+make toolchain	-- create a uClibc toolchain to compile the bootimage
+make j820	-- create a 2.4 bootimage
+make j820-26	-- create a 2.6 bootimage

@@ -29,7 +29,7 @@ KUPSTREAMDIR26		= linux/upstream/kernel26
 #                       default targets                                    |
 # --------------------------------------------------------------------------
 help::
-	$${PAGER:-cat} HELP
+	@$${PAGER:-cat} HELP
 
 all:: j820
 
