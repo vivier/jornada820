@@ -4,7 +4,7 @@
  * Copyright (c) 1999-2002 Vojtech Pavlik
  */
 /* Jornada820 version based on psmouse-base.c 1.8 from cvs.handhelds.org
- * $Id: psmouse-base.c,v 1.1 2004/07/03 15:54:37 fare Exp $
+ * $Id: psmouse-base.c,v 1.2 2004/07/03 21:42:41 fare Exp $
  * For debugging purposes only.
  */
 
@@ -519,22 +519,25 @@ static int psmouse_probe(struct psmouse *psmouse)
 /*
  * First, we check if it's a mouse. It should send 0x00 or 0x03
  * in case of an IntelliMouse in 4-byte mode or 0x04 for IM Explorer.
+ * The Jornada 820 trackpad returns 0x0d.
  */
 
 	param[0] = 0xa5;
 
-	printk("Getting psmouse ID...\n"); // DEBUG
+//	printk("Getting psmouse ID...\n"); // DEBUG
 	if (psmouse_command(psmouse, param, PSMOUSE_CMD_GETID))
 		return -1;
 
-	printk("Got ID=%d, expecting 3 or 4...\n"); // DEBUG
-	if (param[0] != 0x00 && param[0] != 0x03 && param[0] != 0x04)
+	if (param[0] != 0x00 && param[0] != 0x03 &&
+	    param[0] != 0x04 && param[0] != 0x0d) {
+		printk(KERN_WARNING // DEBUG
+		       "Got psmouse ID=%d, was expecting 0, 3, 4 or 13...\n");
 		return -1;
+	}
 
 /*
  * Then we reset and disable the mouse so that it doesn't generate events.
  */
-
 	if (psmouse_command(psmouse, NULL, PSMOUSE_CMD_RESET_DIS))
 		printk(KERN_WARNING "psmouse.c: Failed to reset mouse on %s\n", psmouse->serio->phys);
 
@@ -663,14 +666,14 @@ static void psmouse_connect(struct serio *serio, struct serio_dev *dev)
 {
 	struct psmouse *psmouse;
 
-	printk("Trying to connect a psmouse to %s " // DEBUG
-	       "(type %d; expecting SERIO_8042=%d or SERIO_PS_PSTHRY=%d).\n",
-	       serio->name, serio->type, SERIO_8042, SERIO_PS_PSTHRU);
+//	printk("Trying to connect a psmouse to %s " // DEBUG
+//	       "(type %x; expecting SERIO_8042=%x or SERIO_PS_PSTHRY=%x).\n",
+//	       serio->name, serio->type, SERIO_8042, SERIO_PS_PSTHRU);
 	if ((serio->type & SERIO_TYPE) != SERIO_8042 &&
 	    (serio->type & SERIO_TYPE) != SERIO_PS_PSTHRU)
 		return;
 
-	printk("allocating psmouse structure...\n"); // DEBUG
+//	printk("allocating psmouse structure...\n"); // DEBUG
 	if (!(psmouse = kmalloc(sizeof(struct psmouse), GFP_KERNEL)))
 		return;
 
@@ -685,7 +688,7 @@ static void psmouse_connect(struct serio *serio, struct serio_dev *dev)
 	psmouse->dev.private = psmouse;
 
 	serio->private = psmouse;
-	printk("Opening the serio...\n"); // DEBUG
+//	printk("Opening the serio...\n"); // DEBUG
 	
 	if (serio_open(serio, dev)) {
 		kfree(psmouse);
@@ -693,19 +696,20 @@ static void psmouse_connect(struct serio *serio, struct serio_dev *dev)
 		return;
 	}
 
-	printk("Probing for a psmouse...\n"); // DEBUG
+//	printk("Probing for a psmouse...\n"); // DEBUG
 
 	if (psmouse_probe(psmouse) < 0) {
-		printk("psmouse not recognized. using it anyway.\n"); // DEBUG
-		#if 0 // DEBUG
+		printk("psmouse not recognized.\n"); // DEBUG
+//		printk("psmouse not recognized. using it anyway.\n"); // DEBUG
+//		#if 0 // DEBUG
 		serio_close(serio);
 		kfree(psmouse);
 		serio->private = NULL;
 		return;
-		#endif
+//		#endif
 	}
 
-	printk("Identifying the psmouse...\n"); // DEBUG
+//	printk("Identifying the psmouse...\n"); // DEBUG
 	
 	psmouse->type = psmouse_extensions(psmouse, psmouse_max_proto, 1);
 	if (!psmouse->vendor)
