@@ -2,7 +2,7 @@
  * URB OHCI HCD (Host Controller Driver) for USB.
  *
  * Jornada820 version based on usb-ohci.c 1.37 from cvs.handhelds.org
- * $Id: usb-ohci.c,v 1.2 2004/07/14 20:04:42 fare Exp $
+ * $Id: usb-ohci.c,v 1.3 2004/08/01 11:20:52 fare Exp $
  *
  * (C) Copyright 1999 Roman Weissgaerber <weissg@vienna.at>
  * (C) Copyright 2000-2001 David Brownell <dbrownell@users.sourceforge.net>
@@ -88,7 +88,7 @@
 #endif
 #undef readl
 #undef writel
-#define real(d, a) sa1101_readreg(d, _SA1101( _USB( 0x100 * (int)(a) )))
+#define readl(a) sa1101_readreg(_SA1101( _USB( 0x100 * (int)(a) )))
 #define writel(d, a) sa1101_writereg(d, _SA1101( _USB( 0x100 * (int)(a) )))
 #endif
 
