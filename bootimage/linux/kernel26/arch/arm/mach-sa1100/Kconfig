@@ -1,5 +1,5 @@
 # Jornada820 version based on Kconfig 1.13 from cvs.handhelds.org
-# $Id: Kconfig,v 1.6 2004/07/10 19:51:47 oleg820 Exp $
+# $Id: Kconfig,v 1.7 2004/07/10 20:51:11 oleg820 Exp $
 
 
 if ARCH_SA1100
@@ -352,8 +352,8 @@ config SA1100_SSP
 	help
 	  Say Y here to enable support for the generic PIO SSP driver.
 	  This isn't for audio support, but for attached sensors and
-	  other devices, eg for BadgePAD 4 sensor support, or Jornada
-	  720 touchscreen support.
+	  other devices, eg for BadgePAD 4 sensor support, Jornada
+	  720 touchscreen support, or Jornada 820 keyboard support.
 
 config REGISTERS
 	tristate "SA1100/SA1101 Register access through /proc file system."
