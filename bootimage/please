@@ -68,6 +68,7 @@ create () {
   else
     mkdir -p $(dirname $work)
     cp -fa $upstream $work
+    showorigver
   fi
 }
 import24 () {
