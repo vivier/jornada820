@@ -2,7 +2,7 @@
  *  linux/drivers/video/sa1100fb.c
  *
  * Jornada820 version based on sa1100fb.c 1.22 from cvs.handhelds.org
- * $Id: sa1100fb.c,v 1.1 2004/06/24 16:58:52 fare Exp $
+ * $Id: sa1100fb.c,v 1.2 2004/06/30 12:07:37 fare Exp $
  *
  *  Copyright (C) 1999 Eric A. Thomas
  *   Based on acornfb.c Copyright (C) Russell King.
@@ -893,7 +893,7 @@ sa1100fb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
 		var->transp.offset);
 
 #ifdef CONFIG_CPU_FREQ
-	printk(KERN_DEBUG "dma period = %d ps, clock = %d kHz\n",
+	DPRINTK("dma period = %d ps, clock = %d kHz\n",
 		sa1100fb_display_dma_period(var),
 		cpufreq_get(smp_processor_id()));
 #endif
@@ -1540,7 +1540,7 @@ sa1100fb_freq_policy(struct notifier_block *nb, unsigned long val,
 	switch (val) {
 	case CPUFREQ_ADJUST:
 	case CPUFREQ_INCOMPATIBLE:
-		printk(KERN_DEBUG "min dma period: %d ps, "
+		DPRINTK("min dma period: %d ps, "
 			"new clock %d kHz\n", sa1100fb_min_dma_period(fbi),
 			policy->max);
 		/* todo: fill in min/max values */

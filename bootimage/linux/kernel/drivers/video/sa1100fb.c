@@ -1081,7 +1081,7 @@ sa1100fb_validate_var(struct fb_var_screeninfo *var,
 	}
 
 #ifdef CONFIG_CPU_FREQ
-	printk(KERN_DEBUG "dma period = %d ps, clock = %d kHz\n",
+	DPRINTK("dma period = %d ps, clock = %d kHz\n",
 		sa1100fb_display_dma_period(var),
 		cpufreq_get(smp_processor_id()));
 #endif
@@ -2131,7 +2131,7 @@ sa1100fb_clkchg_notifier(struct notifier_block *nb, unsigned long val,
 
 	switch (val) {
 	case CPUFREQ_MINMAX:
-		printk(KERN_DEBUG "min dma period: %d ps, old clock %d kHz, "
+		DPRINTK("min dma period: %d ps, old clock %d kHz, "
 			"new clock %d kHz\n", sa1100fb_min_dma_period(fbi),
 			mm->cur_freq, mm->new_freq);
 		/* todo: fill in min/max values */
