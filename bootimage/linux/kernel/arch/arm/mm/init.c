@@ -400,8 +400,8 @@ static __init void reserve_node_zero(unsigned int bootmap_pfn, unsigned int boot
 #endif
 #ifdef CONFIG_SA1100_JORNADA820
 	/*
-	 * We have to reserve this area because
-	 * WinCE somehow sets up a 16-bit 1 kHz counter at 0xc005c080
+	 * We have to reserve this area because WinCE (or hpcboot???)
+	 * somehow sets up a 16-bit 1 kHz counter at 0xc005c080
 	 * that constantly modifies memory, even after Linux has booted.
 	 *
 	 * I (galmasi) leave the whole first 2MB untouched,
@@ -410,7 +410,7 @@ static __init void reserve_node_zero(unsigned int bootmap_pfn, unsigned int boot
 	 *
 	 * I (fare) only reserve the page with the infamous counter,
 	 * which leaves more memory for Linux (memory is precious on a 820)
-	 * but confuses WinCE mightily at reboot.
+	 * but can confuse WinCE mightily at reboot.
 	 * Fix: remove power, main batteries AND backup batteries (left side)
 	 * to do a complete reset of the machine and boot it again.
 	 * You may use Ctrl-Alt-Del to kill the WinCE configuration menu.
@@ -425,8 +425,9 @@ static __init void reserve_node_zero(unsigned int bootmap_pfn, unsigned int boot
 	 * uncomment the fare line and comment the galmasi line away.
 	 * Be sure that one and only one of the below is uncommented.
 	 */
-	// reserve_bootmem_node(pgdat, PHYS_OFFSET, __pa(swapper_pg_dir)-PHYS_OFFSET); // galmasi way
-	reserve_bootmem_node(pgdat, PHYS_OFFSET+0x5c000, 0x1000); // fare way
+	if (machine_is_jornada820())
+		// reserve_bootmem_node(pgdat, PHYS_OFFSET, __pa(swapper_pg_dir)-PHYS_OFFSET); // galmasi way
+		reserve_bootmem_node(pgdat, PHYS_OFFSET+0x5c000, 0x1000); // fare way
 #endif
 }
 
