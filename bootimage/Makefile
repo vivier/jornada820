@@ -62,7 +62,7 @@ $(KUPSTREAMDIR)/CVS/Root $(KUPSTREAMDIR)/CVS/Repository:
 	echo '/1 :pserver:anoncvs@cvs.handhelds.org:2401/cvs Ay=0=h<Z' >> ~/.cvspass
 
 $(KUPSTREAMDIR)/Makefile: $(KUPSTREAMDIR)/CVS/Root
-	cd $(KUPSTREAMDIR) && cvs -z9 update -dfP &&
+	cd $(KUPSTREAMDIR) && cvs -z9 update -dfP && \
 	touch $(KUPSTREAMDIR)/Makefile
 
 # --------------------------------------------------------------------------
@@ -129,9 +129,9 @@ do-j820:
 sandisk: j820
 	mount /mnt/sandisk/; cp j820 /mnt/sandisk/; umount /mnt/sandisk/
 
-j820-26: config26 depend26 modules26 ramdisk do-j820-26
+j820-26: config26 depend26 modules26 ramdisk26 do-j820-26
 do-j820-26:
-	export RDIMAGE=$(TOPDIR)/ramdisk/ramdiskimage.gz && \
+	export RDIMAGE=$(TOPDIR)/ramdisk/ramdiskimage26.gz && \
 	cd ${KBUILDDIR26} && \
 	${MAKE} \
 	    ARCH=arm \

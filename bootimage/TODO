@@ -55,11 +55,40 @@ apm: do something
    kernel/arch/arm/kernel/apm.c
 new apm_power_info structure
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+arch/arm/mach-sa1100/sa1101.c
+update IRQ handling to new API...
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 pcmcia:
 in sa1100.h find out what happened to
 extern struct pcmcia_low_level jornada820_pcmcia_ops;
+
+drivers/pcmcia/sa1100_generic.c:74: error: `pcmcia_jornada820_init' undeclared here (not in a function)
+drivers/pcmcia/sa1100_generic.c:74: error: initializer element is not constant
+drivers/pcmcia/sa1100_generic.c:74: error: (near initialization for `sa11x0_pcmcia_hw_init[0]')
+make[2]: *** [drivers/pcmcia/sa1100_generic.o] Error 1
+
+drivers/pcmcia/sa1100_jornada820.c:23: warning: `struct pcmcia_state_array' declared inside parameter list
+drivers/pcmcia/sa1100_jornada820.c:23: warning: its scope is only this definition or declaration, which is probably not what you want
+drivers/pcmcia/sa1100_jornada820.c: In function `jornada820_pcmcia_socket_state':
+drivers/pcmcia/sa1100_jornada820.c:26: error: dereferencing pointer to incomplete type
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+drivers/char/keyboard.c:1011:2: warning: #warning "Cannot generate rawmode keyboard for your architecture yet."
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 j820kbd.c:
 convert to 2.6 style
 make a serio/sa1101ps2.c ???
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+drivers/input/serio/i8042.c: In function `i8042_init':
+drivers/input/serio/i8042.c:949: error: `I8042_AUX_IRQ' undeclared (first use in
+ this function)
+drivers/input/serio/i8042.c:949: error: (Each undeclared identifier is reported 
+only once
+drivers/input/serio/i8042.c:949: error: for each function it appears in.)
+drivers/input/serio/i8042.c:950: error: `I8042_KBD_IRQ' undeclared (first use in
+ this function)
+make[2]: *** [drivers/input/serio/i8042.o] Error 1
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+drivers/misc/mcp-core.c: In function `mcp_host_unregister':
+drivers/misc/mcp-core.c:193: warning: implicit declaration of function `device_unregister_wait'
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------

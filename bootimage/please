@@ -4,8 +4,17 @@
 # To have all the dependencies, try that:
 #	apt-get install zsh realpath
 
+fullpath () {
+  case "$1" in
+    (/*) P=$1 ;;
+    (*) P=$PWD/$1 ;;
+  esac
+  if Q=$(realpath $P 2>/dev/null) ; then P=$Q ; fi
+  echo $P
+}
+
 PROG=$@
-TOPDIR=$(dirname $(realpath $0))
+TOPDIR=$(dirname $(fullpath $0))
 
 DBG () { print -r "$*" >&2 }
 abort () { DBG "$1" ; exit ${2:-42} }
@@ -36,8 +45,9 @@ operate_on_files () {
     ( do_operate_on_file $i )
   done
 }
+
 do_operate_on_file () {
-  file=$(realpath $1)
+  file=$(fullpath $1)
   case $file in
     $TOPDIR/linux/build/kernel*) base=$TOPDIR/linux/build/ ;;
     $TOPDIR/linux/upstream/kernel*) base=$TOPDIR/linux/upstream/ ;;
@@ -58,6 +68,23 @@ create () {
     cp -fa $upstream $work
   fi
 }
+import24 () {
+  if [ -f $work ] ; then
+    abort "file $work already exists"
+  else
+    mkdir -p $(dirname $work)
+    cp -fa $(echo $upstream|perl -npe s,/kernel26/,/kernel/,) $work
+  fi
+}
+diff24 () {
+  if [ ! -f $work ] ; then
+    abort "file $work doesn't exists"
+  else
+    diff -u \
+	$(echo $work|perl -npe s,/kernel26/,/kernel/,) \
+	$(echo $work|perl -npe s,/kernel/,/kernel26/,)
+  fi
+}
 difforigver () {
   diff -u $upstream $work 2>&1
 }
@@ -75,6 +102,5 @@ showorigver () {
  */"
   fi
 }
-
 
 $@
