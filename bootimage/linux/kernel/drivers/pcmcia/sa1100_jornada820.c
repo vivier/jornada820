@@ -97,8 +97,8 @@ int jornada820_pcmcia_socket_state(struct pcmcia_state_array *state)
   
   state->state[0].detect = (status & PCSR_S0_detected)     ? 0 : 1;
   state->state[0].ready  = (status & PCSR_S0_ready)        ? 1 : 0;
-  state->state[0].vs_3v  = (status & PCSR_S0_VS1)          ? 1 : 0;
-  state->state[0].vs_Xv  = (status & PCSR_S0_VS2)          ? 1 : 0;
+  state->state[0].vs_3v  = (status & PCSR_S0_VS1)          ? 0 : 1;
+  state->state[0].vs_Xv  = (status & PCSR_S0_VS2)          ? 0 : 1;
   state->state[0].bvd1   = (status & PCSR_S0_BVD1_nSTSCHG) ? 1 : 0;
   state->state[0].bvd2   = (status & PCSR_S0_BVD2_nSPKR)   ? 1 : 0;
   state->state[0].wrprot = (status & PCSR_S0_WP)           ? 1 : 0;
