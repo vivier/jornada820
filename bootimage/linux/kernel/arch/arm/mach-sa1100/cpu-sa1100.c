@@ -105,6 +105,20 @@ typedef struct {
 
 
 
+#ifdef CONFIG_SA1100_JORNADA820
+
+/* TODO: other frequency settings ? */
+
+static sa1100_dram_regs_t sa1100_dram_settings[] =
+{
+	/* {        mdcnfg,     mdcas0,     mdcas1,     mdcas2 } */ /* clock frequency */
+	{ 191700, 0x063d213f, 0x18c6301f, 0xffff0c63, 0xffffffff }, /* 191.7 MHz */
+	{ 0, 0, 0, 0, 0 } /* last entry */
+};
+#else
+
+/* TODO: valid only for LART ? */
+
 static sa1100_dram_regs_t sa1100_dram_settings[] =
 {
 	/* { mdcnfg, mdcas0, mdcas1, mdcas2 } */ /* clock frequency */
@@ -126,7 +140,7 @@ static sa1100_dram_regs_t sa1100_dram_settings[] =
 	{ 280200, 0x0431c2a3, 0x878780ff, 0x87878787, 0xffffff87 }, /* 280.2 MHz */
 	{ 0, 0, 0, 0, 0 } /* last entry */
 };
-
+#endif
 
 
 
