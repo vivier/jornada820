@@ -5,7 +5,7 @@
  * Based on John Ankcorn's Jornada 720 file
  *
  * This file contains the hardware specific definitions for HP Jornada 820
- * $Id: jornada820.h,v 1.2 2004/06/27 16:24:50 oleg820 Exp $
+ * $Id: jornada820.h,v 1.3 2004/07/10 21:13:06 oleg820 Exp $
  */
 
 #ifndef __ASM_ARCH_HARDWARE_H
@@ -18,6 +18,7 @@
  */
 
 #define SA1101_BASE		(0x18000000) 
+#define JORNADA820_SA1101_BASE		(0x18000000) 
 
 
 /* TODO: remove */
@@ -100,7 +101,3 @@
 
 #define DAC_JORNADA820_CONTRAST			DACDR1
 #define DAC_JORNADA820_BRIGHTNESS		DACDR2
-
-/*
- * PCMCIA/CF power...
- */

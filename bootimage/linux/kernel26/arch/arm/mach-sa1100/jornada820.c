@@ -4,7 +4,7 @@
  * 2004/01/22 George Almasi (galmasi@optonline.net)
  * Modelled after the Jornada 720 code.
  * 
- * $Id: jornada820.c,v 1.8 2004/07/10 18:58:19 fare Exp $
+ * $Id: jornada820.c,v 1.9 2004/07/10 21:12:19 oleg820 Exp $
  */
 
 #include <linux/init.h>
@@ -22,17 +22,10 @@
 
 static struct resource sa1101_resources[] = {
 	[0] = {
-		.start  = 0x18000000,
+		.start  = JORNADA820_SA1101_BASE,
 		.end    = 0x1bffffff,
 		.flags  = IORESOURCE_MEM,
 	},
-/* 
-	[1] = {
-		.start  = ,
-		.end    = IRQ_NEPONSET_SA1111,
-		.flags  = IORESOURCE_IRQ,
-	},
-*/
 };
 
 static struct platform_device sa1101_device = {
@@ -55,21 +48,6 @@ static int __init jornada820_init(void)
 {
   printk("In jornada820_init\n");
 
-#if 0
-  /* audio et al. */
-  set_irq_type(GPIO_JORNADA820_UCB1200_IRQ,		IRQT_RISING);
-  
-  /* TODO: write the drivers to use these events */
-  /*  ser1 */
-  set_irq_type(GPIO_JORNADA820_POWERD_IRQ,		IRQT_BOTHEDGE);
-  /*  serial port */
-  set_irq_type(GPIO_JORNADA820_SERIAL_IRQ,		IRQT_BOTHEDGE);
-  /*  what is that? */
-  set_irq_type(GPIO_JORNADA820_DTRDSR_IRQ,		IRQT_BOTHEDGE);
-  /*  ledbutton */
-  set_irq_type(GPIO_JORNADA820_LEDBUTTON_IRQ,		IRQT_RISING);
-#endif
-
   /* ------------------- */
   /* Initialize the SSP  */
   /* ------------------- */
@@ -80,20 +58,19 @@ static int __init jornada820_init(void)
   GPDR |= (GPIO_GPIO10 | GPIO_GPIO12 | GPIO_GPIO13);
   GPDR &= ~GPIO_GPIO11;
 
+  /* we mess with the SSCR0 directly, because there is no ssp_setreg() API, that
+     can be called by the keyboard driver */
+
     /* 8 bit, Motorola, enable, 460800 bit rate */
   Ser4SSCR0 = SSCR0_DataSize(8)+SSCR0_Motorola+SSCR0_SSE+SSCR0_SerClkDiv(8);
 //  Ser4SSCR1 = SSCR1_RIE | SSCR1_SClkIactH | SSCR1_SClk1_2P;
 
-  /* TODO: remove. */
-  /* Initialize the 1101. */
+  Ser4MCCR0 |= MCCR0_MCE;       /* reenable MCP */
 
-//  sa1101_probe(SA1101_BASE);
-//  sa1101_wake();
-//  sa1101_init_irq(GPIO_JORNADA820_SA1101_CHAIN_IRQ);
-
+  /* we can't set the audio divisor here. It will be reset by the generic MCP code.
+  /* TODO: j820_audio.c driver should take care of this problem */
 
   return platform_add_devices(devices, ARRAY_SIZE(devices));
-
 
   return 0;
 }
@@ -106,7 +83,7 @@ __initcall(jornada820_init);
 
 static struct map_desc jornada820_io_desc[] __initdata = {
   /* virtual     physical    length      type */
-  { 0xf4000000, 0x18000000, 0x00400000, MT_DEVICE } /* SA-1101 */
+  { 0xf4000000, JORNADA820_SA1101_BASE, 0x00400000, MT_DEVICE } /* SA-1101 */
 };
 
 static void __init jornada820_map_io(void)
