@@ -34,6 +34,33 @@ you can even install <a href="http://www.debian.org/">debian-arm</a>
 <a href="http://pocketworkstation.org/">PocketWorkstation</a>)!
 For more information, ask <a href="http://www.google.com/">Google</a>,
 or see on <a href="http://handhelds.org/">handhelds.org</a>, etc.
+</p><p align="justify">
+Quick Tips:
+<ul>
+<li>If you have a linux workstation and a pcmcia network card for your j820,
+ you can use the workstation as a NFS file server -- it works great for me.
+<li>You may even use your linux workstation as a swap server using nbd
+ (untested - send us feedback).
+<li>chroot(2) is your friend. Yes it is.
+ Note that you might need to mount a copy of /proc, /dev/, /dev/pts, etc.,
+ under the point you chroot'ed.
+<li>You can extract (on your NFS server or your CF)
+an archive from
+<a href="http://pocketworkstation.org/">PocketWorkstation</a>
+or Oleg's <a href="old/oleg/TAR.bz2">tarfile</a>
+as the basis for a debian installation.
+<li>I installed debian that way on NFS,
+and then copied the installation over to CF, excluding "non-necessary" files.
+<li>You can make an ext2 partition either by using a CF reader on your
+workstation, or by chrooting into NFS installation that has the ext2 tools.
+<li>When hacking software packages on your Jornada820, you can use distcc
+so as to delegate the compilation to a machine with more RAM and faster CPU.
+<li>You can also start from images designed for other ARM-based PDAs,
+such as Zaurus, iPAQ, etc.
+<li>Please send feedback to the
+	<a href="mailinglists.html">jornada820 mailing-list</a>
+when you get something running!
+</ul>
 </p>
 <!-- required stuff -->
 <table width="100%"><tr>
@@ -52,6 +79,6 @@ Back to <a href="http://jornada820.sourceforge.net"
          + "-" + lastModMonth + "-" + lastModDay + "</small></i>")
       </script>
 </td></tr></table>
-<!-- $Id: userland.html,v 1.8 2004/07/03 10:49:42 fare Exp $ -->
+<!-- $Id: userland.html,v 1.9 2004/07/07 14:54:30 fare Exp $ -->
 </body>
 </html>
