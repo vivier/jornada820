@@ -1,4 +1,4 @@
-$Id: TODO,v 1.15 2004/07/01 20:12:31 fare Exp $
+$Id: TODO,v 1.16 2004/07/04 16:23:44 fare Exp $ -*- Fundamental -*-
 
 Kernel 2.4
 * move on, dude!
@@ -37,7 +37,8 @@ Web site
 
 Bootloader
 * build a gcc toolchain for arm-wince-pe ???
-* we imported the linexec source code as j820boot, now port it to gcc
+* we imported the linexec source code as j820boot,
+ now port it to gcc and some gnu libraries.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 apm: do something
@@ -70,39 +71,31 @@ ensure that somewhere in
 extern void (*sa1100fb_backlight_power)(int on);
 there is
 
-#ifdef CONFIG_SA1100_JORNADA820	
+#ifdef CONFIG_SA1100_JORNADA820
         GPSR = GPIO_JORNADA820_BACKLIGHTON;
 #endif
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
-arch/arm/mach-sa1100/sa1101.c
-update IRQ handling to new API... read Documentation/arm/Interrupts
-avoid use of irq_desc and use request_irq() instead???
-call set_irq_flags(irq,IRQF_VALID|...)???
-get inspiration from jornada56x.c
+arch/arm/common/sa1101.c
+ understand why the mouse generates an uncaught sa1101 interrupt for
+ every few bytes read. These were silent in 2.4 (but present,
+ incrementing the interrupt counter), but generate messages in 2.6.
+
+ Maybe the sa1101ps2.c doesn't send bytes correctly?
+ Or maybe the trackpad just doesn't reply?
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 pcmcia:
-in sa1100.h find out what happened to
-extern struct pcmcia_low_level jornada820_pcmcia_ops;
+* understand why we don't get events when cards are inserted, only when
+ they are ejected.
+ Hypothesis: we are mishandling an initial event and the controller is
+ stuck waiting for our proper handling.
 
-drivers/pcmcia/sa1100_generic.c:74: error: `pcmcia_jornada820_init' undeclared here (not in a function)
-drivers/pcmcia/sa1100_generic.c:74: error: initializer element is not constant
-drivers/pcmcia/sa1100_generic.c:74: error: (near initialization for `sa11x0_pcmcia_hw_init[0]')
-make[2]: *** [drivers/pcmcia/sa1100_generic.o] Error 1
-
-drivers/pcmcia/sa1100_jornada820.c:23: warning: `struct pcmcia_state_array' declared inside parameter list
-drivers/pcmcia/sa1100_jornada820.c:23: warning: its scope is only this definition or declaration, which is probably not what you want
-drivers/pcmcia/sa1100_jornada820.c: In function `jornada820_pcmcia_socket_state':
-drivers/pcmcia/sa1100_jornada820.c:26: error: dereferencing pointer to incomplete type
+* while migrating to the driver model, I broke the way
+ that the driver is initialized at all! Fix that.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
-drivers/char/keyboard.c:1011:2: warning: #warning "Cannot generate
-   rawmode keyboard for your architecture yet."
-Should we just ignore this???
-
 j820_keyb.c:
-conversion to 2.6 style done by Matan Ziv-Av
 
  Maybe special-case the Alt+arrow = PgUp, PgDn, Beg, End mappings? (?)
  Maybe special-case the On/Off key (?)
@@ -110,8 +103,7 @@ conversion to 2.6 style done by Matan Ziv-Av
  Recognize as such the special button on the back?
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
-test the sa1101ps2.c device
-we need a gpm?
-it depends on sa1101.c being updated.
+usb:
 
+ try it? forward-port the changes by Matan?
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------

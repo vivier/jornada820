@@ -12,7 +12,7 @@
  *
  * Created for the Jornada820 port.
  *
- * $Id: sa1101.c,v 1.7 2004/07/03 23:42:41 fare Exp $
+ * $Id: sa1101.c,v 1.8 2004/07/04 16:23:49 fare Exp $
  */
 
 #include <linux/module.h>
@@ -378,6 +378,7 @@ int sa1101_driver_register(struct sa1101_driver *driver)
 //	driver->drv.probe = sa1101_bus_probe;
 //	driver->drv.remove = sa1101_bus_remove;
 //	driver->drv.bus = &sa1101_bus_type;
+	printk("registering sa1101 driver %s\n",driver->drv.name);
 	return driver_register(&driver->drv);
 }
 
