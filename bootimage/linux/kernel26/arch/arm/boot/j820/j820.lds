@@ -1,10 +1,9 @@
 /*
- *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
- * $Id: j820.lds,v 1.3 2004/06/28 12:40:44 fare Exp $
+ * $Id: j820.lds,v 1.4 2004/06/30 13:55:18 fare Exp $
  */
 OUTPUT_ARCH(arm)
 ENTRY(_start)
@@ -20,18 +19,19 @@ SECTIONS
    _stext = .;
    _start = .;
    *(.start)
-   kernel_start = .;
-   arch/arm/boot/j820/kernel.o
-   kernel_len = . - kernel_start;
    . = ALIGN(32);
    initrd_start = .;
    arch/arm/boot/j820/initrd.o 
    . = ALIGN(32);
    initrd_end = .;
-   initrd_size = initrd_end - initrd_start - 0xc0800000 ;
-	/* somehow, the linker insist in adding 0xc0800000
+   initrd_size = . - initrd_start - 0xc0800000 ;
+	/* initrd_size = initrd_end - initrd_start ;
+	 * somehow, the linker insist in adding 0xc0800000
 	 * to the value of this symbol (!)
 	 */
+   kernel_start = .;
+   arch/arm/boot/j820/kernel.o
+   kernel_len = . - kernel_start;
    _etext = .;
   }
   

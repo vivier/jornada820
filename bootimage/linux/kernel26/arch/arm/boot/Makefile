@@ -8,7 +8,7 @@
 # Copyright (C) 1995-2002 Russell King
 #
 # Jornada820 version based on Makefile 1.5 from cvs.handhelds.org
-# $Id: Makefile,v 1.4 2004/06/29 23:14:36 fare Exp $
+# $Id: Makefile,v 1.5 2004/06/30 13:55:17 fare Exp $
 
 
 MKIMAGE         := $(srctree)/scripts/mkuboot.sh
@@ -66,10 +66,9 @@ params_phys-$(CONFIG_ARCH_S3C2410)	:= 0x30000100
 params_phys-$(CONFIG_ARCH_VERSATILE_PB)	:= 0x00000100
 initrd_phys-$(CONFIG_ARCH_VERSATILE_PB)	:= 0x00800000
    zreladdr-$(CONFIG_SA1100_JORNADA820)	:= 0xc0208000
-# ztextaddr-$(CONFIG_SA1100_JORNADA820)	:= 0xc0800000
-#  zbssaddr-$(CONFIG_SA1100_JORNADA820)	:= 0xc0600000
+  ztextaddr-$(CONFIG_SA1100_JORNADA820)	:= 0xc0800000
 params_phys-$(CONFIG_SA1100_JORNADA820)	:= 0xc0200100
-initrd_phys-$(CONFIG_SA1100_JORNADA820)	:= 0xc0a00000
+initrd_phys-$(CONFIG_SA1100_JORNADA820)	:= 0xc0c00000
 
 ZRELADDR    := $(zreladdr-y)
 ZTEXTADDR   := $(ztextaddr-y)
@@ -89,7 +88,7 @@ ZBSSADDR	:= ALIGN(4)
 endif
 ifeq ($(CONFIG_SA1100_JORNADA820),y)
 ZTEXTADDR	:= 0xc0800000
-ZBSSADDR	:= 0xc0600000
+#ZBSSADDR	:= 0xc0600000
 endif
 
 export	ZTEXTADDR ZBSSADDR ZRELADDR INITRD_PHYS PARAMS_PHYS

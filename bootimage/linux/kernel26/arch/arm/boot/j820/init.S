@@ -10,7 +10,12 @@
  *  Header file for providing proper boot parameters to kernel.
  *  See http://www.arm.linux.org.uk/developer/booting.php
  *
- * $Id: init.S,v 1.2 2004/06/24 17:02:01 fare Exp $
+ * This stub is loaded at a fixed address 0xc0800000 (see j820.lds)
+ * by hpcboot.exe from NetBSD. It finishes the job of a Linux bootloader:
+ * it moves the initrd away from the zImage (leaving space for bss),
+ * initializes the ATAG, and jumps into the kernel.
+ *
+ * $Id: init.S,v 1.3 2004/06/30 13:55:18 fare Exp $
  */
 #define __ASSEMBLY__ 1
 #include <asm/mach-types.h>
@@ -19,6 +24,16 @@
 		.type	_start, #function
 		.globl	_start
 _start:
+
+#undef CONFIG_JORNADA820_MOVE_INITRD
+#ifdef CONFIG_JORNADA820_MOVE_INITRD
+/* Move initrd away from the zImage */
+		ldr	r4, initrd_start_	@ source address of initrd
+		ldr	r6, initrd_size_	@ size of initrd
+		ldr	r5, initrd_dest_	@ destination address of initrd
+		add	r4, r6, r6		@ end of initrd
+		bl	blit			@ move the initrd away
+#endif
 
 #define CONFIG_JORNADA820_F1267A_AUTODETECT 1
 /* It's been tested to work, so we enable it by default. */
@@ -124,28 +139,53 @@ setup_kernel_params:
 @ copy kernel ATAG params from our own
 		adr	r4, data
 		ldmia	r4!, {r0,r1,r2,r5,r6}
-copy_loop:
-	        ldmia   r4!, {r7-r10}	@ copy 4 words at a time
-	        stmia   r5!, {r7-r10}
-	        cmp     r4, r6		@ it is ok if we copy a bit more
-	        ble     copy_loop
+		bl	blit
 
 @ clear PID and enable clock switching
 		mov r0, #0; mcr p15, 0, r0, c13, c0, 0;
 		mov r0, #0; mcr p15, 0, r0, c15, c1, 2;
 
-@ jump into (relocated) arch/arm/boot/compressed/head.S
-		b       _kernel_start
+@ jump into (displaced) arch/arm/boot/compressed/head.S
+#ifdef CONFIG_JORNADA820_MOVE_INITRD
+		b       kernel_start
+#else
+		ldr	pc, kernel_start_
+#endif
 
+@ blit, move a big block of memory.
+	@ (named after PDP-10 BLock Transfer instruction),
+	@ copy data from source address r4 upward to r6 (not included),
+	@ to destination r5 upward.
+	@ Beware: will fail horribly if r4<r5<r6 -- don't do that!
+	@ the blit happens by bursts of 4 words,
+	@ and the size of the block is rounded up.
+	@ r4, r5, r7-r10 are clobbered.
+blit:
+	        ldmia   r4!, {r7-r10}	@ copy 4 words at a time
+	        stmia   r5!, {r7-r10}
+	        cmp     r4, r6		@ it is ok if we copy a bit more
+	        ble     blit
+		mov	pc, lr
+
+#ifdef CONFIG_JORNADA820_MOVE_INITRD
+initrd_start_:	.word	initrd_start
+#else
+kernel_start_:	.word	kernel_start
+#endif
 data:
 		@ entry values for r0-r2 as per booting.php
 		.word	0, MACH_TYPE_JORNADA820, params
 		@ initial values for the loop that copies tags to *params
 		.word	params, end_of_tags
-		@ tags
+		@ arm tags
 		.word	2, 0x54410001		@ ATAG_CORE
 		.word	4, 0x54420005		@ ATAG_INITRD2
+#ifdef CONFIG_JORNADA820_MOVE_INITRD
+initrd_dest_:	.word	0xc0c00000		@ INITRD_PHYS
+initrd_size_:	.word	initrd_size
+#else
 		.word	initrd_start, initrd_size
+#endif
 		.word   4, 0x54410002		@ ATAG_MEM: main memory
 		.word	16*1024*1024, 0xC0000000
 #ifdef CONFIG_JORNADA820_F1267A_AUTODETECT
@@ -154,5 +194,3 @@ expansion_mem:	.word	16*1024*1024, 0xD0000000
 #endif
 		.word	0,0			@ ATAG_NONE: end marker
 end_of_tags:
-
-_kernel_start:
