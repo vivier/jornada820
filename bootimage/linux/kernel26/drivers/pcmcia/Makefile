@@ -1,8 +1,8 @@
 #
 # Makefile for the kernel pcmcia subsystem (c/o David Hinds)
 #
-# Jornada820 version based on Makefile 1.12 from cvs.handhelds.org
-# $Id: Makefile,v 1.1 2004/06/24 16:58:51 fare Exp $
+# Jornada820 version based on Makefile 1.13 from cvs.handhelds.org
+# $Id: Makefile,v 1.2 2004/07/03 23:40:26 fare Exp $
 
 ifeq ($(CONFIG_PCMCIA_DEBUG),y)
 EXTRA_CFLAGS += -DDEBUG
@@ -22,6 +22,9 @@ obj-$(CONFIG_PCMCIA_PXA2XX)			+= pxa2xx_core.o pxa2xx_cs.o
 pcmcia_core-y					+= cistpl.o rsrc_mgr.o bulkmem.o cs.o
 pcmcia_core-$(CONFIG_CARDBUS)			+= cardbus.o
 
+sa11xx_core-y					+= soc_common.o sa11xx_base.o
+pxa2xx_core-y					+= soc_common.o pxa2xx_base.o
+
 sa1111_cs-y					+= sa1111_generic.o
 sa1111_cs-$(CONFIG_SA1100_ADSBITSY)		+= sa1100_adsbitsy.o
 sa1111_cs-$(CONFIG_ASSABET_NEPONSET)		+= sa1100_neponset.o
@@ -32,7 +35,6 @@ sa1111_cs-$(CONFIG_SA1100_PFS168)		+= sa1100_pfs168.o
 sa1111_cs-$(CONFIG_SA1100_PT_SYSTEM3)		+= sa1100_system3.o
 sa1111_cs-$(CONFIG_SA1100_XP860)		+= sa1100_xp860.o
 
-sa1100_cs-y					+= sa1100_generic.o
 sa1100_cs-$(CONFIG_SA1100_ASSABET)		+= sa1100_assabet.o
 sa1100_cs-$(CONFIG_SA1100_CERF)			+= sa1100_cerf.o
 sa1100_cs-$(CONFIG_SA1100_FLEXANET)		+= sa1100_flexanet.o
@@ -40,7 +42,6 @@ sa1100_cs-$(CONFIG_SA1100_FREEBIRD)		+= sa1100_freebird.o
 sa1100_cs-$(CONFIG_SA1100_GRAPHICSCLIENT)	+= sa1100_graphicsclient.o
 sa1100_cs-$(CONFIG_SA1100_H3600)		+= sa1100_h3600.o
 sa1100_cs-$(CONFIG_SA1100_JORNADA56X)		+= sa1100_jornada56x.o
-sa1100_cs-$(CONFIG_SA1100_JORNADA820)		+= sa1100_jornada820.o
 sa1100_cs-$(CONFIG_SA1100_PANGOLIN)		+= sa1100_pangolin.o
 sa1100_cs-$(CONFIG_SA1100_SHANNON)		+= sa1100_shannon.o
 sa1100_cs-$(CONFIG_SA1100_SIMPAD)		+= sa1100_simpad.o
@@ -48,4 +49,7 @@ sa1100_cs-$(CONFIG_SA1100_STORK)		+= sa1100_stork.o
 sa1100_cs-$(CONFIG_SA1100_TRIZEPS) 		+= sa1100_trizeps.o
 sa1100_cs-$(CONFIG_SA1100_YOPY)			+= sa1100_yopy.o
 
-pxa2xx_cs-y					+= pxa2xx_generic.o
+sa1100_cs-$(CONFIG_SA1100_JORNADA820)		+= sa1101.o
+
+pxa2xx_cs-$(CONFIG_ARCH_LUBBOCK)		+= pxa2xx_lubbock.o sa1111_generic.o
+pxa2xx_cs-$(CONFIG_MACH_MAINSTONE)		+= pxa2xx_mainstone.o
