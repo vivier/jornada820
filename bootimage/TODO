@@ -1,4 +1,4 @@
-$Id: TODO,v 1.10 2004/06/30 01:22:33 fare Exp $
+$Id: TODO,v 1.11 2004/06/30 01:38:03 fare Exp $
 
 Kernel 2.4
 * move on, dude!
@@ -109,5 +109,9 @@ what about the mouse ???
  Maybe special-case the Alt+arrow = PgUp, PgDn, Beg, End mappings? (?)
  Maybe special-case the On/Off key (?)
 3) glue the code together, including psmouse. Howsitdone?
+ Apparently, when registering the struct serio *serio, we have
+ serio->type == SERIO_8042 or SERIO_PS_PSTHRU, and in the keyboard and
+ mouse driver, in .connect, we switch (serio->type & SERIO_TYPE).
+ serio/serio.c#serio_find_dev() will do the rest...
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
