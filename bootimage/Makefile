@@ -28,6 +28,9 @@ KUPSTREAMDIR26		= linux/upstream/kernel26
 # --------------------------------------------------------------------------
 #                       default targets                                    |
 # --------------------------------------------------------------------------
+help::
+	$${PAGER:-cat} HELP
+
 all:: j820
 
 localclean::
@@ -40,7 +43,6 @@ clean:: localclean
 distclean:: localclean
 	${MAKE} -C ${KBUILDDIR} ARCH=arm mrproper
 	${MAKE} -C ramdisk ARCH=arm mrproper
-
 
 # --------------------------------------------------------------------------
 #                       kernel build tree                                  |

@@ -1,0 +1,52 @@
+Build Environment for the Jornada 820 bootimage
+
+The Makefile ought to contain everything you need to build the bootimage.
+For hacking, an optional script "please" helps you do things
+with the kernel tree.
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+make toolchain
+
+create a toolchain to compile the bootimage.
+All other targets assume that a toolchain is present.
+
+The toolchain is based on uClibc - http://www.uclibc.org/
+You may make it available in your PATH with
+	ln -s ${TOPDIR}/gcc-3.3.x/toolchain_arm/bin/arm-linux-* /usr/local/bin/
+
+Alternatively, you may reuse an existing ARM toolchain that you have installed.
+You may notably find glibc-based toolchains on
+	http://www.handhelds.org/z/wiki/Toolchains
+	http://www.opensistemas.com/Gentoo_for_Zaurus.715.0.html
+	http://www.openzaurus.org/official/toolchain/
+But mind that glibc is both more bloated and less featureful
+(the resolver doesn't work with static binaries).
+
+Also note that you can put your toolchain to good use with distcc,
+so as to speed up compilation on your Jornada.
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+make j820
+
+create a bootimage based on the Linux 2.4 kernel.
+Assumes that you have a working toolchain.
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+make j820-26
+
+create a bootimage based on the Linux 2.6 kernel.
+Assumes that you have a working toolchain.
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+NOTES
+
+the current build system has glitches. Sorry for the inconvenience.
+Please report them as you experience them. We will try to automate things,
+and make the build process as seamless as affordable.
+
+Sometimes, a target won't work at first, because some file didn't exist.
+Sometimes, a target will do too much work at second, rebuilding stuff
+that's already there.
+Sometimes, a target will fail in a subtle way because old files got in the way.
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------

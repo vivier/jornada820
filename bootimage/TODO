@@ -1,4 +1,4 @@
-$Id: TODO,v 1.6 2004/06/29 06:14:54 fare Exp $
+$Id: TODO,v 1.7 2004/06/29 09:29:11 fare Exp $
 
 Kernel 2.4
 * move on, dude!
@@ -7,11 +7,13 @@ Kernel 2.4
  * make the cursor visible by default
 
 Kernel 2.6
-* have the kernel compile properly (see errors below)
-* have the kernel boot properly
-* ensure that bits that weren't merged easily make it to 2.6
-* fix any issues with the initial port from 2.4 that still remain in 2.6
-* fix PCMCIA issues
+* find out why the ramdisk doesn't load
+* port the keyboard driver
+* port the sa1101 driver
+* port and fix the apm driver
+* port and fix the PCMCIA driver
+* ensure that backlight control works on fb
+* fix the above issues from kernel 2.4 if they are still there.
 * make the USB driver work
 * make the sound driver work
 * play nicer with booting to/from WinCE
@@ -23,14 +25,25 @@ Bootdisk
 * have pcmcia and busybox from CVS.
 * include kernel 2.6 module support in busybox configuration.
 * ensure busybox sh correctly reads /etc/profile at startup.
+* use early-userspace on kernel 2.6 ???
 
 Userland
 * gather a sensible base for userland (?)
+* maybe based on OE? on uwoody?
 
 Web site
 * have a cron job update the web site from CVS.
 
+Bootloader
+* build a gcc toolchain for arm-wince-pe ???
+* import and merge latest hpcboot sources from Oleg and NetBSD ???
+
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+apm: do something
+2.4 => kernel/arch/arm/mach-sa1100/apm.c
+2.6 => kernel/arch/arm/mach-sa1100/jornada820.c
+   kernel/arch/arm/kernel/apm.c
+new apm_power_info structure
 
 --- arch/arm/mach-sa1100/apm.c  22 Feb 2004 03:41:28 -0000
    1.1.1.1
@@ -59,17 +72,13 @@ there is
 #ifdef CONFIG_SA1100_JORNADA820	
         GPSR = GPIO_JORNADA820_BACKLIGHTON;
 #endif
------->8------>8------>8------>8------>8------>8------>8------>8------>8------
-apm: do something
-2.4 => kernel/arch/arm/mach-sa1100/apm.c
-2.6 => kernel/arch/arm/mach-sa1100/jornada820.c
-   kernel/arch/arm/kernel/apm.c
-new apm_power_info structure
+
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 arch/arm/mach-sa1100/sa1101.c
 update IRQ handling to new API... read Documentation/arm/Interrupts
 avoid use of irq_desc and use request_irq() instead???
 call set_irq_flags(irq,IRQF_VALID|...)???
+
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 pcmcia:
 in sa1100.h find out what happened to
@@ -87,24 +96,12 @@ drivers/pcmcia/sa1100_jornada820.c:26: error: dereferencing pointer to incomplet
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 drivers/char/keyboard.c:1011:2: warning: #warning "Cannot generate rawmode keyboard for your architecture yet."
------->8------>8------>8------>8------>8------>8------>8------>8------>8------
+
 j820kbd.c:
 convert to 2.6 style
 make a serio/sa1101ps2.c ???
 what about the mouse ???
------->8------>8------>8------>8------>8------>8------>8------>8------>8------
-drivers/input/serio/i8042.c: In function `i8042_init':
-drivers/input/serio/i8042.c:949: error: `I8042_AUX_IRQ' undeclared (first use in
- this function)
-drivers/input/serio/i8042.c:949: error: (Each undeclared identifier is reported 
-only once
-drivers/input/serio/i8042.c:949: error: for each function it appears in.)
-drivers/input/serio/i8042.c:950: error: `I8042_KBD_IRQ' undeclared (first use in
- this function)
-make[2]: *** [drivers/input/serio/i8042.o] Error 1
------->8------>8------>8------>8------>8------>8------>8------>8------>8------
-drivers/misc/mcp-core.c: In function `mcp_host_unregister':
-drivers/misc/mcp-core.c:193: warning: implicit declaration of function `device_unregister_wait'
+
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 Why are we experiencing problems with uncompressing a compressed ramdiskimage,
 whereas we used not to? Maybe upstream bug? Maybe a build glitch?
@@ -119,6 +116,7 @@ Somehow with 2.6, the kernel says
 Freeing initrd memory: 4096K"
 There's a bug to be traced in init/do_mounts_rd.c or init/initramfs.c
 -- somehow, the ramdisk isn't loaded properly.
-
+Using md5sum to check that the compressed then uncompressed disk
+images are there might or mightn't be useful in locating the bug.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
