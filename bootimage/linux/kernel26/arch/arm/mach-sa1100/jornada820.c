@@ -4,7 +4,7 @@
  * 2004/01/22 George Almasi (galmasi@optonline.net)
  * Modelled after the Jornada 720 code.
  * 
- * $Id: jornada820.c,v 1.4 2004/06/30 14:00:05 fare Exp $
+ * $Id: jornada820.c,v 1.5 2004/07/01 21:49:25 fare Exp $
  */
 
 #include <linux/init.h>
@@ -63,6 +63,10 @@ static int __init jornada820_init(void)
   GPDR |= GPIO_32_768kHz;
 
   TUCR = TUCR_3_6864MHz; /* */
+
+  sa1101_probe(SA1101_BASE);
+  sa1101_wake();
+  sa1101_init_irq (GPIO_JORNADA820_SA1101_CHAIN_IRQ);
 
   return 0;
 }

@@ -1,18 +1,15 @@
 /*
+ * 2004/07/01 Fare (fare@tunes.org)
+ * Ported to 2.6, with inspiration from jornada56x.c.
+ * See also Documentation/arm/Interrupts.
+ *
  * 2004/01/22 George Almasi (galmasi@optonline.net)
  * Main driver for the SA1101 chip.
  * Modelled after the file sa1111.c
  *
  * Created for the Jornada820 port.
  *
- * $Id: sa1101.c,v 1.4 2004/06/30 19:28:49 fare Exp $
- */
-
-#if 0
-/*
- * Should be updated for kernel 2.6 (from 2.4),
- * getting inspiration once again from sa1111.c.
- * For instance, do_IRQ is obsolete.
+ * $Id: sa1101.c,v 1.5 2004/07/01 21:49:25 fare Exp $
  */
 
 #include <linux/module.h>
@@ -33,7 +30,6 @@
 #include <asm/mach/irq.h>
 #include <asm/arch/irq.h>
 #include <asm/uaccess.h>
-
 #include <asm/io.h>
 
 static struct resource sa1101_resource = {
@@ -67,33 +63,6 @@ int __init sa1101_probe(unsigned long phys_addr)
  * SA1101 interrupt support
  */
 
-void sa1101_IRQ_demux(int irq, void *dev_id, struct pt_regs *regs)
-{
-  unsigned long stat0, stat1;
-  while (1)
-    {
-      int i;
-      
-      stat0 = INTSTATCLR0;
-      stat1 = INTSTATCLR1;
-
-      if (stat0 == 0 && stat1 == 0) break;
-
-      for (i = IRQ_SA1101_START; stat0; i++, stat0 >>= 1)
-	if (stat0 & 1) 
-	{
-	 do_IRQ(i, regs);
-	}
-      
-      for (i = IRQ_SA1101_START + 32; stat1; i++, stat1 >>= 1)
-	if (stat1 & 1) 
-	{
-	 do_IRQ(i, regs);
-	}
-    }
-}
-
-
 /*
  * A note about masking IRQs:
  *
@@ -112,47 +81,81 @@ void sa1101_IRQ_demux(int irq, void *dev_id, struct pt_regs *regs)
  * trigger an IRQ.
  */
 
-static void sa1101_mask_and_ack_lowirq(unsigned int irq)
+static void irq_ack_low(unsigned int irq)
 {
-	unsigned int mask = SA1101_IRQMASK_LO(irq);
-
-	//INTEN0 &= ~mask;
-	INTSTATCLR0 = mask;
+	INTSTATCLR0 = SA1101_IRQMASK_LO(irq);
 }
 
-static void sa1101_mask_and_ack_highirq(unsigned int irq)
-{
-	unsigned int mask = SA1101_IRQMASK_HI(irq);
-
-	//INTEN1 &= ~mask;
-	INTSTATCLR1 = mask;
-}
-
-static void sa1101_mask_lowirq(unsigned int irq)
+static void irq_mask_low(unsigned int irq)
 {
 	INTENABLE0 &= ~SA1101_IRQMASK_LO(irq);
 }
 
-static void sa1101_mask_highirq(unsigned int irq)
-{
-	INTENABLE1 &= ~SA1101_IRQMASK_HI(irq);
-}
-
-static void sa1101_unmask_lowirq(unsigned int irq)
+static void irq_unmask_low(unsigned int irq)
 {
 	INTENABLE0 |= SA1101_IRQMASK_LO(irq);
 }
 
-static void sa1101_unmask_highirq(unsigned int irq)
+static struct irqchip irq_low = {
+	.ack	= irq_ack_low,
+	.mask	= irq_mask_low,
+	.unmask = irq_unmask_low,
+};
+
+static void irq_ack_high(unsigned int irq)
+{
+	INTSTATCLR1 = SA1101_IRQMASK_HI(irq);
+}
+
+static void irq_mask_high(unsigned int irq)
+{
+	INTENABLE1 &= ~SA1101_IRQMASK_HI(irq);
+}
+
+static void irq_unmask_high(unsigned int irq)
 {
 	INTENABLE1 |= SA1101_IRQMASK_HI(irq);
+}
+
+static struct irqchip irq_high = {
+	.ack	= irq_ack_high,
+	.mask	= irq_mask_high,
+	.unmask = irq_unmask_high,
+};
+
+extern asmlinkage void asm_do_IRQ(int irq, struct pt_regs *regs);
+
+static irqreturn_t sa1101_IRQ_demux(int irq, void *dev_id, struct pt_regs *regs)
+{
+unsigned long stat0, stat1;
+int i, found_one;
+
+	do {
+		found_one = 0;
+		stat0 = INTSTATCLR0 & INTENABLE0 ;
+		stat1 = INTSTATCLR1 & INTENABLE1 ;
+		
+#define CHECK_STAT(A,B) \
+		for (i = A; B; i++, B >>= 1) \
+			if (B & 1) { \
+				found_one = 1; \
+				asm_do_IRQ(i, regs); \
+			}
+		CHECK_STAT(IRQ_SA1101_START, stat0);
+		CHECK_STAT(IRQ_SA1101_START+32, stat1);
+	} while(found_one);
+	
+	return IRQ_HANDLED;
 }
 
 void __init sa1101_init_irq(int irq_nr)
 {
   int irq;
   
-  request_mem_region(_INTTEST0, 512, "irqs");
+  alloc_irq_space(64);
+
+  request_mem_region(_INTTEST0, 512, "irqs"); // XXX - still needed???
+
   
   /* disable all IRQs */
   INTENABLE0 = 0;
@@ -166,30 +169,34 @@ void __init sa1101_init_irq(int irq_nr)
   INTPOL1 = 
     SA1101_IRQMASK_HI(IRQ_SA1101_S0_READY_NIREQ) |
     SA1101_IRQMASK_HI(IRQ_SA1101_S1_READY_NIREQ);
-  
+
   INTSTATCLR0 = -1;
   INTSTATCLR1 = -1;
-  
+
   for (irq = IRQ_SA1101_GPAIN0; irq <= IRQ_SA1101_KPYIn7; irq++) {
-    irq_desc[irq].valid		= 1;
-    irq_desc[irq].probe_ok	= 0;
-    irq_desc[irq].mask_ack	= sa1101_mask_and_ack_lowirq;
-    irq_desc[irq].mask		= sa1101_mask_lowirq;
-    irq_desc[irq].unmask	= sa1101_unmask_lowirq;
+	  set_irq_chip(irq, &irq_low);
+	  set_irq_handler(irq, do_edge_IRQ);
+	  set_irq_flags(irq, IRQF_VALID | IRQF_PROBE);
   }
+	
   for (irq = IRQ_SA1101_KPYIn8; irq <= IRQ_SA1101_USBRESUME; irq++) {
-    irq_desc[irq].valid		= 1;
-    irq_desc[irq].probe_ok	= 0;
-    irq_desc[irq].mask_ack	= sa1101_mask_and_ack_highirq;
-    irq_desc[irq].mask		= sa1101_mask_highirq;
-    irq_desc[irq].unmask	= sa1101_unmask_highirq;
+	  set_irq_chip(irq, &irq_high);
+	  set_irq_handler(irq, do_edge_IRQ);
+	  set_irq_flags(irq, IRQF_VALID | IRQF_PROBE);
   }
   
   /* Register SA1101 interrupt */
   if (irq_nr < 0) return;
-  if (request_irq(irq_nr, sa1101_IRQ_demux, SA_INTERRUPT, "SA1101", NULL) < 0)
-    printk(KERN_ERR "SA1101: unable to claim IRQ %d\n", irq_nr);
+  if (request_irq(irq_nr, sa1101_IRQ_demux, SA_INTERRUPT, "SA1101", NULL) >= 0) {
+	  set_irq_type(irq_nr,IRQT_RISING);
+  } else {
+	  printk(KERN_ERR "SA1101: unable to claim IRQ %d\n", irq_nr);
+  }
 }
+
+/*
+ * Initialize the PCMCIA subsystem: turn on interrupts, reserve memory
+ */
 
 static struct sa1101_pcmcia_irqs 
 {
@@ -202,10 +209,6 @@ static struct sa1101_pcmcia_irqs
   { IRQ_SA1101_S1_BVD1_STSCHG, "CF BVD1" },
 };
 
-/* ************************************************************************* */
-/*  Initialize the PCMCIA subsystem: turn on interrupts, reserve memory      */
-/* ************************************************************************* */
-
 int sa1101_pcmcia_init(void *handler)
 {
   int i, ret;
@@ -213,36 +216,28 @@ int sa1101_pcmcia_init(void *handler)
   if (!request_mem_region(_PCCR, 512, "PCMCIA")) return -1;
   
   for (i = ret = 0; i < ARRAY_SIZE(sa1101_pcmcia_irqs); i++)
-    {
-      ret = request_irq(sa1101_pcmcia_irqs[i].irq, 
-			handler, 
+  {
+      ret = request_irq(sa1101_pcmcia_irqs[i].irq,
+			handler,
 			SA_INTERRUPT,
-			sa1101_pcmcia_irqs[i].str, 
+			sa1101_pcmcia_irqs[i].str,
 			NULL);
-      if (ret)break;
-    }
-
+      if (ret) break;
+      set_irq_type(sa1101_pcmcia_irqs[i].irq, IRQT_RISING);
+		   /* XXX - are we sure it's RISING and not BOTHEDGE ??? */
+  }
 
   if (i < ARRAY_SIZE(sa1101_pcmcia_irqs)) 
-    {
-      printk(KERN_ERR "sa1101_pcmcia: unable to grab IRQ%d (%d)\n",
-	     sa1101_pcmcia_irqs[i].irq, ret);
-      while (i--) 
-       free_irq(sa1101_pcmcia_irqs[i].irq, NULL);
-      release_mem_region(_PCCR, 16);
-    }
-
-  INTPOL1 |= (SA1101_IRQMASK_HI(IRQ_SA1101_S0_CDVALID) |
-              SA1101_IRQMASK_HI(IRQ_SA1101_S1_CDVALID) |
-              SA1101_IRQMASK_HI(IRQ_SA1101_S0_BVD1_STSCHG) |
-              SA1101_IRQMASK_HI(IRQ_SA1101_S1_BVD1_STSCHG));
+  {
+	  printk(KERN_ERR "sa1101_pcmcia: unable to grab IRQ%d (%d)\n",
+		 sa1101_pcmcia_irqs[i].irq, ret);
+	  while (i--)
+		  free_irq(sa1101_pcmcia_irqs[i].irq, NULL);
+	  release_mem_region(_PCCR, 16);
+  }
 
   return ret ? -1 : 2;
 }
-
-/* ************************************************************************* */
-/*      Shut down PCMCIA: release memory, interrupts.                        */
-/* ************************************************************************* */
 
 int sa1101_pcmcia_shutdown(void)
 {
@@ -250,34 +245,29 @@ int sa1101_pcmcia_shutdown(void)
   for (i = 0; i < ARRAY_SIZE(sa1101_pcmcia_irqs); i++) 
    free_irq(sa1101_pcmcia_irqs[i].irq, NULL);
 
-  INTPOL1 &= ~(SA1101_IRQMASK_HI(IRQ_SA1101_S0_CDVALID) |
-	       SA1101_IRQMASK_HI(IRQ_SA1101_S1_CDVALID) |
-	       SA1101_IRQMASK_HI(IRQ_SA1101_S0_BVD1_STSCHG) |
-	       SA1101_IRQMASK_HI(IRQ_SA1101_S1_BVD1_STSCHG));
-
   release_mem_region(_PCCR, 512);
   return 0;
 }
 
-static int sa1101_usb_shutdown(void)
+extern int sa1101_usb_shutdown(void)
 {
   /* not yet */
  return 0;
 }
 
-static int sa1101_vga_shutdown(void)
+extern int sa1101_vga_shutdown(void)
 {
   /* not yet */
  return 0;
 }
 
-static int sa1101_usb_init(void)
+extern int sa1101_usb_init(void)
 {
   /* not yet */
  return 0;
 }
 
-static int sa1101_vga_init(void)
+extern int sa1101_vga_init(void)
 {
   /* not yet */
  return 0;
@@ -357,5 +347,3 @@ EXPORT_SYMBOL_GPL(sa1101_vga_shutdown);
 
 MODULE_DESCRIPTION("Main driver for SA-1101.");
 MODULE_LICENSE("GPL");
-
-#endif
