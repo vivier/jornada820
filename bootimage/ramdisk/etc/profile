@@ -1,13 +1,13 @@
 # /etc/profile: system-wide .profile file for the Bourne shells
 
-# For some reason, busybox doesn't read it, though it should. Darn.
+# Note that busybox reads it when invoked as -sh, but not when invoked as sh.
 
 PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
 
 . /etc/functions
+localfunctions
 
 echo
 echo "We all know Linux is great... It does infinite loops in 5 seconds."
 echo " --Linus Torvalds"
-echo -e '\33[?2c'
-
+echo

@@ -4,6 +4,6 @@ echo "We're in $0! PID=$$ ARGS: $*" >> /tmp/log
 ps >> /tmp/log
 
 . /etc/functions
-[ -f /mnt/linux/etc/functions ] && . /mnt/linux/etc/functions
+localfunctions
 
 $@
