@@ -16,7 +16,9 @@ TEE                     = tee
 TOUCH                   = touch
 CP                      = cp -f
 RM                      = rm -f
+MKE2FS		 	= mke2fs
 DEBUGFS		 	= debugfs
+E2FSCK		 	= e2fsck
 CANONICAL_PATH          = /bin:/usr/bin
 
 # ---------------------------------------------------------------------------
@@ -27,9 +29,9 @@ all: ramdiskimage
 
 ramdiskimage: cmdfile
 	dd if=/dev/zero of=ramdiskimage count=3072 bs=1024
-	/sbin/mke2fs -F ramdiskimage
-	/sbin/debugfs -f cmdfile
-	/sbin/e2fsck -f -y ramdiskimage
+	$(MKE2FS) -F ramdiskimage
+	$(DEBUGFS) -f cmdfile
+	$(E2FSCK) -f -y ramdiskimage ; :
 
 # ----------------- ramdiskimage command file ------------------------------
 
