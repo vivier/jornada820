@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.6 2004/04/27 12:41:39 fare Exp $
+# $Id: functions,v 1.7 2004/04/27 13:02:48 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -195,9 +195,9 @@ ensure_no_noautomount () {
   [ -d /mnt/dos ] || mkdir -p /mnt/dos
   DOSPART=$(fdisk -l /dev/hda | grep FAT | head -1 | cut -d" " -f1 )
   if [ -n "$DOSPART" ] ; then
-    mount $DOSPART /mnt/dos -t vfat -o ro
+    mount $DOSPART /mnt/dos -t vfat -o rw,noatime
     [ -d /mnt/dos/noautomount ] && rmdir /mnt/dos/noautomount
-    [ -f /mnt/dos/noautomount ] && rm /mnt/dos/noautomount
+    [ -f /mnt/dos/noautomount ] && rm -f /mnt/dos/noautomount
     umount /mnt/dos
   fi
 }
