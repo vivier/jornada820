@@ -1,4 +1,17 @@
 /*
+ * Jornada 820 keyboard driver.
+ *
+ * 2004/06/30 Matan Ziv-Av <matan@svgalib.org>
+ * port to kernel 2.6
+ *
+ * 2004/01/22 George Almasi (galmasi@optonline.net)
+ * Modelled after gc_keyb.c
+ *
+ * Cannot (yet) handle Fn key combinations and Power On/Off
+ *
+ * Depends on Russel King's SSP driver to work.
+ *
+ * $Id: j820_keyb.c,v 1.2 2004/06/30 20:28:53 fare Exp $
  */
 
 #include <linux/kernel.h>
@@ -109,7 +122,7 @@ static int __init j820_kbd_init(void)
 	dev.close = j820_kbd_close;
 	dev.event = NULL;
 
-	dev.name = "J820";
+	dev.name = "j820_keyb";
 	dev.id.bustype = BUS_ISA;
 	
 	input_register_device(&dev);
@@ -121,11 +134,10 @@ static int __init j820_kbd_init(void)
 	init_timer(&timer);
 	timer.function = j820_kbd_timer;
 	mod_timer(&timer, jiffies+2);
-	printk(KERN_INFO "input: keyboard: %s\n", dev.name);
+	printk(KERN_INFO "input: %s\n", dev.name);
 
 	return 0;
 }
-
 
 static void __exit j820_kbd_exit(void)
 {
