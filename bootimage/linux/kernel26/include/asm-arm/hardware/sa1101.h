@@ -1,6 +1,6 @@
 /*
  * File created for Jornada 820... (?)
- * $Id: sa1101.h,v 1.3 2004/06/30 20:29:48 fare Exp $
+ * $Id: sa1101.h,v 1.4 2004/07/01 21:50:18 fare Exp $
  */
 #ifndef _ASM_ARCH_SA1101
 #define _ASM_ARCH_SA1101
@@ -18,7 +18,6 @@ extern void sa1101_wake(void);
 extern void sa1101_doze(void);
 
 extern void sa1101_init_irq(int irq_nr);
-extern void sa1101_IRQ_demux(int irq, void *dev_id, struct pt_regs *regs);
 
 extern int sa1101_pcmcia_init(void *handler);
 extern int sa1101_pcmcia_shutdown(void);
