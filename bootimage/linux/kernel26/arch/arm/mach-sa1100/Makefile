@@ -2,7 +2,7 @@
 # Makefile for the linux kernel.
 #
 # Jornada820 version based on Makefile 1.9 from cvs.handhelds.org
-# $Id: Makefile,v 1.3 2004/06/30 20:29:48 fare Exp $
+# $Id: Makefile,v 1.4 2004/07/03 13:26:15 fare Exp $
 
 
 # Common support
@@ -99,7 +99,7 @@ obj-$(CONFIG_LEDS) += $(led-y)
 obj-$(CONFIG_SA1100_USB)		+= usb/
 
 obj-$(CONFIG_REGISTERS) += regs-sa1100.o gpio.o
-obj-$(CONFIG_SA1101)			+= sa1101.o
+#obj-$(CONFIG_SA1101)			+= sa1101.o
 ifeq ($(CONFIG_SA1101),y)
 obj-$(CONFIG_REGISTERS) += regs-sa1101.o
 endif
