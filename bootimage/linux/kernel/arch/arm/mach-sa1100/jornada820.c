@@ -36,8 +36,12 @@ static int __init jornada820_init(void)
   printk("In jornada820_init\n");
 
   /* TODO: move all asm to init.S */
+
   /* we need to fix the PID register, which was left on by WinCE */
-  asm volatile ("mov r0, #0; mcr p15, 0, r0, c13, c0,0;");
+  asm volatile ("mov r0, #0; mcr p15, 0, r0, c13, c0, 0;");
+
+  /* enable clock switching */
+  asm volatile ("mov r0, #0; mcr p15, 0, r0, c15, c1, 2;");
 
   /* allow interrupts: */
   /* audio et al. */
