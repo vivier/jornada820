@@ -12,7 +12,7 @@
  *
  * Created for the Jornada820 port.
  *
- * $Id: sa1101.c,v 1.3 2004/07/03 15:54:38 fare Exp $
+ * $Id: sa1101.c,v 1.4 2004/07/03 19:04:19 fare Exp $
  */
 
 #include <linux/module.h>
@@ -88,6 +88,12 @@ int __init sa1101_probe(unsigned long phys_addr)
  * Note also that changing INTPOL while an IRQ is enabled will itself
  * trigger an IRQ.
  */
+
+static irqreturn_t debug_sa1101_irq_handler(unsigned int irq, void* dev_id, struct pt_regs *regs)
+{
+	printk("Got sa1101 interrupt (%d). Ignoring.\n", irq); // DEBUG
+        return -1;
+}
 
 static void
 sa1101_irq_handler(unsigned int irq, struct irqdesc *desc, struct pt_regs *regs)
@@ -249,6 +255,8 @@ void sa1101_init_irq(int sa1101_irq)
 {
 	unsigned int irq;
 
+	printk("initializing sa1101...\n"); // DEBUG
+
 	alloc_irq_space(64); /* XXX - still needed??? */
 	request_mem_region(_INTTEST0, 512, "irqs"); // XXX - still needed???
 
@@ -284,10 +292,10 @@ void sa1101_init_irq(int sa1101_irq)
 	/*
 	 * Register SA1101 interrupt
 	 */
-//	request_irq(sa1101_irq, sa1101_irq_handler, 0,
-//		    "SA1101 chain interrupt", NULL);
+	request_irq(sa1101_irq, debug_sa1101_irq_handler, 0,
+		    "SA1101 chain interrupt", NULL); // DEBUG
+//	set_irq_chained_handler(sa1101_irq, sa1101_irq_handler); // NORMAL
 	set_irq_type(sa1101_irq, IRQT_RISING);
-	set_irq_chained_handler(sa1101_irq, sa1101_irq_handler);
 }
 
 extern void sa1101_wake(void)
