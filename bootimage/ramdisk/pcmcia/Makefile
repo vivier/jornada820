@@ -3,7 +3,7 @@ TARGET                  = arm-linux
 
 # ----------------- busybox files     --------------------------------------
 
-PCMCIAVER		= 3.2.7
+PCMCIAVER		= 3.2.8
 PCMCIATAR		= pcmcia-cs-${PCMCIAVER}.tar.gz
 PCMCIADIR		= pcmcia-cs-${PCMCIAVER}
 
