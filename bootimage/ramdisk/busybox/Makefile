@@ -3,10 +3,10 @@ TARGET                  = arm-linux
 
 # ----------------- busybox files     --------------------------------------
 
-#BUSYBOXVER		= 1.00-pre7
-#BUSYBOXTAR		= busybox-${BUSYBOXVER}.tar.bz2
-#BUSYBOXDIR		= busybox-${BUSYBOXVER}
-BUSYBOXDIR		= src
+BUSYBOXVER		= 1.00
+BUSYBOXTAR		= busybox-${BUSYBOXVER}.tar.bz2
+BUSYBOXDIR		= busybox-${BUSYBOXVER}
+#BUSYBOXDIR		= busybox
 
 # ------------- programs ---------------------------------------------------
 LN                      = ln
@@ -17,7 +17,7 @@ CP                      = cp -f
 RM                      = rm -f
 
 # ---------------------------------------------------------------------------
-default: busybox
+default: busybox.bin
 
 ${BUSYBOXTAR}:
 	wget http://busybox.net/downloads/${BUSYBOXTAR}
@@ -38,9 +38,12 @@ busybox-cvs: src/CVS/Root
 	cd src && cvs -z9 update -dfP
 	touch $@
 
+busybox-svn:
+	svn co svn://busybox.net/trunk/busybox
+
 compile: ${BUSYBOXDIR}/_install/bin/busybox
 	@cd ${BUSYBOXDIR} && \
-	cp _install/bin/busybox ..
+	cp _install/bin/busybox ../busybox.bin
 
 ${BUSYBOXDIR}/_install/bin/busybox:
 	@cd ${BUSYBOXDIR} && \
@@ -49,7 +52,7 @@ ${BUSYBOXDIR}/_install/bin/busybox:
 	${MAKE} CROSS=${TARGET}- busybox && \
 	${MAKE} CROSS=${TARGET}- install
 
-busybox: busybox-cvs compile
+busybox.bin: busybox-dir compile
 
 localclean:
 	$(RM) busybox-dir busybox.links busybox
