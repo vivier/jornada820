@@ -50,8 +50,6 @@ ramdiskimage26.gz: ramdiskimage26
 cmdfile: cmdfile.in busybox pcmcia
 	( echo open -w ramdiskimage ; \
 	cat cmdfile.in ; \
-	echo "cd /" ; \
-	echo write modules.tar.bz2 modules.tar.bz2 ; \
 	for d in `find etc -type d | grep -v CVS` ; do \
 	  echo "mkdir /$$d" ; \
 	done ; \
@@ -61,7 +59,8 @@ cmdfile: cmdfile.in busybox pcmcia
 	  echo "cd /$$dir" ; \
 	  echo "write $$f $$file" ; \
 	done ; \
-	echo "cd /" ) > $@
+	echo "cd /" ; \
+	echo write modules.tar.bz2 modules.tar.bz2 ; ) > $@
 	#for d in `find lib -type d` ; do \
 	#  echo "mkdir /$$d" ; \
 	#done
