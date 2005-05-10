@@ -15,7 +15,7 @@ mkdir /mnt/dos
 mkdir /mnt/linux
 
 cd /bin
-write busybox/busybox busybox
+write busybox/busybox.bin busybox
 cd /sbin
 write pcmcia/cardmgr cardmgr
 write pcmcia/cardctl cardctl
