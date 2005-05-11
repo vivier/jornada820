@@ -1,7 +1,12 @@
-OS			= linux
-TARGET			= arm-linux
-TOPDIR			= $(shell pwd)
-PATH:=$(TOPDIR)/gcc-3.3.x/toolchain_arm/bin:$(PATH)
+OS		= linux
+TARGET		= arm-linux
+TOPDIR		= $(shell pwd)
+
+BUILDROOT	= $(TOPDIR)/uclibc/buildroot
+TOOLCHAINPATH	= $(BUILDROOT)/build_arm/staging_dir/bin
+#TOOLCHAINPATH	= $(TOPDIR)/gcc-3.3.x/toolchain_arm/bin
+
+PATH:=$(TOOLCHAINPATH):$(PATH)
 
 export PATH
 
@@ -16,7 +21,7 @@ TOUCH			= touch
 CP			= cp -f
 RM			= rm -f
 
-# ------------- directories for source code ----------------------------
+# ------------- directories ----------------------------
 
 KERNELDIR		= linux/kernel
 KBUILDDIR		= linux/build/kernel
@@ -24,6 +29,8 @@ KUPSTREAMDIR		= linux/upstream/kernel
 KERNELDIR26		= linux/kernel26
 KBUILDDIR26		= linux/build/kernel26
 KUPSTREAMDIR26		= linux/upstream/kernel26
+MODDIR			= $(TOPDIR)/$(KBUILDDIR)/target
+MODDIR26		= $(TOPDIR)/$(KBUILDDIR26)/target
 
 # --------------------------------------------------------------------------
 #                       default targets                                    |
@@ -97,21 +104,24 @@ $(KUPSTREAMDIR26)/Makefile: $(KUPSTREAMDIR26)/CVS/Root
 gcc_version:
 	${TARGET}-gcc -v
 
-gcc-3.3.x/CVS/Root gcc-3.3.x/CVS/Repository:
-	mkdir -p gcc-3.3.x/CVS ; cd gcc-3.3.x/CVS || exit 2 ; \
-	echo :pserver:anonymous@uclibc.org:/var/cvs > Root ; \
-	echo toolchain/gcc-3.3.x > Repository ; \
-	touch Entries ; \
-	grep -q ':pserver:anonymous@uclibc.org:2401/var/cvs' ~/.cvspass || \
-	echo '/1 :pserver:anonymous@uclibc.org:2401/var/cvs A' >> ~/.cvspass
+uclibc/buildroot/Makefile:
+	mkdir -p uclibc && cd uclibc && \
+	svn co svn://uclibc.org/trunk/buildroot
 
-gcc-3.3.x/Makefile: gcc-3.3.x/CVS/Root
-	cd gcc-3.3.x && cvs -z9 update -dfP
+uclibc-svn: uclibc/buildroot/Makefile
 
-gcc-3.3.x/toolchain_arm/bin/arm-linux-gcc: gcc-3.3.x/Makefile
-	cd gcc-3.3.x && ( echo 2 ; echo 9 ; echo y ) | make ARCH=arm
+uclibc-setup: uclibc-svn
+	cp uclibc.config uclibc/buildroot/.config ;
+	#-ln -sf ../../../../linux/linux.mk \
+	#	../../../../linux/Config.in \
+	#	uclibc/buildroot/package/linux/ ; \
+	#perl -p -i.bak -e 'if (m,package/linux/Config.in,) { $$A = 1 } ; unless ($$A) { s,endmenu,source "package/linux/Config.in"\nendmenu,s }' uclibc/buildroot/package/Config.in
 
-toolchain: gcc-3.3.x/toolchain_arm/bin/arm-linux-gcc
+uclibc-config: uclibc-setup
+	make -C uclibc/buildroot oldconfig
+
+toolchain: uclibc-config
+	make -C uclibc/buildroot uclibc
 
 # -------------------------------------------------------------------------- 
 #                    build the boot image
