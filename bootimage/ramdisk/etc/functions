@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.23 2005/01/26 02:45:10 fare Exp $
+# $Id: functions,v 1.25 2005/07/25 09:09:15 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -124,7 +124,7 @@ CHECK '[ -d proc ]' \
       'mkdir proc' \
       "Cannot make a $PWD/proc directory node."
 CHECK '[ -f proc/cpuinfo ]' \
-      'mount proc proc -t proc' \
+      'mount none proc -t proc' \
       "Cannot mount the $PWD/proc partition."
 }
 
@@ -139,7 +139,7 @@ CHECK '[ -c dev/console ]' \
 
 ensure_shm () {
 CHECK '[ -d dev/shm ]' \
-      'mkdir dev/shm' \
+      'mkdir -p dev/shm' \
       "Cannot make a $PWD/dev/shm directory node."
 CHECK "grep -q $PWD/dev/shm /proc/mounts" \
       "mount tmpfs dev/shm -t tmpfs" \
@@ -206,8 +206,12 @@ linkme () { (
     DO_T ln -s /mnt/linux/$i /usr/bin/
   done
 ) }
-CET () { export TZ=CET-1CEST ; }
-PST () { export TZ=PST+8PDT ; }
+CET () { if [ -d /usr/share/zoneinfo ] ; then
+  export TZ=Europe/Paris ; else export TZ=CET-1CEST ; fi ; }
+PST () { if [ -d /usr/share/zoneinfo ] ; then
+  export TZ=US/Pacific ; else export TZ=PST+8PDT ; fi ; }
+EST () { if [ -d /usr/share/zoneinfo ] ; then
+  export TZ=US/Eastern ; else export TZ=EST+5EDT ; fi ; }
 
 nameserver () { (
   for i in $2 ; do echo search $i ; done
@@ -215,6 +219,10 @@ nameserver () { (
  ) > /etc/resolv.conf
 }
 
+nonet0 () {
+  umount -a -t nfs
+  ifconfig eth0 down
+}
 net0 () {
   hostname mildendo
   ifconfig eth0 192.168.0.16 netmask 255.255.255.0 broadcast 192.168.0.255
@@ -232,7 +240,6 @@ nbdswap () {
   swapon /dev/nb0
   : nbd-client -d /dev/nb0
 }
-
 
 udhcp () {
   # http://udhcp.busybox.net/README.udhcpc
@@ -331,9 +338,9 @@ has_init_p () {
 }
 do_init () {
   if [ 1 = "$$" ] ; then
-    [ -x sbin/init ] && exec ./sbin/init
-    [ -x etc/init ] && exec ./etc/init
-    [ -x bin/init ] && exec ./bin/init
+    [ -x sbin/init ] && exec ./sbin/init $INIT_ARGS
+    [ -x etc/init ] && exec ./etc/init $INIT_ARGS
+    [ -x bin/init ] && exec ./bin/init $INIT_ARGS
   else
     LOG "PID=$$, not 1, so let's not try to exec init."
   fi
@@ -497,5 +504,8 @@ getdate () {
 }
 mnt1 () {
   mount /dev/hda1 /mnt -t vfat -o shortname=winnt,umask=077,noatime
+}
+umnt () {
+  umount /mnt
 }
 up () { cd .. ; }
