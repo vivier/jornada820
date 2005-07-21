@@ -1,0 +1,350 @@
+#!/bin/zsh -f
+
+DEB_SOURCE=/usr/src/DEB
+TARGET=/usr/src/j820/deb
+TARGET_ARCH=arm
+DEBIAN_MIRROR=http://ftp.us.debian.org/debian
+#DEBIAN_DISTRIBUTION=sid
+DEBIAN_DISTRIBUTION=etch
+#DEBIAN_DISTRIBUTION=sarge
+
+PACKAGE_SELECTION () {
+  PACKAGES=(
+    $BASE_PACKAGES
+#) FOO=(
+    $DEV_PACKAGES
+    $CONSOLE_PACKAGES
+    $X11_PACKAGES
+    $EDITOR_PACKAGES
+    $COMMON_LISP_PACKAGES
+    # $GAME_PACKAGES
+    # $SOUND_PACKAGES
+    # $USB_PACKAGES
+  )
+}
+REMOTE_DIRS=(
+/usr/doc
+/usr/info
+/usr/man
+/usr/share/doc
+/usr/share/info
+/usr/share/man
+/usr/src
+/var/cache/apt
+/var/cache/debconf
+/var/lib/apt
+/var/lib/dpkg
+)
+
+
+BASE_PACKAGES=(
+screen zsh ssh gnutls-bin telnet
+recode
+lynx ca-certificates
+w3m w3m-img # w3mmee w3mmee-img
+bzip2 gzip tar rsync
+
+dpkg
+dialog apt # aptitude
+localeconf localepurge locales localization-config
+
+procps psmisc
+
+pump
+mount
+module-init-tools devfsd udev
+e2fsprogs
+# reiserfs-tools
+nfs-kernel-server nfs-client
+gpm
+
+pcmcia-cs wireless-tools
+# irda-utils gpsman cu ppp xawtv-tools xawtv
+)
+CONSOLE_PACKAGES=(
+console-tools
+fbset fbiterm
+# fbi
+# fbgetty
+
+# microwindows-fb
+# dvifb
+)
+DEV_PACKAGES=(
+cruft
+
+diff patch wdiff cvs xdelta
+cvsutils apt-utils strace
+make
+# ocaml
+)
+X11_PACKAGES=(
+xserver-xfree86 #xserver-xorg
+xpdf
+xterm
+xlibs-data
+qiv
+ratpoison
+ttf-bitstream-vera
+# xfonts-75dpi xfonts-100dpi xfonts-jmk 
+# mlterm mlterm-tiny
+)
+EDITOR_PACKAGES=(
+xemacs21
+dict dictd
+dict-foldoc dict-gcide dict-wn dict-moby-thesaurus
+dict-freedict-eng-fra dict-freedict-fra-eng
+aspell aspell-bin aspell-fr aspell-en
+ispell
+)
+
+COMMON_LISP_PACKAGES=(
+clisp common-lisp-controller
+#gcl
+
+cl-ppcre
+cl-pdf
+
+cl-acl-compat
+cl-aima
+cl-ansi-tests
+cl-asdf
+cl-aserve
+cl-base64
+cl-binary-types
+cl-blowfish
+cl-ftp
+cl-gd
+cl-getopt
+cl-htmlgen
+cl-inflate
+cl-interpol
+cl-irc
+cl-irc-logger
+cl-jpeg
+cl-kmrcl
+cl-lml2
+cl-md5
+cl-memoization
+cl-meta
+cl-menusystem
+cl-net-telent-date
+cl-paip
+cl-parse-number
+cl-pipes
+cl-plus
+cl-png
+cl-puri
+cl-readline
+cl-quick-arrays
+cl-rsm-memo
+cl-rsm-mod
+cl-rsm-modal
+cl-rsm-queue
+cl-rsm-bitcomp
+cl-rsm-bool-comp
+cl-rsm-cache
+cl-rsm-delayed
+cl-rsm-filter
+cl-rsm-finance
+cl-rsm-fuzzy
+cl-rsm-gen-prog
+cl-rsm-genetic-alg
+cl-rsm-rand
+cl-rsm-rsa
+cl-rsm-rand
+cl-rsm-string
+cl-rss
+cl-screamer
+cl-scribble
+cl-split-sequence
+cl-ssl
+cl-syslog
+cl-ubf
+cl-uffi
+cl-units
+cl-unit
+cl-webactions
+cl-who
+cl-xlunit
+cl-xptest
+cl-xmls
+
+#cl-faq
+#cl-infix
+cl-metering
+#lush
+#lush-library
+# maxima
+#cl-hyperspec
+#cl-onlisp-code
+#cltl
+)
+GAME_PACKAGES=(
+doom-wad-shareware doomlegacy-sdl
+# prboom lxdoom
+# recompile: rocks-n-diamonds
+# gnuboy
+# vice
+)
+USB_PACKAGES=(
+usbmgr usbutils
+)
+SOUND_PACKAGES=(
+madplay sox aumix
+)
+
+ABORT () {
+  print -r "$*" >&2
+  exit 42
+}
+
+setup_remote_dirs () {
+  for i ; do
+    i=${i%/} ; i=${i#/}
+    b=$(dirname $i)
+    j=$(echo $b/ | sed -e 's,[^/]\+\/,..\/,g')
+    mkdir -p $b
+    if [ -L $i ] ; then
+      rm $i
+      mkdir -p remote/$i
+    elif [ -d $i ] ; then
+      mkdir -p remote/$b
+      mv $i remote/$b/
+    else
+      mkdir -p remote/$i
+    fi
+    ln -s ${j}remote/$i ${TARGET}/$i
+  done
+}
+
+setup_directories () {
+  mkdir -p $TARGET
+  cd $TARGET || ABORT "Create and mount target directory $TARGET first!"
+  setup_remote_dirs $REMOTE_DIRS
+  mkdir -p remote/var/lib/apt/lists/partial
+}
+
+configure_xemacs () {
+  ./configure --compiler='distcc arm-linux-gcc' --cflags="-Os -fomit-frame-pointer" --with-x11=no --with-sound=no --with-database=no --with-tty=yes --with-ipv6-cname=no --pdump=no --with-gnome=no --with-gtk=no --with-toolbars=no --with-wmcommand=no --with-menubars=no --with-scrollbars=no --with-dialogs=no --with-widgets=no --with-dragndrop=no --with-cde=no --with-offix=no --with-xmu=no --external-widget=no --with-ncurses --with-gpm --with-kerberos=no --with-pop=no --with-hesiod=no --with-workshop=no --with-socks=no --with-modules=no --with-netinstall=no --with-mule=no --with-xfs=no
+
+# For a minimal distribution, use uclibc, too?
+
+# Detect which files to copy on a minimal distribution:
+# strace -eopen -o foo xemacs -q -f kill-emacs
+# cat foo | grep -v SIG | grep -v ' = -' | cut -d\" -f2 | grep -v '/$' | sort -u > bar
+}
+
+used_libs () {
+  for i ; do
+    ldd $i | cut -d'>' -f2 | cut -d' ' -f2
+  done | sort -u
+}
+
+make_qemu-arm () {
+  cd $DEB_SOURCE
+  apt-get source qemu
+  cd ./qemu-*
+  ./configure --static --target-list=arm-user
+  make
+  cp arm-user/qemu-arm /usr/local/bin/
+  ln -s /usr/local/bin/qemu-arm /usr/bin/
+  cp /usr/local/bin/qemu-arm $TARGET/remote/
+  ln -s ../../remote/qemu-arm $TARGET/usr/bin/
+}
+register_qemu-arm () {
+  /bin/echo ':arm:M::\x7fELF\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfb\xff\xff\xff:/usr/bin/qemu-arm:' > /proc/sys/fs/binfmt_misc/register
+}
+
+bootstrap () {
+COMMAND=(
+debootstrap
+	# --download-only
+	--foreign
+	--arch $TARGET_ARCH
+	# --include=${(pj:,:)BASE_PACKAGES}
+	$DEBIAN_DISTRIBUTION
+	$TARGET
+	$DEBIAN_MIRROR
+) ; $COMMAND
+}
+
+extract-deb () {
+  for i ; do
+    dpkg-deb --extract $i $TARGET
+  done
+}
+extract-downloaded-debs () {
+  extract-debs $TARGET/var/cache/apt/archives/*.deb
+}
+
+setup_sources.list () {
+  echo "deb http://ftp.us.debian.org/debian etch main" > $TARGET/etc/apt/sources.list
+}
+
+setup_sources.list-sid () {
+  echo "deb http://ftp.us.debian.org/debian sid main" > ${TARGET0}/etc/apt/sources.list
+}
+
+APT_OPTIONS=(
+--option Dir::Etc::SourceList=$TARGET/etc/apt/sources.list --option Dir::State::Lists=$TARGET/var/lib/apt/lists --option Debug::Nolocking=true --option APT::Architecture=$TARGET_ARCH --option Dir::Cache::archives=$TARGET/var/cache/apt/archives --option APT::Get::Force-Yes=true --option APT::Get::Download-Only=true --option Dir::State::status=$TARGET/var/lib/dpkg/status --option Dir::Etc::Preferences=$TARGET/etc/preferences
+)
+
+cross-apt-get () {
+  apt-get $APT_OPTIONS $@
+}
+
+cross-apt-install () {
+  # cross-apt-get clean
+  cross-apt-get -fuy install $PACKAGES
+}
+
+apt-install () {
+  # cross-apt-get clean
+  apt-get -fuy install $PACKAGES
+}
+
+in-target () { chroot $TARGET $@ }
+
+do_it () {
+  setup_directories
+  make_qemu-arm
+  register_qemu-arm
+  bootstrap
+  setup_sources.list
+  in-target apt-get update
+  in-target apt-get -fuy --fix-missing install
+  setup_sources.list-sid
+  in-target apt-get update
+  in-target apt-get -fuy --fix-missing dist-upgrade
+  in-target apt-get -fuy --fix-missing install $PACKAGES
+  in-target localepurge
+}
+
+PACKAGE_SELECTION
+
+$@
+
+exit
+
+
+
+##### DOCUMENTATION BELOW #####
+
+### You can install relevant packages this way:
+apt-get install debootstrap qemu
+
+### If not running debian, you can get debootstrap here:
+http://people.debian.org/~blade/install/debootstrap
+
+### Information about Debian ARM
+http://www.chocky.org/linux/
+
+### Here is one post that inspired me:
+[lessdisks] cross architecture support
+http://lists.freegeek.org/pipermail/lessdisks/2004-July/000237.html
+
+### More links ###
+http://radiolivre.org/darksnow/jornada/
+http://www-jcsu.jesus.cam.ac.uk/~mma29/debian-arm/
+http://www.tuxscreen.net/wiki/view/pivot_root_to_debian-ARM
