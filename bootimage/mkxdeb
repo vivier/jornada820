@@ -306,12 +306,17 @@ apt-install () {
 
 in-target () { chroot $TARGET $@ }
 
+mount-target-proc () {
+  mount -t proc proc $TARGET/proc
+}
+
 do_it () {
   setup_directories
   make_qemu-arm
   register_qemu-arm
   bootstrap
   setup_sources.list
+  mount-target-proc
   in-target apt-get update
   in-target apt-get -fuy --fix-missing install
   setup_sources.list-sid
