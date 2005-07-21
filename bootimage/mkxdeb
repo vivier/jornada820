@@ -336,6 +336,9 @@ exit
 
 ##### DOCUMENTATION BELOW #####
 
+### See this page on the Wiki:
+http://jornada820.sourceforge.net/wiki/index.php/Debian%20on%20the%20Jornada%20820
+
 ### You can install relevant packages this way:
 apt-get install debootstrap qemu
 

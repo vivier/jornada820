@@ -1,4 +1,4 @@
-$Id: TODO,v 1.19 2004/07/15 21:22:24 fare Exp $ -*- Fundamental -*-
+$Id: TODO,v 1.20 2005/07/21 21:04:15 fare Exp $ -*- Fundamental -*-
 
 Kernel 2.4
 * move on, dude!
@@ -42,6 +42,16 @@ Bootloader
  w/o ever going through WinCE
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+kernel 2.4
+
+See unhh branch of this tree
+	http://www.psc.edu/~semke/cvs_branches.html
+
+Use the latest jornada 720 kernel from
+	http://wwwcip.informatik.uni-erlangen.de/~simigern/jornada-7xx/
+instead of the handhelds.org kernel.
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 apm: do something
 2.4 => kernel/arch/arm/mach-sa1100/apm.c
 2.6 => kernel/arch/arm/mach-sa1100/jornada820.c
@@ -75,5 +85,15 @@ j820_keyb.c:
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 usb:
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+versioning
+
+migrate to a tool that knows about 3-way merges instead of CVS,
+and insert sources for the official kernel, the official arm kernel (if different),
+the handhelds.org kernel, the latest j720 kernel (if different), our latest release kernel
+and our experimental kernels.
+
+DARCS? monotone? arch?
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
