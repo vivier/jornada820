@@ -121,8 +121,9 @@ uclibc-config: uclibc-setup
 	make -C uclibc/buildroot oldconfig
 
 toolchain: uclibc-config
-	( echo 1 ; echo 2 ; echo 9 ; echo y ; echo n ) | \
+	( for i in 10 1 y ; do echo $$i ; done ) | \
 	make -C uclibc/buildroot
+
 
 # -------------------------------------------------------------------------- 
 #                    build the boot image
