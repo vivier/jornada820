@@ -58,6 +58,7 @@ do_operate_on_file () {
   linux=${rel%%/*}
   sub=${rel#*/}
   upstream=$TOPDIR/linux/upstream/$rel
+  hh=$TOPDIR/linux/upstream/${linux}-hh/$sub
   work=$TOPDIR/linux/$rel
   build=$TOPDIR/linux/build/$rel
   $COMMAND
@@ -88,6 +89,49 @@ diff24 () {
 	$(echo $work|perl -npe s,/kernel/,/kernel26/,)
   fi
 }
+diffhv () {
+  h=$TOPDIR/linux/upstream/kernel-hh/$sub
+  v=$TOPDIR/linux/upstream/kernel/$sub
+  diff -uN $h $v
+}
+diffm () {
+  m=$TOPDIR/linux/upstream/kernel24matan/$sub
+  w=$TOPDIR/linux/kernel/$sub
+  diff -uN $m $w
+}
+diffh () {
+  m=$TOPDIR/linux/upstream/kernel-hh/$sub
+  w=$TOPDIR/linux/kernel/$sub
+  diff -uN $m $w
+}
+diffv () {
+  m=$TOPDIR/linux/upstream/kernel/$sub
+  w=$TOPDIR/linux/kernel/$sub
+  diff -uabEN $m $w
+}
+tpatchhv () {
+  h=$TOPDIR/linux/upstream/kernel-hh/$sub
+  v=$TOPDIR/linux/upstream/kernel/$sub
+  w=$work
+  ( cd $(dirname $v) ; diff -uN $h $(basename $v) ) |
+  patch --dry-run -d $(dirname $work) -p0
+}
+tpatchhv2 () {
+  h=$TOPDIR/linux/upstream/kernel-hh/$sub
+  v=$TOPDIR/linux/upstream/kernel/$sub
+  w=$work
+  ( cd $(dirname $w) ; diff -uN $h $(basename $w) ) |
+  patch --dry-run -d $(dirname $v) -p0
+}
+dopatchhv () {
+  h=$TOPDIR/linux/upstream/kernel-hh/$sub
+  v=$TOPDIR/linux/upstream/kernel/$sub
+  w=$work
+  ( cd $(dirname $v) ; diff -uN $h $(basename $v) ) |
+  patch -d $(dirname $work) -p0
+}
+
+
 difforigver () {
   diff -u $upstream $work 2>&1
 }
@@ -97,6 +141,20 @@ showorigver () {
   else
     base=$(basename $upstream)
     cvs=$(dirname $upstream)/CVS
+    SER=$(perl -npe 's,^:[^:]*:([^:]*@)?(.*):.*,$2,' < $cvs/Root)
+    VER=$(grep "^/$base/" < $cvs/Entries |
+		cut -d/ -f3)
+    echo "/* Jornada820 version based on $base $VER from $SER
+ * \$Id\$
+ */"
+  fi
+}
+showhhver () {
+  if [ ! -f $hh ] ; then
+    abort "file $hh doesn't exist"
+  else
+    base=$(basename $hh)
+    cvs=$(dirname $hh)/CVS
     SER=$(perl -npe 's,^:[^:]*:([^:]*@)?(.*):.*,$2,' < $cvs/Root)
     VER=$(grep "^/$base/" < $cvs/Entries |
 		cut -d/ -f3)
@@ -146,5 +204,11 @@ compile () {
   cd ${TOPDIR}/linux/build/$linux
   make ${sub%.c}.o
 }
+cross-execution () {
+  /bin/echo ':arm:M::\x7fELF\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfb\xff\xff\xff:/usr/local/bin/qemu-arm:' > /proc/sys/fs/binfmt_misc/register
+}
 
+run () {
+  /usr/local/bin/qemu-arm $@
+}
 op $@
