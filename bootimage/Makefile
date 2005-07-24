@@ -107,25 +107,30 @@ gcc_version:
 	${TARGET}-gcc -v
 
 uclibc/buildroot/Makefile:
-	mkdir -p uclibc && cd uclibc && \
-	svn co svn://uclibc.org/trunk/buildroot
+        mkdir -p uclibc && cd uclibc && \
+        svn co svn://uclibc.org/trunk/buildroot
 
 uclibc-svn: uclibc/buildroot/Makefile
 
 uclibc-setup: uclibc-svn
-	cp uclibc.config uclibc/buildroot/.config ;
-	#-ln -sf ../../../../linux/linux.mk \
-	#	../../../../linux/Config.in \
-	#	uclibc/buildroot/package/linux/ ; \
-	#perl -p -i.bak -e 'if (m,package/linux/Config.in,) { $$A = 1 } ; unless ($$A) { s,endmenu,source "package/linux/Config.in"\nendmenu,s }' uclibc/buildroot/package/Config.in
+        cp uclibc/buildroot.config uclibc/buildroot/.config ;
+        mkdir -p uclibc/buildroot/toolchain_build_arm/uClibc
+        cp uclibc/uclibc.config uclibc/buildroot/toolchain_build_arm/uClibc/.config
+        #-ln -sf ../../../../linux/linux.mk \
+        #       ../../../../linux/Config.in \
+        #       uclibc/buildroot/package/linux/ ; \
+        #perl -p -i.bak -e 'if (m,package/linux/Config.in,) { $$A = 1 } ; unless ($$A) { s,endmenu,sourc
+e "package/linux/Config.in"\nendmenu,s }' uclibc/buildroot/package/Config.in
 
 uclibc-config: uclibc-setup
-	make -C uclibc/buildroot oldconfig
+        make -C uclibc/buildroot oldconfig
 
 toolchain: uclibc-config
-	( for i in 10 1 y ; do echo $$i ; done ) | \
-	make -C uclibc/buildroot
+        #( for i in 10 1 y ; do echo $$i ; done ) | \#
+        make -C uclibc/buildroot
 
+everything: toolchain
+        make -C uclibc/buildroot
 
 # -------------------------------------------------------------------------- 
 #                    build the boot image
