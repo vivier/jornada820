@@ -1,5 +1,5 @@
 OS		= linux
-TARGET		= arm-linux
+TARGET		= arm-linux-uclibc
 TOPDIR		= $(shell pwd)
 
 BUILDROOT	= $(TOPDIR)/uclibc/buildroot
@@ -56,6 +56,7 @@ distclean:: localclean
 # --------------------------------------------------------------------------
 
 kbuildtree:: $(KUPSTREAMDIR)/Makefile
+	mkdir -p linux/build/
 	cp -fal $(KUPSTREAMDIR) linux/build/
 	cp -fal $(KERNELDIR) linux/build/
 
@@ -79,6 +80,7 @@ $(KUPSTREAMDIR)/Makefile: $(KUPSTREAMDIR)/CVS/Root
 # --------------------------------------------------------------------------
 
 kbuildtree26:: $(KUPSTREAMDIR26)/Makefile
+	mkdir -p linux/build/
 	cp -fal $(KUPSTREAMDIR26) linux/build/
 	cp -fal $(KERNELDIR26) linux/build/
 

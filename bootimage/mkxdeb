@@ -25,10 +25,10 @@ PACKAGE_SELECTION () {
 REMOTE_DIRS=(
 /usr/doc
 /usr/info
-/usr/man
+#/usr/man
 /usr/share/doc
 /usr/share/info
-/usr/share/man
+#/usr/share/man
 /usr/src
 /var/cache/apt
 /var/cache/debconf
@@ -38,6 +38,10 @@ REMOTE_DIRS=(
 
 
 BASE_PACKAGES=(
+aptitude- fdutils-
+
+less gnupg ksymoops
+
 screen zsh ssh gnutls-bin telnet
 recode
 lynx ca-certificates
