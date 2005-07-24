@@ -41,6 +41,7 @@ BASE_PACKAGES=(
 aptitude- fdutils-
 
 less gnupg ksymoops
+ntpdate ntp
 
 screen zsh ssh gnutls-bin telnet
 recode
@@ -185,6 +186,7 @@ cl-metering
 #cltl
 )
 GAME_PACKAGES=(
+fortune-mod fortune-min
 doom-wad-shareware doomlegacy-sdl
 # prboom lxdoom
 # recompile: rocks-n-diamonds
