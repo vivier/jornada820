@@ -33,7 +33,7 @@ MODDIR			= $(TOPDIR)/$(KBUILDDIR)/target
 MODDIR26		= $(TOPDIR)/$(KBUILDDIR26)/target
 
 # --------------------------------------------------------------------------
-#                       default targets                                    |
+#		       default targets				    |
 # --------------------------------------------------------------------------
 help::
 	@$${PAGER:-cat} HELP
@@ -52,7 +52,7 @@ distclean:: localclean
 	${MAKE} -C ramdisk ARCH=arm mrproper
 
 # --------------------------------------------------------------------------
-#                       kernel build tree                                  |
+#		       kernel build tree				  |
 # --------------------------------------------------------------------------
 
 kbuildtree:: $(KUPSTREAMDIR)/Makefile
@@ -76,7 +76,7 @@ $(KUPSTREAMDIR)/Makefile: $(KUPSTREAMDIR)/CVS/Root
 	touch Makefile
 
 # --------------------------------------------------------------------------
-#                       kernel build tree, v2.6                            |
+#		       kernel build tree, v2.6			    |
 # --------------------------------------------------------------------------
 
 kbuildtree26:: $(KUPSTREAMDIR26)/Makefile
@@ -100,40 +100,39 @@ $(KUPSTREAMDIR26)/Makefile: $(KUPSTREAMDIR26)/CVS/Root
 	touch Makefile
 
 # -------------------------------------------------------------------------- 
-#                    optional: build the toolchain
+#		    optional: build the toolchain
 # --------------------------------------------------------------------------
 
 gcc_version:
 	${TARGET}-gcc -v
 
 uclibc/buildroot/Makefile:
-        mkdir -p uclibc && cd uclibc && \
-        svn co svn://uclibc.org/trunk/buildroot
+	mkdir -p uclibc && cd uclibc && \
+	svn co svn://uclibc.org/trunk/buildroot
 
 uclibc-svn: uclibc/buildroot/Makefile
 
 uclibc-setup: uclibc-svn
-        cp uclibc/buildroot.config uclibc/buildroot/.config ;
-        mkdir -p uclibc/buildroot/toolchain_build_arm/uClibc
-        cp uclibc/uclibc.config uclibc/buildroot/toolchain_build_arm/uClibc/.config
-        #-ln -sf ../../../../linux/linux.mk \
-        #       ../../../../linux/Config.in \
-        #       uclibc/buildroot/package/linux/ ; \
-        #perl -p -i.bak -e 'if (m,package/linux/Config.in,) { $$A = 1 } ; unless ($$A) { s,endmenu,sourc
-e "package/linux/Config.in"\nendmenu,s }' uclibc/buildroot/package/Config.in
+	cp uclibc/buildroot.config uclibc/buildroot/.config ;
+	mkdir -p uclibc/buildroot/toolchain_build_arm/uClibc
+	cp uclibc/uclibc.config uclibc/buildroot/toolchain_build_arm/uClibc/.config
+	#-ln -sf ../../../../linux/linux.mk \
+	#       ../../../../linux/Config.in \
+	#       uclibc/buildroot/package/linux/ ; \
+	#perl -p -i.bak -e 'if (m,package/linux/Config.in,) { $$A = 1 } ; unless ($$A) { s,endmenu,source "package/linux/Config.in"\nendmenu,s }' uclibc/buildroot/package/Config.in
 
 uclibc-config: uclibc-setup
-        make -C uclibc/buildroot oldconfig
+	make -C uclibc/buildroot oldconfig
 
 toolchain: uclibc-config
-        #( for i in 10 1 y ; do echo $$i ; done ) | \#
-        make -C uclibc/buildroot
+	#( for i in 10 1 y ; do echo $$i ; done ) | \#
+	make -C uclibc/buildroot
 
 everything: toolchain
-        make -C uclibc/buildroot
+	make -C uclibc/buildroot
 
 # -------------------------------------------------------------------------- 
-#                    build the boot image
+#		    build the boot image
 # --------------------------------------------------------------------------
 
 j820: config depend ramdisk do-j820
@@ -165,7 +164,7 @@ do-j820-26:
 
 
 # -------------------------------------------------------------------------- 
-#                  Initial configuration and dependences
+#		  Initial configuration and dependences
 # --------------------------------------------------------------------------
 
 config: kbuildtree do-config
@@ -210,7 +209,7 @@ ${KBUILDDIR26}/.config: force
 	cat .config > arch/arm/def-configs/jornada820 )
 
 # --------------------------------------------------------------------------
-#                     build loadable modules
+#		     build loadable modules
 # --------------------------------------------------------------------------
 
 modules: config depend do-modules
@@ -225,10 +224,10 @@ ramdisk/lib/modules: force
 	echo $${MODDIR} && \
 	cd ${KBUILDDIR} && \
 	${MAKE} ARCH=arm \
-	        CROSS_COMPILE=${TARGET}- \
+		CROSS_COMPILE=${TARGET}- \
 		INSTALL_MOD_PATH=$${MODDIR} \
 		DEPMOD=true \
-	        modules modules_install
+		modules modules_install
 
 modules26: config26 do-modules26
 
@@ -245,13 +244,13 @@ $(KBUILDDIR26)/target/lib/modules: force
 	echo $${MODDIR} && \
 	cd ${KBUILDDIR26} && \
 	${MAKE} ARCH=arm \
-	        CROSS_COMPILE=${TARGET}- \
+		CROSS_COMPILE=${TARGET}- \
 		INSTALL_MOD_PATH=$${MODDIR} \
 		DEPMOD=true \
-	        modules modules_install
+		modules modules_install
 
 # --------------------------------------------------------------------------
-#                     build ramdisk image
+#		     build ramdisk image
 # --------------------------------------------------------------------------
 
 ramdisk: modules
