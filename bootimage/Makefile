@@ -107,15 +107,17 @@ gcc_version:
 	${TARGET}-gcc -v
 
 uclibc/buildroot/Makefile:
-	mkdir -p uclibc && cd uclibc && \
+	cd uclibc && \
 	svn co svn://uclibc.org/trunk/buildroot
 
-uclibc-svn: uclibc/buildroot/Makefile
+uclibc-svn: $(BUILDROOT)/Makefile
 
 uclibc-setup: uclibc-svn
-	cp uclibc/buildroot.config uclibc/buildroot/.config ;
-	mkdir -p uclibc/buildroot/toolchain_build_arm/uClibc
-	cp uclibc/uclibc.config uclibc/buildroot/toolchain_build_arm/uClibc/.config
+	cp uclibc/buildroot.config $(BUILDROOT)/.config ;
+	[ -f $(BUILDROOT)/toolchain/uClibc/uClibc.config.bak ] || \
+	cp $(BUILDROOT)/toolchain/uClibc/uClibc.config $(BUILDROOT)/toolchain/uClibc/uClibc.config.bak
+	cp uclibc/uclibc.config $(BUILDROOT)/toolchain/uClibc/uClibc.config
+	#make -C $(BUILDROOT) $(BUILDROOT)/toolchain_build_arm/uClibc/.unpacked
 	#-ln -sf ../../../../linux/linux.mk \
 	#       ../../../../linux/Config.in \
 	#       uclibc/buildroot/package/linux/ ; \
@@ -125,8 +127,7 @@ uclibc-config: uclibc-setup
 	make -C uclibc/buildroot oldconfig
 
 toolchain: uclibc-config
-	#( for i in 10 1 y ; do echo $$i ; done ) | \#
-	make -C uclibc/buildroot
+	make -C uclibc/buildroot uclibc
 
 everything: toolchain
 	make -C uclibc/buildroot
