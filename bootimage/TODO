@@ -1,11 +1,10 @@
-$Id: TODO,v 1.21 2005/07/25 09:09:03 fare Exp $ -*- Fundamental -*-
+$Id: TODO,v 1.22 2005/07/25 12:18:01 fare Exp $ -*- Fundamental -*-
 
 Kernel 2.4
 * move on, dude!
+* Get the USB to work (?)
 * maybe fix issues (that may reappear in 2.6?):
  * APM kills the machine if kapmd is killed. Workaround: rmmod apm before.
- * cardmgr oopses while holding the pcmcia lock if run after pivoting to rootfs
-* 802.11b works with orinoco...
 
 Kernel 2.6
 * fix the PCMCIA driver
@@ -43,14 +42,18 @@ Bootloader
  w/o ever going through WinCE
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
-kernel 2.4
+CVS branches
 
-See unhh branch of this tree
+The unhh branch was merged back into head. If you want to try branches:
 	http://www.psc.edu/~semke/cvs_branches.html
 
-Use the latest jornada 720 kernel from
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+kernel 2.4
+
+We now use the latest jornada 720 kernel by Michael Gernoth, from
 	http://wwwcip.informatik.uni-erlangen.de/~simigern/jornada-7xx/
-instead of the handhelds.org kernel.
+instead of the handhelds.org CVS kernel.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 apm: do something
@@ -58,24 +61,6 @@ apm: do something
 2.6 => kernel/arch/arm/mach-sa1100/jornada820.c
    kernel/arch/arm/kernel/apm.c
 new apm_power_info structure
-
------->8------>8------>8------>8------>8------>8------>8------>8------>8------
-video/sa1100fb.c
-
-ensure that somewhere in
-extern void (*sa1100fb_backlight_power)(int on);
-there is
-
-#ifdef CONFIG_SA1100_JORNADA820
-        GPSR = GPIO_JORNADA820_BACKLIGHTON;
-#endif
-
------->8------>8------>8------>8------>8------>8------>8------>8------>8------
-pcmcia in 2.6:
-
-if sa11xx_core is a module, then busybox's insmod (and module-init-tools?)
-fails to insert sa1100_cs.o: Unknown symbol soc_common_drv_pcmcia_remove
-even though it's an extern symbol in sa11xx_core.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 j820_keyb.c:
@@ -87,6 +72,16 @@ j820_keyb.c:
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 usb:
 
+In 2.4, USB compiles but Oopses when you try to modprobe usb-ohci-sa1101.
+We use a crude hack to emulate a pci layer, taken from old sa1111 code.
+Does anyone understand how sa1111 now works, if it does?
+We might have to just emulate the way the sa1111 works...
+Would it actually work to just modify existing sa1111 code into a sa11x1 code,
+with #ifdef surrounding the sa1101 or sa1111 code (supposing you never
+compile a kernel simultaneously for sa1101 and sa1111 anyway)?
+
+In 2.6, we have more urgent matters to tackle.
+
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 2.4
 
@@ -95,6 +90,9 @@ NFS swap. Since NBD swap doesn't seem to be supported anymore.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 2.6
+
+It compiles for me, but crashes even before it reaches the framebuffer.
+Gotta get my serial cable before I debug more.
 
 FILES=( $(zcat /usr/src/j820/bootimage/2.6.7-my4.gz | grep '+++ my' | perl -npe 's/^\++ my3\/(\S*)\s.*$/$1/') )
 
@@ -109,45 +107,15 @@ http://lwn.net/Articles/2.6-kernel-api
 http://lwn.net/Articles/95312/
 http://kerneltrap.org/node/3513
 
------->8------>8------>8------>8------>8------>8------>8------>8------>8------
-2.4 unhh branch
-We're using 2.4.27-vrs1 instead of the handhelds.org version,
-as a basis for the kernel.
 
-* Use the latest uclibc buildroot, since the current Makefile is obsolete.
+K26HH=/usr/src/j820/bootimage/linux/upstream/kernel26-hh
+K26U=/usr/src/j820/bootimage/linux/upstream/kernel26
+K26=/usr/src/j820/bootimage/linux/kernel26
 
-* Check if the ARM stuff has all been merged into 2.4.30?
+pcmcia in 2.6:
 
-* cardmgr segfaults and dies while grabbing the pcmcia lock.
- The kernel has a null pointer dereference (actually dereference
- of 0x100 as an octet) happening in static function do_io_probe
- from drivers/pcmcia/rsrc_mgr.c, right after an
- increment-by-8-and-check that only branches backwards.
- I guess somewhere I'm feeding the pcmcia system an offset
- to a sa1101 register instead of the address of said register.
- Maybe some macro somewhere doesn't do the right thing?
-
-* To locate the bug, we may try to merge the vrs1 kernel
- with parts of the hh kernel, until we nail the problem... GAH!
-
-* USB is disabled for the moment.
- Getting the USB to compile with 2.4.27-vrs1 entails to
- backport some pci layer emulation from sa1111 to sa1101 or so.
- Does anyone understand whether I should adapt the sa1111 code
- to sa1101, or leave an essentially blank template,
- or do something altogether different? Would it actually work
- to just modify existing sa1111 code into sa11x1 code, with #ifdef
- surrounding the sa1101 or sa1111 code (supposing you never
- compile a kernel simultaneously for sa1101 and sa1111 anyway)?
-
------->8------>8------>8------>8------>8------>8------>8------>8------>8------
-2.6 unhh branch
-It compiles for me, but crashes even before it reaches the framebuffer.
-Gotta get my serial cable before I debug more.
-
-
-K26HH=/usr/src/j820/bootimage/linux/upstream/kernel26
-K26U=/usr/src/j820/bootimage-unhh/linux/upstream/kernel26
-K26=/usr/src/j820/bootimage-unhh/linux/kernel26
+if sa11xx_core is a module, then busybox's insmod (and module-init-tools?)
+fails to insert sa1100_cs.o: Unknown symbol soc_common_drv_pcmcia_remove
+even though it's an extern symbol in sa11xx_core.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------

@@ -1,5 +1,5 @@
 Jornada 820 bootimage information
-$Id: README,v 1.5 2004/07/15 21:22:51 fare Exp $
+$Id: README,v 1.6 2005/07/25 12:18:01 fare Exp $
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 BUILD ENVIRONMENT
@@ -16,9 +16,11 @@ All other targets assume that a toolchain is present.
 
 The toolchain is based on uClibc - http://www.uclibc.org/
 You may make it available in your PATH with
-	ln -s ${TOPDIR}/gcc-3.3.x/toolchain_arm/bin/arm-linux-* /usr/local/bin/
+	ln -s ${TOPDIR}/uclibc/buildroot/build_arm/bin/arm-linux-uclibc-* /usr/local/bin/
+or
+	PATH=${TOPDIR}/uclibc/buildroot/build_arm/bin:$PATH
 
-Alternatively, you may reuse an existing ARM toolchain that you have installed.
+Alternatively, you may reuse a toolchain that you already possess.
 You may notably find glibc-based toolchains on
 	http://www.handhelds.org/z/wiki/Toolchains
 	http://www.opensistemas.com/Gentoo_for_Zaurus.715.0.html
@@ -26,7 +28,7 @@ You may notably find glibc-based toolchains on
 But mind that glibc is both more bloated and less featureful
 (the resolver doesn't work with static binaries).
 
-Also note that you can put your toolchain to good use with distcc,
+Also note that you can put your toolchain to good use with distcc and ccache,
 so as to speed up compilation on your Jornada.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
@@ -50,16 +52,19 @@ See the TODO file.
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 BUILD ENVIRONMENT NOTES
 
-The current build system may have glitches. We're sorry for the inconvenience.
+Although it's been used a lot, the current build system may still have
+glitches, caused by thinkoes and bitrot. We apologize for the inconvenience.
 Please report to us any bugs as you experience them.
 We will try to automate things and make the build process
 as seamless as affordable.
 
-Kinds of bugs:
+Typical kinds of bugs:
 Sometimes, a target won't work at first, because some file didn't exist.
 Sometimes, a target will do too much work at second,
 rebuilding stuff that's already there.
-Sometimes, a target will fail in a subtle way because old files got in the way.
+Sometimes, a target will fail in a subtle way because old files got in the way;
+the solution is to remove the cruft.
+  rm -rf linux/upstream/*/ linux/build
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 RAMDISKIMAGE USAGE
@@ -72,6 +77,8 @@ The ramdisk that is built by this Makefile has the following usage:
 * The ramdisk will automatically attempt to "rootfs" at startup, unless you
  create a file or directory named "noautomount" in your WinCE partition.
 * We have mkfs.minix and fsck.minix in busybox. No ext2 support, sorry.
+ To build an ext2 filesystem, you'll have to use a CF reader on your PC,
+ or to NFS mount a filesystem with your ext2 utilities.
 * Busybox is packed up with lots of functionality. Check it out!
 * To free the memory occupied by the ramdisk, your rootfs will need to run
  the program blockdev, which is part of the util-linux debian package.
@@ -81,12 +88,32 @@ The ramdisk that is built by this Makefile has the following usage:
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 RAMDISKIMAGE NOTES
 
-* Building with a glibc toolchain will not only make everything much larger, it
+* We now build with a uclibc toolchain.
+ Building with a glibc toolchain will not only make everything much larger, it
  will also break the resolver functionality, that requires dynamic loading (!)
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
 KEYBOARD NOTES
 
 * The top row keys are mapped to F1..F10, SysRq, Suspend.
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+USERLAND NOTES
+
+* You can make your own debian userland with the included mkxdeb script.
+
+* if cardmgr oopses after pivoting to rootfs, it might very well be because
+ of invalid I/O specifications in /etc/pcmcia/config.opts -- the file has
+ statements such "include port 0x100-0x420" that tells the kernel to scan a
+ range of ports, which might make sense on an old PC, but which is badly
+ broken on the Jornada 820.
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+PERIPHERAL SUPPORT
+
+* the pcmcia slot is a 16-bit PC-Card, and doesn't support 32-bit CardBus.
+ Don't be surprised if CardBus cards do not work.
+* NE2000-compatible (pcnet_cs) ethernet 10BaseT network cards
+ and Hermes-chipset (orinoco_cs) 802.11b wireless cards are reported to work.
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------

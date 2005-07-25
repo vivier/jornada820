@@ -6,6 +6,8 @@ TOOLCHAINPATH	= ${BUILDROOT}/build_arm/staging_dir/bin
 PATH:=${TOOLCHAINPATH}:${PATH}
 export PATH
 
+EXTRAVERSION	= -j820
+
 KERNEL_FTP	= ftp://ftp.bz2.fr.kernel.org/pub/linux/kernel
 ARM_FTP		= ftp://ftp.arm.linux.org.uk/pub/armlinux/source/kernel-patches
 JORNADA7XX	= http://wwwcip.informatik.uni-erlangen.de/~simigern/jornada-7xx/linux-2.4.31-j720-4/
@@ -78,7 +80,7 @@ kbuildtree:: upstream-kernel
 	mkdir -p linux/build/
 	cp -fal ${KUPSTREAMDIR} linux/build/
 	cp -fal ${KERNELDIR} linux/build/
-	perl -pi -e 's/^EXTRAVERSION.*=.*$$/EXTRAVERSION = -j820/ ; \
+	perl -pi -e 's/^EXTRAVERSION.*=.*$$/EXTRAVERSION = ${EXTRAVERSION}/ ; \
 		s/^ARCH\s*:= .*$$/ARCH := arm/ ; \
 		s/^\#?CROSS_COMPILE\s*=.*$$/CROSS_COMPILE = ${TARGET}-/ ; \
 		' linux/build/kernel/Makefile
@@ -122,7 +124,7 @@ kbuildtree26:: upstream-kernel26
 	mkdir -p linux/build/
 	cp -fal ${KUPSTREAMDIR26} linux/build/
 	cp -fal ${KERNELDIR26} linux/build/
-	perl -pi.bak -e 's/^EXTRAVERSION.*=.*$$/EXTRAVERSION = -j820/ ; \
+	perl -pi.bak -e 's/^EXTRAVERSION.*=.*$$/EXTRAVERSION = ${EXTRAVERSION}/ ; \
 		s/^ARCH\s*:= .*$$/ARCH := arm/ ; \
 		s/^\#?CROSS_COMPILE\s*=.*$$/CROSS_COMPILE = ${TARGET}-/ ; \
 		' linux/build/kernel/Makefile
