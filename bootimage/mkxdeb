@@ -85,6 +85,7 @@ make
 )
 X11_PACKAGES=(
 xserver-xfree86 #xserver-xorg
+x-window-system-core
 xpdf
 xterm
 xlibs-data
