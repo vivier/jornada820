@@ -53,6 +53,15 @@
  
 #include <linux/config.h>
 #include <linux/module.h>
+
+#ifdef CONFIG_SA1101
+#warning Experimental attempt for the Jornada 820...
+#include <asm/hardware.h>
+#include <asm/hardware/sa1101.h>
+#define ASM_PCI_H
+#include "../../../arch/arm/mach-sa1100/pcipool.h"
+#endif
+
 #include <linux/pci.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
@@ -75,18 +84,6 @@
 
 #define OHCI_USE_NPS		// force NoPowerSwitching mode
 // #define OHCI_VERBOSE_DEBUG	/* not always helpful */
-
-#ifdef CONFIG_SA1101
-#warn Experimental attempt for the Jornada 820...
-#include <asm/hardware.h>
-#include <asm/hardware/sa1101.h>
-#ifdef CONFIG_PCI
-#warn CONFIG_PCI already defined!
-#else
-#define CONFIG_PCI
-#include "../../../arch/arm/mach-sa1100/pcipool.h"
-#endif
-#endif
 
 #include "usb-ohci.h"
 

@@ -11,15 +11,14 @@
 #include <linux/slab.h>
 #include <linux/usb.h>
 
-#include <asm/hardware.h>
 #include <asm/irq.h>
 #include <asm/io.h>
-#include <asm/pci.h>
-#include <asm/arch/hardware.h>
+#include <asm/hardware.h>
+#include "../../../arch/arm/mach-sa1100/pcipool.h"
 
 #include "usb-ohci.h"
 
-#define SA1111_FAKE_PCIDEV ((struct pci_dev *) 1111)
+#define SA1101_FAKE_PCIDEV ((struct pci_dev *) 1101)
 
 int __devinit
 hc_add_ohci(struct pci_dev *dev, int irq, void *membase, unsigned long flags,
@@ -72,7 +71,7 @@ static int __init sa1101_ohci_init(void)
 	/*
 	 * Initialise the generic OHCI driver.
 	 */
-	ret = hc_add_ohci(SA1111_FAKE_PCIDEV, 101,
+	ret = hc_add_ohci(SA1101_FAKE_PCIDEV, 101,
 			  (void *)0, 0, &sa1101_ohci,
 			  "usb-ohci", "sa1101");
 
