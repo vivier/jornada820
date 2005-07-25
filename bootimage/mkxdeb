@@ -362,3 +362,9 @@ http://lists.freegeek.org/pipermail/lessdisks/2004-July/000237.html
 http://radiolivre.org/darksnow/jornada/
 http://www-jcsu.jesus.cam.ac.uk/~mma29/debian-arm/
 http://www.tuxscreen.net/wiki/view/pivot_root_to_debian-ARM
+
+### BEWARE(!) ###
+cardmgr may oops if you keep the include lines that are included by default in
+/etc/pcmcia/config.opts
+Be sure to clear the content of this file.
+
