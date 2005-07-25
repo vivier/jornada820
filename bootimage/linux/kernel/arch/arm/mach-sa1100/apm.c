@@ -167,6 +167,9 @@ static int apm_get_power_status(u_char *ac_line_status,
 #ifdef CONFIG_IPAQ_HANDHELD
         h3600_apm_get_power_status(ac_line_status, battery_status, battery_flag, battery_percentage, battery_life);
 #endif
+#ifdef CONFIG_SA1100_JORNADA720
+	jornada720_apm_get_power_status(ac_line_status, battery_status, battery_flag, battery_percentage, battery_life);
+#endif
 #ifdef CONFIG_SA1100_JORNADA820
 	j820_apm_get_power_status(ac_line_status, battery_status, battery_flag, battery_percentage, battery_life);
 #endif
@@ -508,5 +511,6 @@ MODULE_PARM(debug, "i");
 MODULE_PARM_DESC(debug, "Enable debug mode");
 MODULE_PARM(power_off, "i");
 MODULE_PARM_DESC(power_off, "Enable power off");
+MODULE_LICENSE("GPL");
 
 EXPORT_NO_SYMBOLS;
