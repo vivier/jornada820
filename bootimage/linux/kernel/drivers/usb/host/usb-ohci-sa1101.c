@@ -71,7 +71,7 @@ static int __init sa1101_ohci_init(void)
 	/*
 	 * Initialise the generic OHCI driver.
 	 */
-	ret = hc_add_ohci(SA1101_FAKE_PCIDEV, NIRQHCIM,
+	ret = hc_add_ohci(SA1101_FAKE_PCIDEV, IRQ_SA1101_NIRQHCIM,
 			  (void *)0, 0, &sa1101_ohci,
 			  "usb-ohci", "sa1101");
 
