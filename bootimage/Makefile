@@ -307,7 +307,7 @@ do-modules: do-modules-compilation do-modules-tarbz2
 
 do-modules-tarbz2:
 	cd ${KBUILDDIR}/target && \
-	tar jcf modules.tar.bz2 lib/modules/ && \
+	tar -jcf modules.tar.bz2 --owner 0 --group 0 lib/modules/ && \
 	ln -f modules.tar.bz2 ${TOPDIR}/ramdisk/modules.tar.bz2
 
 do-modules-compilation:
@@ -325,7 +325,7 @@ do-modules26: ramdisk/modules26.tar.bz2
 
 ramdisk/modules26.tar.bz2: ${KBUILDDIR26}/target/lib/modules
 	cd ${KBUILDDIR26}/target && \
-	tar jcf modules.tar.bz2 lib/modules && \
+	tar -jcf modules.tar.bz2 --owner 0 --group 0 lib/modules && \
 	ln -f modules.tar.bz2 ${TOPDIR}/ramdisk/modules26.tar.bz2
 
 ${KBUILDDIR26}/target/lib/modules: force
