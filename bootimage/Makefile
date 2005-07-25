@@ -64,9 +64,13 @@ clean:: localclean
 	${MAKE} -C ${KBUILDDIR} ARCH=arm clean
 	${MAKE} -C ramdisk clean
 
-distclean:: localclean
+mrproper:: localclean
 	${MAKE} -C ${KBUILDDIR} ARCH=arm mrproper
 	${MAKE} -C ramdisk ARCH=arm mrproper
+
+distclean::
+	rm -rf linux/build linux/upstream/*/
+	${MAKE} -C ramdisk distclean
 
 # --------------------- kernel build tree ----------------------------------
 
