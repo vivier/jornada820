@@ -443,7 +443,7 @@ int ucb1x00_free_irq(struct ucb1x00 *ucb, unsigned int idx, void *devid)
 	return ret;
 
 bad:
-	printk(KERN_ERR __FUNCTION__ ": freeing bad irq %d\n", idx);
+	printk(KERN_ERR "%s: freeing bad irq %d\n", __FUNCTION__, idx);
 	return -EINVAL;
 }
 
@@ -457,8 +457,8 @@ bad:
  *	cerf		IRQ_GPIO_UCB1200_IRQ
  *	flexanet	IRQ_GPIO_GUI
  *	freebird	IRQ_GPIO_FREEBIRD_UCB1300_IRQ
- *	graphicsclient	ADS_EXT_IRQ(8)
- *	graphicsmaster	ADS_EXT_IRQ(8)
+ *	graphicsclient	IRQ_GRAPHICSCLIENT_UCB1200
+ *	graphicsmaster	IRQ_GRAPHICSMASTER_UCB1200
  *	jornada820	IRQ_GPIO1
  *	lart		LART_IRQ_UCB1200
  *	omnimeter	IRQ_GPIO23
@@ -540,9 +540,18 @@ static int __init ucb1x00_configure(struct ucb1x00 *ucb)
 	if (machine_is_freebird())
 		default_irq = IRQ_GPIO_FREEBIRD_UCB1300_IRQ;
 #endif
-#if defined(CONFIG_SA1100_GRAPHICSCLIENT) || defined(CONFIG_SA1100_GRAPICSMASTER)
-	if (machine_is_graphicsclient() || machine_is_graphicsmaster())
-		default_irq = ADS_EXT_IRQ(8);
+#if defined(CONFIG_SA1100_GRAPHICSCLIENT)
+	if (machine_is_graphicsclient())
+		default_irq = IRQ_GRAPHICSCLIENT_UCB1200;
+#endif
+#if defined(CONFIG_SA1100_GRAPHICSMASTER)
+	if (machine_is_graphicsmaster())
+		default_irq = IRQ_GRAPHICSMASTER_UCB1200;
+#endif
+#ifdef CONFIG_SA1100_JORNADA820
+	if (machine_is_jornada820()) {
+		default_irq = IRQ_GPIO1;
+	}
 #endif
 #ifdef CONFIG_SA1100_LART
 	if (machine_is_lart()) {
@@ -550,9 +559,10 @@ static int __init ucb1x00_configure(struct ucb1x00 *ucb)
 		irq_gpio_pin = LART_GPIO_UCB1200;
 	}
 #endif
+#ifdef CONFIG_OMNIMETER
 	if (machine_is_omnimeter())
 		default_irq = IRQ_GPIO23;
-
+#endif
 #ifdef CONFIG_SA1100_PFS168
 	if (machine_is_pfs168())
 		default_irq = IRQ_GPIO_UCB1300_IRQ;
@@ -589,6 +599,15 @@ static int __init ucb1x00_configure(struct ucb1x00 *ucb)
 		GPDR(irq_gpio_pin) &= ~GPIO_bit(irq_gpio_pin);
 	}
 #endif
+
+#ifdef CONFIG_ARCH_TRIZEPS2
+	if (machine_is_trizeps2()) {
+		default_irq = TOUCH_PANEL_IRQ;
+		irq_gpio_pin = IRQ_TO_GPIO_2_80(TOUCH_PANEL_IRQ);
+		GPDR(irq_gpio_pin) &= ~GPIO_bit(irq_gpio_pin);
+	}
+#endif
+
 
 #ifdef CONFIG_PXA_CERF_PDA
 	if (machine_is_pxa_cerf()) {

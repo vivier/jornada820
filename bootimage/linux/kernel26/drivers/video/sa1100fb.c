@@ -2,7 +2,7 @@
  *  linux/drivers/video/sa1100fb.c
  *
  * Jornada820 version based on sa1100fb.c 1.22 from cvs.handhelds.org
- * $Id: sa1100fb.c,v 1.2 2004/06/30 12:07:37 fare Exp $
+ * $Id: sa1100fb.c,v 1.3 2005/07/25 09:09:15 fare Exp $
  *
  *  Copyright (C) 1999 Eric A. Thomas
  *   Based on acornfb.c Copyright (C) Russell King.
@@ -971,23 +971,6 @@ static int sa1100fb_set_par(struct fb_info *info)
 	return 0;
 }
 
-#if 0
-static int
-sa1100fb_set_cmap(struct fb_cmap *cmap, int kspc, int con,
-		  struct fb_info *info)
-{
-	struct sa1100fb_info *fbi = (struct sa1100fb_info *)info;
-
-	/*
-	 * Make sure the user isn't doing something stupid.
-	 */
-	if (!kspc && (fbi->fb.var.bits_per_pixel == 16 || fbi->cmap_static))
-		return -EINVAL;
-
-	return gen_set_cmap(cmap, kspc, con, info);
-}
-#endif
-
 /*
  * Formal definition of the VESA spec:
  *  On
@@ -1044,7 +1027,7 @@ static int sa1100fb_blank(int blank, struct fb_info *info)
 	case VESA_NO_BLANKING:
 		if (fbi->fb.fix.visual == FB_VISUAL_PSEUDOCOLOR ||
 		    fbi->fb.fix.visual == FB_VISUAL_STATIC_PSEUDOCOLOR)
-			fb_set_cmap(&fbi->fb.cmap, 1, info);
+			fb_set_cmap(&fbi->fb.cmap, info);
 		sa1100fb_schedule_work(fbi, C_ENABLE);
 	}
 	return 0;
@@ -1054,7 +1037,6 @@ static struct fb_ops sa1100fb_ops = {
 	.owner		= THIS_MODULE,
 	.fb_check_var	= sa1100fb_check_var,
 	.fb_set_par	= sa1100fb_set_par,
-//	.fb_set_cmap	= sa1100fb_set_cmap,
 	.fb_setcolreg	= sa1100fb_setcolreg,
 	.fb_fillrect	= cfb_fillrect,
 	.fb_copyarea	= cfb_copyarea,
@@ -1658,7 +1640,6 @@ static struct sa1100fb_info * __init sa1100fb_init_fbinfo(struct device *dev)
 	fbi->fb.fbops		= &sa1100fb_ops;
 	fbi->fb.flags		= FBINFO_FLAG_DEFAULT;
 	fbi->fb.monspecs	= monspecs;
-	fbi->fb.currcon		= -1;
 	fbi->fb.pseudo_palette	= (fbi + 1);
 
 	fbi->rgb[RGB_8]		= &rgb_8;
@@ -1768,9 +1749,6 @@ static int __init sa1100fb_probe(struct device *dev)
 	cpufreq_register_notifier(&fbi->freq_policy, CPUFREQ_POLICY_NOTIFIER);
 #endif
 
-	/* This driver cannot be unloaded at the moment */
-	MOD_INC_USE_COUNT;
-
 	return 0;
 
 failed:
@@ -1835,5 +1813,8 @@ int __init sa1100fb_setup(char *options)
 	return 0;
 }
 
+#ifdef MODULE
 MODULE_DESCRIPTION("StrongARM-1100/1110 framebuffer driver");
 MODULE_LICENSE("GPL");
+
+#endif /* MODULE */

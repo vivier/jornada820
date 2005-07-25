@@ -4,37 +4,22 @@
 # Note! Dependencies are done automagically by 'make dep', which also
 # removes any old dependencies. DON'T put your own dependencies here
 # unless it's something special (ie not a .c file).
-#
-# Changes: Added dma_backpaq as module if backpaq fpga is configured
-#          Fae Ghodrat
-#
 
 USE_STANDARD_AS_RULE := true
 
 O_TARGET		:= sa1100.o
 
 # Common support (must be linked before board specific support)
-obj-y := generic.o irq.o 
+obj-y := generic.o irq.o dma-sa1100.o
 obj-m :=
 obj-n :=
 obj-  :=
 
-export-objs :=	assabet.o badge4.o dma-sa1100.o dma-sa1111.o \
+export-objs :=	assabet.o consus.o badge4.o dma-sa1100.o dma-sa1111.o \
 		flexanet.o freebird.o frodo.o generic.o h3600.o \
-		huw_webpanel.o irq.o pcipool.o pm-sa1100.o sa1111.o sa1111-pcibuf.o \
-		system3.o yopy.o usb_ctl.o usb_recv.o usb_send.o simputer.o ssp.o sa1101.o
-
-ifeq ($(CONFIG_SA1100_JORNADA720),y)
-obj-y += dma-jornada720.o
-export-objs += dma-jornada720.o
-else
-obj-y += dma-sa1100.o
-endif
-
-ifeq ($(CONFIG_H3600_BACKPAQ_FPGA),m)
-obj-m += dma-backpaq.o
-export-objs += dma-backpaq.o
-endif
+		huw_webpanel.o irq.o sa1111.o sa1111-pcibuf.o \
+		system3.o yopy.o usb_ctl.o usb_recv.o usb_send.o simputer.o \
+		ssp.o jornada720.o jornada820.o pm-sa1100.o sa1101.o pcipool.o
 
 # These aren't present yet, and prevents a plain -ac kernel building.
 # hwtimer.o
@@ -46,39 +31,44 @@ endif
 ifeq ($(CONFIG_CPU_FREQ),y)
 obj-$(CONFIG_SA1100_ASSABET) += cpu-sa1110.o
 obj-$(CONFIG_SA1100_CEP) += cpu-sa1110.o
+obj-$(CONFIG_SA1100_CONSUS) += cpu-sa1110.o
 obj-$(CONFIG_SA1100_CERF) += cpu-sa1110.o
 obj-$(CONFIG_SA1100_HACKKIT) += cpu-sa1110.o
 obj-$(CONFIG_SA1100_PT_SYSTEM3) += cpu-sa1110.o
-obj-$(CONFIG_SA1100_IPAQ) += cpu-sa1110.o
 obj-$(CONFIG_SA1100_SIMPUTER) += cpu-sa1110.o
 obj-$(CONFIG_SA1100_LART) += cpu-sa1100.o
+obj-$(CONFIG_SA1100_JORNADA720) += cpu-sa1110.o
 obj-$(CONFIG_SA1100_JORNADA820) += cpu-sa1100.o
 endif
 
 # Next, the SA1111 stuff.
 obj-$(CONFIG_SA1111) += sa1111.o dma-sa1111.o
-obj-$(CONFIG_USB_OHCI_SA1111) += sa1111-pcibuf.o pcipool.o
+obj-$(CONFIG_USB_OHCI_SA1111) += sa1111-pcibuf.o
 
 # Specific board support
+obj-$(CONFIG_SA1100_ADSAGC) += adsagc.o
 obj-$(CONFIG_SA1100_ADSBITSY) += adsbitsy.o
+obj-$(CONFIG_SA1100_ADSBITSYPLUS) += adsbitsyplus.o
 obj-$(CONFIG_SA1100_ASSABET) += assabet.o
 obj-$(CONFIG_ASSABET_NEPONSET) += neponset.o
 obj-$(CONFIG_SA1100_BADGE4) +=  badge4.o
 obj-$(CONFIG_SA1100_BRUTUS) += brutus.o
 obj-$(CONFIG_SA1100_CEP) += cep.o
 obj-$(CONFIG_SA1100_CERF) += cerf.o
+obj-$(CONFIG_SA1100_CONSUS) += consus.o
 obj-$(CONFIG_SA1100_EMPEG) += empeg.o
 obj-$(CONFIG_SA1100_FLEXANET) += flexanet.o
 obj-$(CONFIG_SA1100_FREEBIRD) += freebird.o
 obj-$(CONFIG_SA1100_FRODO) += frodo.o
 obj-$(CONFIG_SA1100_GRAPHICSCLIENT) += graphicsclient.o
 obj-$(CONFIG_SA1100_GRAPHICSMASTER) += graphicsmaster.o
-obj-$(CONFIG_SA1100_IPAQ) += h3600.o
+obj-$(CONFIG_SA1100_H3600) += h3600.o
 obj-$(CONFIG_SA1100_HACKKIT) += hackkit.o
 obj-$(CONFIG_SA1100_HUW_WEBPANEL) += huw_webpanel.o
 obj-$(CONFIG_SA1100_ITSY) += itsy.o
 obj-$(CONFIG_SA1100_JORNADA720) += jornada720.o
-obj-$(CONFIG_SA1100_JORNADA56X) += jornada56x.o
+obj-$(CONFIG_JORNADA720_CONTROL) += j720_control.o
+obj-$(CONFIG_SA1100_JORNADA820) += jornada820.o sa1101.o pcipool.o
 obj-$(CONFIG_SA1100_LART) += lart.o
 obj-$(CONFIG_SA1100_NANOENGINE) += nanoengine.o
 obj-$(CONFIG_SA1100_OMNIMETER) += omnimeter.o
@@ -93,14 +83,16 @@ obj-$(CONFIG_SA1100_SIMPUTER) += simputer.o
 obj-$(CONFIG_SA1100_VICTOR) += victor.o
 obj-$(CONFIG_SA1100_XP860) += xp860.o
 obj-$(CONFIG_SA1100_YOPY) += yopy.o
-obj-$(CONFIG_SA1100_JORNADA820) += jornada820.o sa1101.o pcipool.o
 
 # LEDs support
 leds-y := leds.o
+leds-$(CONFIG_SA1100_ADSAGC) += leds-adsagc.o
 leds-$(CONFIG_SA1100_ADSBITSY) += leds-adsbitsy.o
+leds-$(CONFIG_SA1100_ADSBITSYPLUS) += leds-adsbitsyplus.o
 leds-$(CONFIG_SA1100_ASSABET) += leds-assabet.o
 leds-$(CONFIG_SA1100_BRUTUS) += leds-brutus.o
 leds-$(CONFIG_SA1100_CERF) += leds-cerf.o
+leds-$(CONFIG_SA1100_CONSUS) += leds-consus.o
 leds-$(CONFIG_SA1100_FLEXANET) += leds-flexanet.o
 leds-$(CONFIG_SA1100_FRODO) += leds-frodo.o
 leds-$(CONFIG_SA1100_GRAPHICSCLIENT) += leds-graphicsclient.o
@@ -119,34 +111,16 @@ obj-$(CONFIG_SA1100_USB) += sa1100usb_core.o
 obj-$(CONFIG_SA1100_USB_NETLINK) += usb-eth.o
 obj-$(CONFIG_SA1100_USB_CHAR) += usb-char.o
 
-# Compaq iPAQ specific
-export-objs += h3600_asic_battery.o
-
-ifeq ($(CONFIG_IPAQ_HANDHELD),y)
-vpath % ../mach-ipaq
-endif
-
-list-multi += h3600_asic.o
-mmc-$(CONFIG_MMC) += h3600_asic_mmc.o
-h3600_asic-objs := h3600_asic_core.o h3600_asic_io.o h3600_asic_battery.o h3600_asic_bluetooth.o asic2_shared.o asic2_io.o battery_h3x00.o
-h3600_asic-objs += $(mmc-y) 
-h3600_asic-objs += $(mmc-m)
-obj-$(CONFIG_H3600_MICRO) += h3600_micro.o
-obj-$(CONFIG_H3600_ASIC) += h3600_asic.o
-
 # Miscelaneous functions
 obj-$(CONFIG_REGISTERS) += regs-sa1100.o gpio.o regs-sa1101.o
 obj-$(CONFIG_PM) += pm-sa1100.o sleep.o
 obj-$(CONFIG_APM) += apm.o
-obj-$(CONFIG_HWTIMER) += hwtimer.o
 obj-$(CONFIG_SA1100_SSP) += ssp.o
+obj-$(CONFIG_HWTIMER) += hwtimer.o
 export-objs += hwtimer.o
 
 include $(TOPDIR)/Rules.make
 
 sa1100usb_core.o: $(sa1100usb_core-objs)
 	$(LD) -r -o $@ $(sa1100usb_core-objs)
-
-h3600_asic.o: $(h3600_asic-objs)
-	$(LD) -r -o $@ $(h3600_asic-objs)
 

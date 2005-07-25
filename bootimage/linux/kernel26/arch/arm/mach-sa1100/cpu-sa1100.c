@@ -1,8 +1,10 @@
 /*
+ * Jornada820 version based on cpu-sa1100.c from linux 2.6.11.9
+ * $Id: cpu-sa1100.c,v 1.3 2005/07/25 09:09:12 fare Exp $
+ * We religiously duplicate the settings from WinCE in an #ifdef.
+ */
+/*
  * cpu-sa1100.c: clock scaling for the SA1100
- *
- * Jornada820 version based on cpu-sa1100.c 1.4 from cvs.handhelds.org
- * $Id: cpu-sa1100.c,v 1.2 2004/07/03 13:29:33 fare Exp $
  *
  * Copyright (C) 2000 2001, The Delft University of Technology
  *
@@ -250,9 +252,7 @@ static int __init sa1100_cpu_init(struct cpufreq_policy *policy)
 }
 
 static struct cpufreq_driver sa1100_driver = {
-	.flags		= CPUFREQ_STICKY |
-			  CPUFREQ_PANIC_OUTOFSYNC | 
-			  CPUFREQ_PANIC_RESUME_OUTOFSYNC,
+	.flags		= CPUFREQ_STICKY,
 	.verify		= sa11x0_verify_speed,
 	.target		= sa1100_target,
 	.get		= sa11x0_getspeed,

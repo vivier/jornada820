@@ -42,7 +42,6 @@
 extern int (*console_blank_hook)(int);
 #endif
 
-
 struct apm_bios_info apm_bios_info = {
         /* this driver simulates APM version 1.2 */
         version: 0x102,
@@ -87,8 +86,6 @@ struct apm_user {
 	int		magic;
 	struct apm_user *	next;
 	int		suser: 1;
-	int		writer: 1;
-	int		reader: 1;
 	int		suspend_wait: 1;
 	int		suspend_result;
 	int		suspends_pending;
@@ -108,7 +105,7 @@ struct apm_user {
 /*
  * Local variables
  */
-static int			suspends_pending;
+//static int			suspends_pending;
 //static int			standbys_pending;
 //static int			ignore_normal_resume;
 
@@ -126,6 +123,8 @@ static int			power_off;
 #else
 static int			power_off = 1;
 #endif
+static int			exit_kapmd;
+static int			kapmd_running;
 
 static DECLARE_WAIT_QUEUE_HEAD(apm_waitqueue);
 static DECLARE_WAIT_QUEUE_HEAD(apm_suspend_waitqueue);
@@ -166,10 +165,10 @@ static int apm_get_power_status(u_char *ac_line_status,
                                 u_short *battery_life)
 {
 #ifdef CONFIG_IPAQ_HANDHELD
-            h3600_apm_get_power_status(ac_line_status, battery_status, battery_flag, battery_percentage, battery_life);
+        h3600_apm_get_power_status(ac_line_status, battery_status, battery_flag, battery_percentage, battery_life);
 #endif
 #ifdef CONFIG_SA1100_JORNADA820
-            j820_apm_get_power_status(ac_line_status, battery_status, battery_flag, battery_percentage, battery_life);
+	j820_apm_get_power_status(ac_line_status, battery_status, battery_flag, battery_percentage, battery_life);
 #endif
 	return APM_SUCCESS;
 }
@@ -183,42 +182,6 @@ static apm_event_t get_queued_event(struct apm_user *as)
 {
 	as->event_tail = (as->event_tail + 1) % APM_MAX_EVENTS;
 	return as->events[as->event_tail];
-}
-
-static void queue_event(apm_event_t event, struct apm_user *sender)
-{
-	struct apm_user *	as;
-
-	if (user_list == NULL)
-		return;
-	for (as = user_list; as != NULL; as = as->next) {
-		if ((as == sender) || (!as->reader))
-			continue;
-		as->event_head = (as->event_head + 1) % APM_MAX_EVENTS;
-		if (as->event_head == as->event_tail) {
-			static int notified;
-
-			if (notified++ == 0)
-			    printk(KERN_ERR "apm: an event queue overflowed\n");
-			as->event_tail = (as->event_tail + 1) % APM_MAX_EVENTS;
-		}
-		as->events[as->event_head] = event;
-		if ((!as->suser) || (!as->writer))
-			continue;
-		switch (event) {
-		case APM_SYS_SUSPEND:
-		case APM_USER_SUSPEND:
-			as->suspends_pending++;
-			suspends_pending++;
-			break;
-
-		case APM_SYS_STANDBY:
-		case APM_USER_STANDBY:
-			as->standbys_pending++;
-			break;
-		}
-	}
-	wake_up_interruptible(&apm_waitqueue);
 }
 
 static int check_apm_user(struct apm_user *as, const char *func)
@@ -259,6 +222,7 @@ repeat:
 	i = count;
 	while ((i >= sizeof(event)) && !queue_empty(as)) {
 		event = get_queued_event(as);
+                printk("  do_read: event=%d\n", event);
 		if (copy_to_user(buf, &event, sizeof(event))) {
 			if (i < count)
 				break;
@@ -310,17 +274,7 @@ static int do_ioctl(struct inode * inode, struct file *filp,
 		return -EPERM;
 	switch (cmd) {
         case APM_IOC_SUSPEND:
-		if (as->suspends_read > 0) {
-			as->suspends_read--;
-			as->suspends_pending--;
-			suspends_pending--;
-		} else {
-			queue_event(APM_USER_SUSPEND, as);
-		}
-
-		if (suspends_pending <= 0)
-			wake_up(&apm_suspend_waitqueue);
-		
+		pm_suggest_suspend();
 		break;
 	default:
 		return -EINVAL;
@@ -337,20 +291,6 @@ static int do_release(struct inode * inode, struct file * filp)
 		return 0;
 	filp->private_data = NULL;
 	lock_kernel();
-	if (user_list == as)
-		user_list = as->next;
-	else {
-		struct apm_user *	as1;
-
-		for (as1 = user_list;
-		     (as1 != NULL) && (as1->next != as);
-		     as1 = as1->next)
-			;
-		if (as1 == NULL)
-			printk(KERN_ERR "apm: filp not in user list\n");
-		else
-			as1->next = as->next;
-	}
 	unlock_kernel();
 	kfree(as);
 	return 0;
@@ -378,8 +318,6 @@ static int do_open(struct inode * inode, struct file * filp)
 	 * privileged operation -- cevans
 	 */
 	as->suser = capable(CAP_SYS_ADMIN);
-	as->writer = (filp->f_mode & FMODE_WRITE) == FMODE_WRITE;
-	as->reader = (filp->f_mode & FMODE_READ) == FMODE_READ;
 	as->next = user_list;
 	user_list = as;
 	filp->private_data = as;
@@ -463,6 +401,34 @@ static int apm_get_info(char *buf, char **start, off_t fpos, int length)
 	return p - buf;
 }
 
+#ifndef MODULE
+static int __init apm_setup(char *str)
+{
+	int	invert;
+
+	while ((str != NULL) && (*str != '\0')) {
+		if (strncmp(str, "off", 3) == 0)
+			apm_disabled = 1;
+		if (strncmp(str, "on", 2) == 0)
+			apm_disabled = 0;
+		invert = (strncmp(str, "no-", 3) == 0);
+		if (invert)
+			str += 3;
+		if (strncmp(str, "debug", 5) == 0)
+			debug = !invert;
+		if ((strncmp(str, "power-off", 9) == 0) ||
+		    (strncmp(str, "power_off", 9) == 0))
+			power_off = !invert;
+		str = strchr(str, ',');
+		if (str != NULL)
+			str += strspn(str, ", \t");
+	}
+	return 1;
+}
+
+__setup("apm=", apm_setup);
+#endif
+
 static struct file_operations apm_bios_fops = {
 	owner:		THIS_MODULE,
 	read:		do_read,
@@ -479,48 +445,6 @@ static struct miscdevice apm_device = {
 };
 
 #define APM_INIT_ERROR_RETURN	return -1
-
-static pid_t apmd_pid;
-static DECLARE_COMPLETION(apmd_exited);
-
-static int apm(void *unused)
-{
-	unsigned short	bx;
-	unsigned short	cx;
-	unsigned short	dx;
-	int		error;
-	char *		power_stat;
-	char *		bat_stat;
-	DECLARE_WAITQUEUE(wait, current);
-	struct apm_user au, *as;
-
-	lock_kernel();
-
-	daemonize();
-
-	strcpy(current->comm, "kapmd");
-
-	as = &au;
-	as->magic = APM_BIOS_MAGIC;
-	as->event_tail = as->event_head = 0;
-	as->suspends_pending = as->standbys_pending = 0;
-	as->suspends_read = as->standbys_read = 0;
-	as->suser = 1;
-	as->writer = 1;
-	as->reader = 0;
-
-	while (!signal_pending (current)) {
-		interruptible_sleep_on(&apm_suspend_waitqueue);
-
-		pm_suggest_suspend();
-
-		queue_event(APM_NORMAL_RESUME, as);
-	}
-
-	unlock_kernel();
-
-	complete_and_exit(&apmd_exited, 0);
-}
 
 /*
  * Just start the APM thread. We do NOT want to do APM BIOS
@@ -560,8 +484,6 @@ static int __init apm_init(void)
 
 	misc_register(&apm_device);
 
-	apmd_pid = kernel_thread(apm, NULL, 0);
-
 	return 0;
 }
 
@@ -569,10 +491,11 @@ static void __exit apm_exit(void)
 {
 	misc_deregister(&apm_device);
 	remove_proc_entry("apm", NULL);
-	kill_proc (apmd_pid, SIGTERM, 1);
-	wait_for_completion(&apmd_exited);
 	if (power_off)
 		pm_power_off = NULL;
+	exit_kapmd = 1;
+	while (kapmd_running)
+		schedule();
 	pm_active = 0;
 }
 
@@ -581,7 +504,6 @@ module_exit(apm_exit);
 
 MODULE_AUTHOR("Jamey Hicks, pulling bits from original by Stephen Rothwell");
 MODULE_DESCRIPTION("A minimal emulation of APM");
-MODULE_LICENSE("GPL");
 MODULE_PARM(debug, "i");
 MODULE_PARM_DESC(debug, "Enable debug mode");
 MODULE_PARM(power_off, "i");

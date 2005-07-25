@@ -1,3 +1,7 @@
+/* Jornada820 version based on generic.c from linux 2.6.11.9
+ * $Id: generic.c,v 1.4 2005/07/25 09:09:13 fare Exp $
+ * We didn't change anything from upstream. Remove this from CVS...
+ */
 /*
  * linux/arch/arm/mach-sa1100/generic.c
  *
@@ -8,9 +12,6 @@
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
- */
-/* Jornada820 version based on generic.c 1.8 from cvs.handhelds.org
- * $Id: generic.c,v 1.3 2004/07/03 13:29:33 fare Exp $
  */
 #include <linux/config.h>
 #include <linux/module.h>
@@ -109,15 +110,16 @@ unsigned int sa11x0_getspeed(unsigned int cpu)
 #else
 /*
  * We still need to provide this so building without cpufreq works.
- */ 
-unsigned int cpufreq_get(unsigned int cpu)
+ */
+#if 0
+unsigned int cpufreq_cpu_get(unsigned int cpu)
 {
 	return cclk_frequency_100khz[PPCR & 0xf] * 100;
 }
-EXPORT_SYMBOL(cpufreq_get);
+EXPORT_SYMBOL(cpufreq_cpu_get);
+#endif
 #endif
 
-#if 0
 /*
  * This is the SA11x0 sched_clock implementation.  This has
  * a resolution of 271ns, and a maximum value of 1165s.
@@ -132,7 +134,6 @@ unsigned long long sched_clock(void)
 
 	return v;
 }
-#endif
 
 /*
  * Default power-off for SA1100
@@ -166,7 +167,7 @@ static u64 sa11x0udc_dma_mask = 0xffffffffUL;
 
 static struct platform_device sa11x0udc_device = {
 	.name		= "sa11x0-udc",
-	.id		= 0,
+	.id		= -1,
 	.dev		= {
 		.dma_mask = &sa11x0udc_dma_mask,
 		.coherent_dma_mask = 0xffffffff,
@@ -217,7 +218,7 @@ static u64 sa11x0mcp_dma_mask = 0xffffffffUL;
 
 static struct platform_device sa11x0mcp_device = {
 	.name		= "sa11x0-mcp",
-	.id		= 0,
+	.id		= -1,
 	.dev = {
 		.dma_mask = &sa11x0mcp_dma_mask,
 		.coherent_dma_mask = 0xffffffff,
@@ -238,7 +239,7 @@ static u64 sa11x0ssp_dma_mask = 0xffffffffUL;
 
 static struct platform_device sa11x0ssp_device = {
 	.name		= "sa11x0-ssp",
-	.id		= 0,
+	.id		= -1,
 	.dev = {
 		.dma_mask = &sa11x0ssp_dma_mask,
 		.coherent_dma_mask = 0xffffffff,
@@ -262,7 +263,7 @@ static struct resource sa11x0fb_resources[] = {
 
 static struct platform_device sa11x0fb_device = {
 	.name		= "sa11x0-fb",
-	.id		= 0,
+	.id		= -1,
 	.dev = {
 		.coherent_dma_mask = 0xffffffff,
 	},
@@ -272,8 +273,53 @@ static struct platform_device sa11x0fb_device = {
 
 static struct platform_device sa11x0pcmcia_device = {
 	.name		= "sa11x0-pcmcia",
-	.id		= 0,
+	.id		= -1,
 };
+
+static struct platform_device sa11x0mtd_device = {
+	.name		= "flash",
+	.id		= -1,
+};
+
+void sa11x0_set_flash_data(struct flash_platform_data *flash,
+			   struct resource *res, int nr)
+{
+	sa11x0mtd_device.dev.platform_data = flash;
+	sa11x0mtd_device.resource = res;
+	sa11x0mtd_device.num_resources = nr;
+}
+
+static struct resource sa11x0ir_resources[] = {
+	{
+		.start	= __PREG(Ser2UTCR0),
+		.end	= __PREG(Ser2UTCR0) + 0x24 - 1,
+		.flags	= IORESOURCE_MEM,
+	}, {
+		.start	= __PREG(Ser2HSCR0),
+		.end	= __PREG(Ser2HSCR0) + 0x1c - 1,
+		.flags	= IORESOURCE_MEM,
+	}, {
+		.start	= __PREG(Ser2HSCR2),
+		.end	= __PREG(Ser2HSCR2) + 0x04 - 1,
+		.flags	= IORESOURCE_MEM,
+	}, {
+		.start	= IRQ_Ser2ICP,
+		.end	= IRQ_Ser2ICP,
+		.flags	= IORESOURCE_IRQ,
+	}
+};
+
+static struct platform_device sa11x0ir_device = {
+	.name		= "sa11x0-ir",
+	.id		= -1,
+	.num_resources	= ARRAY_SIZE(sa11x0ir_resources),
+	.resource	= sa11x0ir_resources,
+};
+
+void sa11x0_set_irda_data(struct irda_platform_data *irda)
+{
+	sa11x0ir_device.dev.platform_data = irda;
+}
 
 static struct platform_device *sa11x0_devices[] __initdata = {
 	&sa11x0udc_device,
@@ -283,11 +329,15 @@ static struct platform_device *sa11x0_devices[] __initdata = {
 	&sa11x0ssp_device,
 	&sa11x0pcmcia_device,
 	&sa11x0fb_device,
+	&sa11x0mtd_device,
 };
 
 static int __init sa1100_init(void)
 {
 	pm_power_off = sa1100_power_off;
+
+	if (sa11x0ir_device.dev.platform_data)
+		platform_device_register(&sa11x0ir_device);
 
 	return platform_add_devices(sa11x0_devices, ARRAY_SIZE(sa11x0_devices));
 }
@@ -332,6 +382,7 @@ void __init sa1100_map_io(void)
 	iotable_init(standard_io_desc, ARRAY_SIZE(standard_io_desc));
 }
 
+#ifdef CONFIG_SA1111
 /*
  * Disable the memory bus request/grant signals on the SA1110 to
  * ensure that we don't receive spurious memory requests.  We set
@@ -372,4 +423,4 @@ void __init sa1110_mb_enable(void)
 
 	local_irq_restore(flags);
 }
-
+#endif

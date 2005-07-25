@@ -12,7 +12,7 @@
  *
  * Created for the Jornada820 port.
  *
- * $Id: sa1101.c,v 1.14 2004/07/12 18:32:19 fare Exp $
+ * $Id: sa1101.c,v 1.15 2005/07/25 09:09:12 fare Exp $
  */
 
 #include <linux/module.h>
@@ -184,9 +184,9 @@ out:
 	return ret;
 }
 
-static struct resource sa1101_resource = {
-  .name   = "SA1101"
-};
+//static struct resource sa1101_resource = {
+//  .name   = "SA1101"
+//};
 
 /*
  * Figure out whether we can see the SA1101
@@ -398,8 +398,7 @@ void sa1101_init_irq(int sa1101_irq)
 {
 	unsigned int irq;
 
-	alloc_irq_space(64); /* XXX - still needed??? */
-	request_mem_region(SA1101_INTERRUPT, 0x1ffff, "irqs-1101"); // XXX - still needed???
+	request_mem_region(SA1101_INTERRUPT, 0x20000, "SA1101 irqs");
 
 	/* disable all IRQs */
 	INTENABLE0 = 0;

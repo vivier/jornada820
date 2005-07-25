@@ -9,7 +9,6 @@
  */
 #include <linux/config.h>
 #include <linux/signal.h>
-#include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/string.h>
@@ -18,7 +17,6 @@
 #include <linux/mman.h>
 #include <linux/mm.h>
 #include <linux/swap.h>
-#include <linux/swapctl.h>
 #include <linux/smp.h>
 #include <linux/init.h>
 #include <linux/bootmem.h>
@@ -306,9 +304,10 @@ find_memend_and_nodes(struct meminfo *mi, struct node_info *np)
 static int __init check_initrd(struct meminfo *mi)
 {
 	int initrd_node = -2;
-	unsigned long end = phys_initrd_start + phys_initrd_size;
 
 #ifdef CONFIG_BLK_DEV_INITRD
+        unsigned long end = phys_initrd_start + phys_initrd_size;
+
 	/*
 	 * Make sure that the initrd is within a valid area of
 	 * memory.

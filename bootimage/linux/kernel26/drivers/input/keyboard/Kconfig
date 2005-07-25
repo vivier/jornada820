@@ -1,3 +1,8 @@
+# Jornada820 version based on Kconfig from linux 2.6.11.9
+# $Id: Kconfig,v 1.2 2005/07/25 09:09:13 fare Exp $
+# JORNADA820, (SA1100_SSP), SA1101
+# REGISTERS, SA1100_USB, SA110_USB_NETLINK, SA1100_USB_CHAR
+
 #
 # Input core configuration
 #
@@ -16,6 +21,7 @@ config KEYBOARD_ATKBD
 	default y
 	depends on INPUT && INPUT_KEYBOARD
 	select SERIO
+	select SERIO_LIBPS2
 	select SERIO_I8042 if PC
 	select SERIO_GSCPS2 if GSC
 	help
@@ -77,16 +83,6 @@ config KEYBOARD_NEWTON
 	  To compile this driver as a module, choose M here: the
 	  module will be called newtonkbd.
 
-config KEYBOARD_USAR1855A01
-	tristate "USAR1855A01 based keyboard (HP Jornada 820)"
-	depends on INPUT && INPUT_KEYBOARD
-	select SERIO
-	help
-	  Say Y here if you have a HP Jornada 820 keyboard on the SSP port.
-
-	  To compile this driver as a module, choose M here: the
-	  module will be called j820_keyb.
-
 config KEYBOARD_MAPLE
 	tristate "Maple bus keyboard support"
 	depends on SH_DREAMCAST && INPUT && INPUT_KEYBOARD && MAPLE
@@ -107,14 +103,13 @@ config KEYBOARD_AMIGA
 	  To compile this driver as a module, choose M here: the
 	  module will be called amikbd.
 
-config KEYBOARD_98KBD
-	tristate "NEC PC-9800 Keyboard support"
-	depends on X86_PC9800 && INPUT && INPUT_KEYBOARD
+config KEYBOARD_USAR1855A01
+	tristate "USAR1855A01 based keyboard (HP Jornada 820)"
+	depends on INPUT && INPUT_KEYBOARD
 	select SERIO
+	select SERIO_LIBPS2
 	help
-	  Say Y here if you want to use the NEC PC-9801/PC-9821 keyboard (or
-	  compatible) on your system.
+	  Say Y here if you have a HP Jornada 820 keyboard on the SSP port.
 
 	  To compile this driver as a module, choose M here: the
-	  module will be called 98kbd.
-
+	  module will be called j820_keyb.

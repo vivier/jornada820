@@ -10,9 +10,6 @@
  * License.  See the file COPYING in the main directory of this archive
  * for more details.
  */
-/* Jornada820 version based on fbmem.c 1.31 from cvs.handhelds.org
- * $Id: fbmem.c,v 1.1 2004/07/13 09:27:08 fare Exp $
- */
 
 #include <linux/config.h>
 #include <linux/module.h>
@@ -113,12 +110,7 @@ extern int chips_init(void);
 extern int g364fb_init(void);
 extern int sa1100fb_init(void);
 extern int sa1101fb_init(void);
-extern int s3c2410fb_init(void);
 extern int pxafb_init(void);
-extern int mq200fb_init(void);
-extern int mq1100fb_h5400_init(void);
-extern int mq1100fb_pci_init(void);
-extern int mq1132fb_axim_init(void);
 extern int fm2fb_init(void);
 extern int fm2fb_setup(char*);
 extern int q40fb_init(void);
@@ -136,22 +128,30 @@ extern int sisfb_init(void);
 extern int sisfb_setup(char*);
 extern int stifb_init(void);
 extern int stifb_setup(char*);
+extern int pmagaafb_init(void);
 extern int pmagbafb_init(void);
 extern int pmagbbfb_init(void);
-extern void maxinefb_init(void);
+extern int maxinefb_init(void);
 extern int tx3912fb_init(void);
 extern int radeonfb_init(void);
 extern int radeonfb_setup(char*);
+extern int intelfb_init(void);
+extern int intelfb_setup(char*);
 extern int e1355fb_init(void);
 extern int e1355fb_setup(char*);
 extern int e1356fb_init(void);
 extern int e1356fb_setup(char*);
+extern int au1100fb_init(void);
+extern int au1100fb_setup(char*);
 extern int pvr2fb_init(void);
 extern int pvr2fb_setup(char*);
 extern int sstfb_init(void);
 extern int sstfb_setup(char*);
+extern int it8181fb_init(void);
+extern int it8181fb_setup(char*);
 extern int anakinfb_init(void);
-  
+extern int dbmx1fb_init(void);
+
 static struct {
 	const char *name;
 	int (*init)(void);
@@ -215,6 +215,9 @@ static struct {
 #ifdef CONFIG_FB_RADEON
 	{ "radeon", radeonfb_init, radeonfb_setup },
 #endif
+#ifdef CONFIG_FB_INTEL
+	{ "intelfb", intelfb_init, intelfb_setup },
+#endif
 #ifdef CONFIG_FB_CONTROL
 	{ "controlfb", control_init, control_setup },
 #endif
@@ -232,10 +235,10 @@ static struct {
 #endif
 #ifdef CONFIG_FB_S3TRIO
 	{ "s3trio", s3triofb_init, NULL },
-#endif 
+#endif
 #ifdef CONFIG_FB_FM2
 	{ "fm2fb", fm2fb_init, fm2fb_setup },
-#endif 
+#endif
 #ifdef CONFIG_FB_SIS
 	{ "sisfb", sisfb_init, sisfb_setup },
 #endif
@@ -248,7 +251,7 @@ static struct {
 
 	/*
 	 * Generic drivers that are used as fallbacks
-	 * 
+	 *
 	 * These depend on resource management and must be initialized
 	 * _after_ all other frame buffer devices that use resource
 	 * management!
@@ -259,7 +262,7 @@ static struct {
 #endif
 #ifdef CONFIG_FB_VESA
 	{ "vesa", vesafb_init, vesafb_setup },
-#endif 
+#endif
 
 	/*
 	 * Chipset specific drivers that don't use resource management (yet)
@@ -282,7 +285,7 @@ static struct {
 #endif
 #ifdef CONFIG_FB_HGA
 	{ "hga", hgafb_init, hgafb_setup },
-#endif 
+#endif
 #ifdef CONFIG_FB_IGA
 	{ "igafb", igafb_init, igafb_setup },
 #endif
@@ -297,33 +300,18 @@ static struct {
 #endif
 #ifdef CONFIG_FB_HP300
 	{ "hpfb", hpfb_init, NULL },
-#endif 
+#endif
 #ifdef CONFIG_FB_G364
 	{ "g364", g364fb_init, NULL },
-#endif
-#ifdef CONFIG_FB_SA1101
-	{ "sa1101", sa1101fb_init, NULL },
 #endif
 #ifdef CONFIG_FB_SA1100
 	{ "sa1100", sa1100fb_init, NULL },
 #endif
+#ifdef CONFIG_FB_SA1101
+	{ "sa1101", sa1101fb_init, NULL },
+#endif
 #ifdef CONFIG_FB_PXA
 	{ "pxa", pxafb_init, NULL },
-#endif
-#ifdef CONFIG_FB_MQ200
-	{ "mq200fb", mq200fb_init, NULL },
-#endif
-#if defined CONFIG_FB_MQ1100 && defined CONFIG_PCI
-	{ "mq1100", mq1100fb_pci_init, NULL },
-#endif
-#if defined CONFIG_FB_MQ1100 && defined CONFIG_ARCH_H5400
-	{ "mq1100", mq1100fb_h5400_init, NULL },
-#endif
-#if defined CONFIG_FB_MQ1100 && defined CONFIG_ARCH_AXIM
-	{ "mq1132", mq1132fb_axim_init, NULL },
-#endif
-#ifdef CONFIG_FB_S3C2410
-	{ "s3c2410", s3c2410fb_init, NULL },
 #endif
 #ifdef CONFIG_FB_SUN3
 	{ "sun3", sun3fb_init, sun3fb_setup },
@@ -341,10 +329,13 @@ static struct {
 	{ "e1355fb", e1355fb_init, e1355fb_setup },
 #endif
 #ifdef CONFIG_FB_EPSON1356
-	{ "e1356fb", e1356fb_init, e1356fb_setup },
+        { "e1356fb", e1356fb_init, e1356fb_setup },
 #endif
 #ifdef CONFIG_FB_PVR2
 	{ "pvr2", pvr2fb_init, pvr2fb_setup },
+#endif
+#ifdef CONFIG_FB_PMAG_AA
+	{ "pmagaafb", pmagaafb_init, NULL },
 #endif
 #ifdef CONFIG_FB_PMAG_BA
 	{ "pmagbafb", pmagbafb_init, NULL },
@@ -355,6 +346,15 @@ static struct {
 #ifdef CONFIG_FB_MAXINE
 	{ "maxinefb", maxinefb_init, NULL },
 #endif
+#ifdef CONFIG_FB_AU1100
+	{ "au1100fb", au1100fb_init, au1100fb_setup },
+#endif
+#ifdef CONFIG_FB_IT8181
+	{ "it8181fb", it8181fb_init, it8181fb_setup },
+#endif
+#ifdef CONFIG_FB_DBMX1
+	{ "dbmx1fb", dbmx1fb_init, NULL },
+#endif
 
 
 	/*
@@ -363,7 +363,7 @@ static struct {
 
 #ifdef CONFIG_FB_VGA16
 	{ "vga16", vga16fb_init, vga16fb_setup },
-#endif 
+#endif
 #ifdef CONFIG_FB_STI
 	{ "stifb", stifb_init, stifb_setup },
 #endif
@@ -392,7 +392,7 @@ static int num_pref_init_funcs __initdata = 0;
 
 struct fb_info *registered_fb[FB_MAX];
 int num_registered_fb;
-extern int fbcon_softback_size; 
+extern int fbcon_softback_size;
 
 static int first_fb_vc;
 static int last_fb_vc = MAX_NR_CONSOLES-1;
@@ -425,23 +425,27 @@ static int fbmem_read_proc(char *buf, char **start, off_t offset,
 static ssize_t
 fb_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
-	unsigned long p = *ppos;
+	loff_t p = *ppos;
 	struct inode *inode = file->f_dentry->d_inode;
 	int fbidx = GET_FB_IDX(inode->i_rdev);
 	struct fb_info *info = registered_fb[fbidx];
 	struct fb_ops *fb = info->fbops;
 	struct fb_fix_screeninfo fix;
+	unsigned int size;
 
 	if (! fb || ! info->disp)
 		return -ENODEV;
 
+	if (p < 0)
+		return -EINVAL;
+
 	fb->fb_get_fix(&fix,PROC_CONSOLE(info), info);
-	if (p >= fix.smem_len)
+	size = info->mapped_vram ? info->mapped_vram : fix.smem_len;
+	
+	if (p >= size)
 	    return 0;
-	if (count >= fix.smem_len)
-	    count = fix.smem_len;
-	if (count + p > fix.smem_len)
-		count = fix.smem_len - p;
+	if (count > size - p)
+		count = size - p;
 	if (count) {
 	    char *base_addr;
 
@@ -449,7 +453,7 @@ fb_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 	    count -= copy_to_user(buf, base_addr+p, count);
 	    if (!count)
 		return -EFAULT;
-	    *ppos += count;
+	    *ppos = p + count;
 	}
 	return count;
 }
@@ -457,25 +461,29 @@ fb_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 static ssize_t
 fb_write(struct file *file, const char *buf, size_t count, loff_t *ppos)
 {
-	unsigned long p = *ppos;
+	loff_t p = *ppos;
 	struct inode *inode = file->f_dentry->d_inode;
 	int fbidx = GET_FB_IDX(inode->i_rdev);
 	struct fb_info *info = registered_fb[fbidx];
 	struct fb_ops *fb = info->fbops;
 	struct fb_fix_screeninfo fix;
 	int err;
+	unsigned int size;
 
 	if (! fb || ! info->disp)
 		return -ENODEV;
 
+	if (p < 0)
+		return -EINVAL;
+
 	fb->fb_get_fix(&fix, PROC_CONSOLE(info), info);
-	if (p > fix.smem_len)
+	size = info->mapped_vram ? info->mapped_vram : fix.smem_len;
+	
+	if (p > size)
 	    return -ENOSPC;
-	if (count >= fix.smem_len)
-	    count = fix.smem_len;
 	err = 0;
-	if (count + p > fix.smem_len) {
-	    count = fix.smem_len - p;
+	if (count > size - p) {
+	    count = size - p;
 	    err = -ENOSPC;
 	}
 	if (count) {
@@ -483,7 +491,7 @@ fb_write(struct file *file, const char *buf, size_t count, loff_t *ppos)
 
 	    base_addr = info->disp->screen_base;
 	    count -= copy_from_user(base_addr+p, buf, count);
-	    *ppos += count;
+	    *ppos = p + count;
 	    err = -EFAULT;
 	}
 	if (count)
@@ -501,7 +509,7 @@ static void try_to_load(int fb)
 }
 #endif /* CONFIG_KMOD */
 
-static int 
+static int
 fb_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 	 unsigned long arg)
 {
@@ -513,7 +521,7 @@ fb_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 	struct fb_fix_screeninfo fix;
 	struct fb_con2fbmap con2fb;
 	int i;
-	
+
 	if (! fb)
 		return -ENODEV;
 	switch (cmd) {
@@ -597,7 +605,7 @@ fb_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 	}
 }
 
-static int 
+static int
 fb_mmap(struct file *file, struct vm_area_struct * vma)
 {
 	int fbidx = GET_FB_IDX(file->f_dentry->d_inode->i_rdev);
@@ -638,7 +646,7 @@ fb_mmap(struct file *file, struct vm_area_struct * vma)
 
 	/* frame buffer memory */
 	start = fix.smem_start;
-	len = PAGE_ALIGN((start & ~PAGE_MASK)+fix.smem_len);
+	len = PAGE_ALIGN((start & ~PAGE_MASK) + fix.smem_len);
 	if (off >= len) {
 		/* memory mapped io */
 		off -= len;
@@ -683,16 +691,16 @@ fb_mmap(struct file *file, struct vm_area_struct * vma)
 #elif defined(__i386__) || defined(__x86_64__)
 	if (boot_cpu_data.x86 > 3)
 		pgprot_val(vma->vm_page_prot) |= _PAGE_PCD;
-#elif defined(__arm__) || defined(__mips__)
-#ifdef CONFIG_PXA
-	vma->vm_page_prot = pgprot_noncached_buffered(vma->vm_page_prot);
-#else
+#elif defined(__mips__)
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
-#endif
 #elif defined(__sh__)
 	pgprot_val(vma->vm_page_prot) &= ~_PAGE_CACHABLE;
-#elif defined(__ia64__)
+#elif defined(__hppa__)
+	pgprot_val(vma->vm_page_prot) |= _PAGE_NO_CACHE;
+#elif defined(__ia64__) || defined(__arm__) 
 	vma->vm_page_prot = pgprot_writecombine(vma->vm_page_prot);
+#elif defined(__hppa__)
+	pgprot_val(vma->vm_page_prot) |= _PAGE_NO_CACHE;
 #else
 #warning What do we have to do here??
 #endif
@@ -745,7 +753,7 @@ fb_open(struct inode *inode, struct file *file)
 	return res;
 }
 
-static int 
+static int
 fb_release(struct inode *inode, struct file *file)
 {
 	int fbidx = GET_FB_IDX(inode->i_rdev);
@@ -877,7 +885,7 @@ unregister_framebuffer(struct fb_info *fb_info)
  *
  */
 
-void __init 
+void __init
 fbmem_init(void)
 {
 	int i;
@@ -925,7 +933,7 @@ int __init video_setup(char *options)
 
     if (!options || !*options)
 	    return 0;
-	    
+
     if (!strncmp(options, "scrollback:", 11)) {
 	    options += 11;
 	    if (*options) {
@@ -951,7 +959,7 @@ int __init video_setup(char *options)
 		    }
 	    return 0;
     }
-    
+
     if (!strncmp(options, "vc:", 3)) {
 	    options += 3;
 	    if (*options)

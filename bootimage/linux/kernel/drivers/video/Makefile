@@ -1,14 +1,10 @@
 # Makefile for the Linux video drivers.
 # 5 Aug 1999, James Simmons, <mailto:jsimmons@edgeglobal.com>
 # Rewritten to use lists instead of if-statements.
-#
-# Jornada820 version based on Makefile 1.35 from cvs.handhelds.org
-# $Id: Makefile,v 1.1 2004/07/13 09:27:08 fare Exp $
-
 
 O_TARGET := video.o
 
-mod-subdirs	:= matrox
+mod-subdirs	:= matrox sti
 
 # All of the (potential) objects that export symbols.
 # This list comes from 'grep -l EXPORT_SYMBOL *.[hc]'.
@@ -19,14 +15,13 @@ export-objs    := fbmem.o fbcmap.o fbcon.o fbmon.o modedb.o \
 		  fbcon-iplan2p8.o fbcon-vga-planes.o fbcon-cfb16.o \
 		  fbcon-cfb2.o fbcon-cfb24.o fbcon-cfb32.o fbcon-cfb4.o \
 		  fbcon-cfb8.o fbcon-mac.o fbcon-mfb.o pxafb.o \
-		  cyber2000fb.o sa1100fb.o fbcon-hga.o fbgen.o mq200fb.o mq1100fb.o
+		  cyber2000fb.o sa1100fb.o sa1101fb.o fbcon-hga.o fbgen.o
 
 # Each configuration option enables a list of files.
 
 obj-$(CONFIG_DUMMY_CONSOLE)       += dummycon.o
 obj-$(CONFIG_SGI_NEWPORT_CONSOLE) += newport_con.o
 obj-$(CONFIG_PROM_CONSOLE)        += promcon.o promcon_tbl.o
-obj-$(CONFIG_STI_CONSOLE)         += sticon.o sticon-bmode.o sticore.o
 obj-$(CONFIG_VGA_CONSOLE)         += vgacon.o
 obj-$(CONFIG_MDA_CONSOLE)         += mdacon.o
 
@@ -74,7 +69,7 @@ obj-$(CONFIG_FB_CLGEN)            += clgenfb.o fbgen.o
 obj-$(CONFIG_FB_TRIDENT)          += tridentfb.o fbgen.o
 obj-$(CONFIG_FB_S3TRIO)           += S3triofb.o
 obj-$(CONFIG_FB_TGA)              += tgafb.o fbgen.o
-obj-$(CONFIG_FB_VESA)             += vesafb.o 
+obj-$(CONFIG_FB_VESA)             += vesafb.o
 obj-$(CONFIG_FB_VGA16)            += vga16fb.o fbcon-vga-planes.o
 obj-$(CONFIG_FB_VIRGE)            += virgefb.o
 obj-$(CONFIG_FB_G364)             += g364fb.o
@@ -87,26 +82,32 @@ obj-$(CONFIG_FB_TCX)              += tcxfb.o sbusfb.o
 obj-$(CONFIG_FB_CGFOURTEEN)       += cgfourteenfb.o sbusfb.o
 obj-$(CONFIG_FB_P9100)            += p9100fb.o sbusfb.o
 obj-$(CONFIG_FB_LEO)              += leofb.o sbusfb.o
-obj-$(CONFIG_FB_STI)	          += stifb.o sticore.o fbgen.o
+obj-$(CONFIG_FB_PMAG_AA)          += pmag-aa-fb.o
 obj-$(CONFIG_FB_PMAG_BA)          += pmag-ba-fb.o
 obj-$(CONFIG_FB_PMAGB_B)          += pmagb-b-fb.o
 obj-$(CONFIG_FB_MAXINE)           += maxinefb.o
 obj-$(CONFIG_FB_TX3912)           += tx3912fb.o
-obj-$(CONFIG_FB_MQ200)		  += mq200fb.o
-obj-$(CONFIG_FB_MQ1100)		  += mq1100fb.o fbgen.o
-ifeq ($(CONFIG_ARCH_H5400),y)
-obj-$(CONFIG_FB_MQ1100)		  += mq1100fb-h5400.o
+obj-$(CONFIG_FB_AU1100)		  += au1100fb.o fbgen.o
+obj-$(CONFIG_FB_IT8181)		  += it8181fb.o fbgen.o
+
+subdir-$(CONFIG_STI_CONSOLE)      += sti
+ifeq ($(CONFIG_STI_CONSOLE),y)
+obj-y                             += sti/sti.o fonts.o
 endif
-ifeq ($(CONFIG_PCI),y)
-obj-$(CONFIG_FB_MQ1100)		  += mq1100fb-pci.o
-endif
-ifeq ($(CONFIG_ARCH_AXIM),y)
-obj-$(CONFIG_FB_MQ1100)		  += mq1132fb-axim.o
+
+subdir-$(CONFIG_FB_STI)           += sti
+ifeq ($(CONFIG_FB_STI),y)
+obj-y                             += sti/sti.o fbgen.o
 endif
 
 subdir-$(CONFIG_FB_MATROX)	  += matrox
 ifeq ($(CONFIG_FB_MATROX),y)
 obj-y				  += matrox/matrox.o
+endif
+
+subdir-$(CONFIG_FB_INTEL)	  += intel
+ifeq ($(CONFIG_FB_INTEL),y)
+obj-y				  += intel/intelfb.o
 endif
 
 subdir-$(CONFIG_FB_RIVA)	  += riva
@@ -126,19 +127,19 @@ endif
 
 obj-$(CONFIG_FB_SUN3)             += sun3fb.o
 obj-$(CONFIG_FB_BWTWO)            += bwtwofb.o
-obj-$(CONFIG_FB_HGA)              += hgafb.o  
+obj-$(CONFIG_FB_HGA)              += hgafb.o
 obj-$(CONFIG_FB_SA1100)           += sa1100fb.o
 obj-$(CONFIG_FB_SA1101)           += sa1101fb.o
-obj-$(CONFIG_FB_S3C2410)          += s3c2410fb.o
-obj-$(CONFIG_FB_PXA)	  += pxafb.o
+obj-$(CONFIG_FB_PXA)              += pxafb.o
 ifeq ($(CONFIG_PXA_CERF_PDA),y)
-obj-$(CONFIG_FB_PXA)              += lcdctrl.o lcdctrl_cerf.o
+   obj-$(CONFIG_FB_PXA)           += lcdctrl.o lcdctrl_cerf.o
 endif
-obj-$(CONFIG_FB_VIRTUAL)          += vfb.o  
+obj-$(CONFIG_FB_DBMX1)            += dbmx1fb.o
+obj-$(CONFIG_FB_VIRTUAL)          += vfb.o
 obj-$(CONFIG_FB_HIT)              += hitfb.o fbgen.o
 obj-$(CONFIG_FB_E1355)            += epson1355fb.o fbgen.o
-obj-$(CONFIG_FB_PVR2)             += pvr2fb.o
 obj-$(CONFIG_FB_EPSON1356)        += epson1356fb.o
+obj-$(CONFIG_FB_PVR2)             += pvr2fb.o
 obj-$(CONFIG_FB_VOODOO1)          += sstfb.o
 obj-$(CONFIG_FB_ANAKIN)           += anakinfb.o
 
@@ -176,5 +177,3 @@ promcon_tbl.c: prom.uni ../char/conmakehash
 	    -e 's/dfont\(_uni.*\]\)/promfont\1 __initdata/' > promcon_tbl.c
 
 promcon_tbl.o: promcon_tbl.c $(TOPDIR)/include/linux/types.h
-
-mq1100fb.o: mq1100init.c mq1100.h

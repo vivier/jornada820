@@ -1,3 +1,7 @@
+# Jornada820 version based on Kconfig from linux 2.6.11.9
+# $Id: Kconfig,v 1.2 2005/07/25 09:09:14 fare Exp $
+# We added the SA1101 entry.
+
 #
 # Input core configuration
 #
@@ -20,7 +24,7 @@ config SERIO_I8042
 	tristate "i8042 PC Keyboard controller" if EMBEDDED || !X86
 	default y
 	select SERIO
-	depends on !PARISC
+	depends on !PARISC && (!ARM || ARCH_SHARK || FOOTBRIDGE_HOST) && !M68K
 	---help---
 	  i8042 is the chip over which the standard AT keyboard and PS/2
 	  mouse are connected to the computer. If you use these devices,
@@ -89,18 +93,6 @@ config SERIO_RPCKBD
 	  To compile this driver as a module, choose M here: the
 	  module will be called rpckbd.
 
-config SERIO_CLPS7500
-	tristate "CLPS7500 PS/2 mouse port controller"
-	depends on ARCH_CLPS7500 && SERIO
-	help
-	  Say Y here if you have CLPS7500 based hardware and want to use
-	  the mouse port.
-
-	  This driver is also available as a module ( = code which can be
-	  inserted in and removed from the running kernel whenever you want).
-	  The module will be called clps7500ps2. If you want to compile it
-	  as a module, say M here and read <file:Documentation/modules.txt>.
-
 config SERIO_AMBAKMI
 	tristate "AMBA KMI keyboard controller"
 	depends on ARM_AMBA && SERIO
@@ -120,16 +112,6 @@ config SERIO_SA1101
 	  inserted in and removed from the running kernel whenever you want).
 	  The module will be called sa1101ps2. If you want to compile it
 	  as a module, say M here and read <file:Documentation/modules.txt>.
-
-config SERIO_98KBD
-	tristate "NEC PC-9800 keyboard controller"
-	depends on X86_PC9800 && SERIO
-	help
-	  Say Y here if you have the NEC PC-9801/PC-9821 and want to use its
-	  standard keyboard connected to its keyboard controller.
-
-	  To compile this driver as a module, choose M here: the
-	  module will be called 98kbd-io.
 
 config SERIO_GSCPS2
 	tristate "HP GSC PS/2 keyboard and PS/2 mouse controller"
@@ -164,3 +146,29 @@ config SERIO_MACEPS2
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called maceps2.
+
+config SERIO_LIBPS2
+	tristate "PS/2 driver library" if EMBEDDED
+	depends on SERIO
+	help
+	  Say Y here if you are using a driver for device connected
+	  to a PS/2 port, such as PS/2 mouse or standard AT keyboard.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called libps2.
+
+config SERIO_RAW
+	tristate "Raw access to serio ports"
+	depends on SERIO
+	help
+	  Say Y here if you want to have raw access to serio ports, such as
+	  AUX ports on i8042 keyboard controller. Each serio port that is
+	  bound to this driver will be accessible via a char device with
+	  major 10 and dynamically allocated minor. The driver will try
+	  allocating minor 1 (that historically corresponds to /dev/psaux)
+	  first. To bind this driver to a serio port use sysfs interface:
+
+	      echo -n "serio_raw" > /sys/bus/serio/devices/serioX/driver
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called serio_raw.

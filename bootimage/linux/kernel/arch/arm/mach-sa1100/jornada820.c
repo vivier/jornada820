@@ -78,7 +78,8 @@ static int __init jornada820_init(void)
   ssp_enable();
 
   Ser4MCCR0 |= MCCR0_MCE;       /* reenable MCP */
- 
+				/* XXX - Not in matan's kernel(?) */
+
   /* Initialize the 1101. */
   GAFR |= GPIO_32_768kHz;
   GPDR |= GPIO_32_768kHz;
@@ -98,6 +99,22 @@ static int __init jornada820_init(void)
 }
 
 __initcall(jornada820_init);
+
+
+int jornada_contrast(int arg_contrast)
+{
+        DAC_JORNADA820_CONTRAST = arg_contrast;
+        return arg_contrast;
+}
+EXPORT_SYMBOL(jornada_contrast);
+
+int jornada_brightness(int arg_brightness)
+{
+        DAC_JORNADA820_BRIGHTNESS = arg_brightness;
+        return arg_brightness;
+}
+EXPORT_SYMBOL(jornada_brightness);
+
 
 /* *********************************************************************** */
 /*              map Jornada 820-specific IO (think SA1101)                 */

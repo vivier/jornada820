@@ -1,9 +1,6 @@
 /*
  * URB OHCI HCD (Host Controller Driver) for USB.
  *
- * Jornada820 version based on usb-ohci.c 1.37 from cvs.handhelds.org
- * $Id: usb-ohci.c,v 1.3 2004/08/01 11:20:52 fare Exp $
- *
  * (C) Copyright 1999 Roman Weissgaerber <weissg@vienna.at>
  * (C) Copyright 2000-2001 David Brownell <dbrownell@users.sourceforge.net>
  * 
@@ -77,22 +74,23 @@
 #include <asm/unaligned.h>
 
 #define OHCI_USE_NPS		// force NoPowerSwitching mode
-#undef OHCI_VERBOSE_DEBUG	/* not always helpful */
+// #define OHCI_VERBOSE_DEBUG	/* not always helpful */
 
 #ifdef CONFIG_SA1101
+#warn Experimental attempt for the Jornada 820...
 #include <asm/hardware.h>
 #include <asm/hardware/sa1101.h>
-#ifndef CONFIG_PCI
+#ifdef CONFIG_PCI
+#warn CONFIG_PCI already defined!
+#else
 #define CONFIG_PCI
-#include "../../arch/arm/mach-sa1100/pcipool.h"
+#include "../../../arch/arm/mach-sa1100/pcipool.h"
 #endif
-#undef readl
-#undef writel
-#define readl(a) sa1101_readreg(_SA1101( _USB( 0x100 * (int)(a) )))
-#define writel(d, a) sa1101_writereg(d, _SA1101( _USB( 0x100 * (int)(a) )))
 #endif
 
 #include "usb-ohci.h"
+
+#include "../hcd.h"
 
 /*
  * Version Information
@@ -179,7 +177,7 @@ static void urb_free_priv (struct ohci *hc, urb_priv_t * urb_priv)
 	kfree (urb_priv);
 }
  
-static void urb_rm_priv_locked (urb_t * urb) 
+static void urb_rm_priv_locked (struct urb * urb) 
 {
 	urb_priv_t * urb_priv = urb->hcpriv;
 	
@@ -213,7 +211,7 @@ static void urb_rm_priv_locked (urb_t * urb)
 	}
 }
 
-static void urb_rm_priv (urb_t * urb)
+static void urb_rm_priv (struct urb * urb)
 {
 	unsigned long flags;
 
@@ -230,7 +228,7 @@ static int sohci_get_current_frame_number (struct usb_device * dev);
 /* debug| print the main components of an URB     
  * small: 0) header + data packets 1) just header */
  
-static void urb_print (urb_t * urb, char * str, int small)
+static void urb_print (struct urb * urb, char * str, int small)
 {
 	unsigned int pipe= urb->pipe;
 	
@@ -385,6 +383,8 @@ static void ohci_dump_roothub (ohci_t *controller, int verbose)
 	__u32			temp, ndp, i;
 
 	temp = roothub_a (controller);
+	if (temp == ~(u32)0)
+		return;
 	ndp = (temp & RH_A_NDP);
 
 	if (verbose) {
@@ -459,10 +459,10 @@ static void ohci_dump (ohci_t *controller, int verbose)
 
 /* return a request to the completion handler */
  
-static int sohci_return_urb (struct ohci *hc, urb_t * urb)
+static int sohci_return_urb (struct ohci *hc, struct urb * urb)
 {
 	urb_priv_t * urb_priv = urb->hcpriv;
-	urb_t * urbt;
+	struct urb * urbt;
 	unsigned long flags;
 	int i;
 	
@@ -487,13 +487,20 @@ static int sohci_return_urb (struct ohci *hc, urb_t * urb)
 				usb_pipeout (urb->pipe)
 					? PCI_DMA_TODEVICE
 					: PCI_DMA_FROMDEVICE);
-			urb->complete (urb);
 
-			/* implicitly requeued */
-  			urb->actual_length = 0;
-			urb->status = -EINPROGRESS;
-			td_submit_urb (urb);
-  			break;
+			if (urb->interval) {
+				urb->complete (urb);
+ 
+				/* implicitly requeued */
+				urb->actual_length = 0;
+				urb->status = -EINPROGRESS;
+				td_submit_urb (urb);
+			} else {
+				urb_rm_priv(urb);
+				urb->complete (urb);
+			}
+   			break;
+
   			
 		case PIPE_ISOCHRONOUS:
 			for (urbt = urb->next; urbt && (urbt != urb); urbt = urbt->next);
@@ -537,7 +544,7 @@ static int sohci_return_urb (struct ohci *hc, urb_t * urb)
 
 /* get a transfer request */
  
-static int sohci_submit_urb (urb_t * urb)
+static int sohci_submit_urb (struct urb * urb)
 {
 	ohci_t * ohci;
 	ed_t * ed;
@@ -618,13 +625,14 @@ static int sohci_submit_urb (urb_t * urb)
 
 	/* allocate the private part of the URB */
 	urb_priv = kmalloc (sizeof (urb_priv_t) + size * sizeof (td_t *), 
-							in_interrupt() ? GFP_ATOMIC : GFP_KERNEL);
+							in_interrupt() ? GFP_ATOMIC : GFP_NOIO);
 	if (!urb_priv) {
 		usb_dec_dev_use (urb->dev);	
 		return -ENOMEM;
 	}
 	memset (urb_priv, 0, sizeof (urb_priv_t) + size * sizeof (td_t *));
-	
+	init_waitqueue_head (&urb_priv->wait);
+
 	/* fill the private part of the URB */
 	urb_priv->length = size;
 	urb_priv->ed = ed;	
@@ -721,7 +729,7 @@ static int sohci_submit_urb (urb_t * urb)
 /* deactivate all TDs and remove the private part of the URB */
 /* interrupt callers must use async unlink mode */
 
-static int sohci_unlink_urb (urb_t * urb)
+static int sohci_unlink_urb (struct urb * urb)
 {
 	unsigned long flags;
 	ohci_t * ohci;
@@ -772,12 +780,10 @@ static int sohci_unlink_urb (urb_t * urb)
 			urb_priv->ed->state |= ED_URB_DEL;
 
 			if (!(urb->transfer_flags & USB_ASYNC_UNLINK)) {
-				DECLARE_WAIT_QUEUE_HEAD (unlink_wakeup); 
 				DECLARE_WAITQUEUE (wait, current);
 				int timeout = OHCI_UNLINK_TIMEOUT;
 
-				add_wait_queue (&unlink_wakeup, &wait);
-				urb_priv->wait = &unlink_wakeup;
+				add_wait_queue(&urb_priv->wait, &wait);
 				spin_unlock_irqrestore (&usb_ed_lock, flags);
 
 				/* wait until all TDs are deleted */
@@ -785,7 +791,16 @@ static int sohci_unlink_urb (urb_t * urb)
 				while (timeout && (urb->status == USB_ST_URB_PENDING))
 					timeout = schedule_timeout (timeout);
 				set_current_state(TASK_RUNNING);
-				remove_wait_queue (&unlink_wakeup, &wait); 
+
+				/*
+				 * A waitqueue head is self-locked, but we try
+				 * to interlock with the dl_del_urb() which may
+				 * be doing wake_up() right now, least
+				 * urb->complete poisons over the urb->wait.
+				 */
+				spin_lock_irqsave(&usb_ed_lock, flags);
+				remove_wait_queue(&urb_priv->wait, &wait); 
+				spin_unlock_irqrestore(&usb_ed_lock, flags);
 				if (urb->status == USB_ST_URB_PENDING) {
 					err ("unlink URB timeout");
 					return -ETIMEDOUT;
@@ -880,18 +895,16 @@ static int sohci_free_dev (struct usb_device * usb_dev)
 				warn ("TD leak, %d", cnt);
 
 			} else if (!in_interrupt ()) {
-				DECLARE_WAIT_QUEUE_HEAD (freedev_wakeup); 
 				DECLARE_WAITQUEUE (wait, current);
 				int timeout = OHCI_UNLINK_TIMEOUT;
 
 				/* SF interrupt handler calls dl_del_list */
-				add_wait_queue (&freedev_wakeup, &wait);
-				dev->wait = &freedev_wakeup;
+				add_wait_queue (&dev->wait, &wait);
 				set_current_state(TASK_UNINTERRUPTIBLE);
 				while (timeout && dev->ed_cnt)
 					timeout = schedule_timeout (timeout);
 				set_current_state(TASK_RUNNING);
-				remove_wait_queue (&freedev_wakeup, &wait);
+				remove_wait_queue (&dev->wait, &wait);
 				if (dev->ed_cnt) {
 					err ("free device %d timeout", usb_dev->devnum);
 					return -ETIMEDOUT;
@@ -1296,7 +1309,7 @@ static void ep_rm_ed (struct usb_device * usb_dev, ed_t * ed)
 static void
 td_fill (ohci_t * ohci, unsigned int info,
 	dma_addr_t data, int len,
-	urb_t * urb, int index)
+	struct urb * urb, int index)
 {
 	volatile td_t  * td, * td_pt;
 	urb_priv_t * urb_priv = urb->hcpriv;
@@ -1305,13 +1318,9 @@ td_fill (ohci_t * ohci, unsigned int info,
 		err("internal OHCI error: TD index > length");
 		return;
 	}
-
-
-	/* 	SW.LEE    	
- 	 *	This line exists for StrongArm bug 
-	 */
-#ifdef CONFIG_ARCH_SA1100
-	if (data & (1 << 20)) panic("td_fill: A20 = 1: %08x\n", data);
+#ifdef CONFIG_SA1111
+	if (data & (1 << 20))
+		panic("td_fill: A20 = 1: %08x\n", data);
 #endif
 
 	/* use this td as the next dummy */
@@ -1353,7 +1362,7 @@ td_fill (ohci_t * ohci, unsigned int info,
  
 /* prepare all TDs of a transfer */
 
-static void td_submit_urb (urb_t * urb)
+static void td_submit_urb (struct urb * urb)
 { 
 	urb_priv_t * urb_priv = urb->hcpriv;
 	ohci_t * ohci = (ohci_t *) urb->dev->bus->hcpriv;
@@ -1466,7 +1475,7 @@ static void dl_transfer_length(td_t * td)
 {
 	__u32 tdINFO, tdBE, tdCBP;
  	__u16 tdPSW;
- 	urb_t * urb = td->urb;
+ 	struct urb * urb = td->urb;
  	urb_priv_t * urb_priv = urb->hcpriv;
 	int dlen = 0;
 	int cc = 0;
@@ -1507,9 +1516,9 @@ static void dl_transfer_length(td_t * td)
 
 /* handle an urb that is being unlinked */
 
-static void dl_del_urb (urb_t * urb)
+static void dl_del_urb (struct urb * urb)
 {
-	wait_queue_head_t * wait_head = ((urb_priv_t *)(urb->hcpriv))->wait;
+ 	urb_priv_t * urb_priv = urb->hcpriv;
 
 	urb_rm_priv_locked (urb);
 
@@ -1519,10 +1528,11 @@ static void dl_del_urb (urb_t * urb)
 			urb->complete (urb);
 	} else {
 		urb->status = -ENOENT;
+		if (urb->complete)
+			urb->complete (urb);
 
 		/* unblock sohci_unlink_urb */
-		if (wait_head)
-			wake_up (wait_head);
+		wake_up(&urb_priv->wait);
 	}
 }
 
@@ -1542,14 +1552,10 @@ static td_t * dl_reverse_done_list (ohci_t * ohci)
   	spin_lock_irqsave (&usb_ed_lock, flags);
   	
 	td_list_hc = le32_to_cpup (&ohci->hcca->done_head) & 0xfffffff0;
-	dbg("dl_reverse_done_list: ohci->hcca=%p td_list_hc=%x\n", ohci->hcca, td_list_hc);
 	ohci->hcca->done_head = 0;
 	
 	while (td_list_hc) {		
 		td_list = dma_to_td (ohci, td_list_hc);
-		if (!td_list)
-			break;
-		dbg("      td_list_hc=%p td_list=%p td_list->hwINFO=%x\n", td_list_hc, td_list, le32_to_cpup(&td_list->hwINFO));
 
 		if (TD_CC_GET (le32_to_cpup (&td_list->hwINFO))) {
 			urb_priv = (urb_priv_t *) td_list->urb->hcpriv;
@@ -1569,7 +1575,6 @@ static td_t * dl_reverse_done_list (ohci_t * ohci)
 		td_list->next_dl_td = td_rev;	
 		td_rev = td_list;
 		td_list_hc = le32_to_cpup (&td_list->hwNextTD) & 0xfffffff0;	
-		dbg("        td_list_hc=%p\n", td_list_hc);
 	}	
 	spin_unlock_irqrestore (&usb_ed_lock, flags);
 	return td_list;
@@ -1601,7 +1606,7 @@ static void dl_del_list (ohci_t  * ohci, unsigned int frame)
 		td_p = &ed->hwHeadP;
 
 		for (td = tdHeadP; td != tdTailP; td = td_next) { 
-			urb_t * urb = td->urb;
+			struct urb * urb = td->urb;
 			urb_priv_t * urb_priv = td->urb->hcpriv;
 			
 			td_next = dma_to_td (ohci, le32_to_cpup (&td->hwNextTD) & 0xfffffff0);
@@ -1626,13 +1631,8 @@ static void dl_del_list (ohci_t  * ohci, unsigned int frame)
 			ed->state = ED_NEW;
 			hash_free_ed(ohci, ed);
    	 		/* if all eds are removed wake up sohci_free_dev */
-   	 		if (!--dev->ed_cnt) {
-				wait_queue_head_t *wait_head = dev->wait;
-
-				dev->wait = 0;
-				if (wait_head)
-					wake_up (wait_head);
-			}
+   	 		if (!--dev->ed_cnt)
+				wake_up(&dev->wait);
    	 	} else {
    	 		ed->state &= ~ED_URB_DEL;
 			tdHeadP = dma_to_td (ohci, le32_to_cpup (&ed->hwHeadP) & 0xfffffff0);
@@ -1684,7 +1684,7 @@ static void dl_done_list (ohci_t * ohci, td_t * td_list)
   	td_t * td_list_next = NULL;
 	ed_t * ed;
 	int cc = 0;
-	urb_t * urb;
+	struct urb * urb;
 	urb_priv_t * urb_priv;
  	__u32 tdINFO, edHeadP, edTailP;
  	
@@ -1860,7 +1860,7 @@ static void rh_int_timer_do (unsigned long ptr)
 {
 	int len; 
 
-	urb_t * urb = (urb_t *) ptr;
+	struct urb * urb = (struct urb *) ptr;
 	ohci_t * ohci = urb->dev->bus->hcpriv;
 
 	if (ohci->disabled)
@@ -1889,7 +1889,7 @@ static void rh_int_timer_do (unsigned long ptr)
 
 /* Root Hub INTs are polled by this timer */
 
-static int rh_init_int_timer (urb_t * urb) 
+static int rh_init_int_timer (struct urb * urb) 
 {
 	ohci_t * ohci = urb->dev->bus->hcpriv;
 
@@ -1914,12 +1914,12 @@ static int rh_init_int_timer (urb_t * urb)
 
 /* request to virtual root hub */
 
-static int rh_submit_urb (urb_t * urb)
+static int rh_submit_urb (struct urb * urb)
 {
 	struct usb_device * usb_dev = urb->dev;
 	ohci_t * ohci = usb_dev->bus->hcpriv;
 	unsigned int pipe = urb->pipe;
-	devrequest * cmd = (devrequest *) urb->setup_packet;
+	struct usb_ctrlrequest * cmd = (struct usb_ctrlrequest *) urb->setup_packet;
 	void * data = urb->transfer_buffer;
 	int leni = urb->transfer_buffer_length;
 	int len = 0;
@@ -1943,10 +1943,10 @@ static int rh_submit_urb (urb_t * urb)
 		return 0;
 	}
 
-	bmRType_bReq  = cmd->requesttype | (cmd->request << 8);
-	wValue        = le16_to_cpu (cmd->value);
-	wIndex        = le16_to_cpu (cmd->index);
-	wLength       = le16_to_cpu (cmd->length);
+	bmRType_bReq  = cmd->bRequestType | (cmd->bRequest << 8);
+	wValue        = le16_to_cpu (cmd->wValue);
+	wIndex        = le16_to_cpu (cmd->wIndex);
+	wLength       = le16_to_cpu (cmd->wLength);
 
 	switch (bmRType_bReq) {
 	/* Request Destination:
@@ -2120,7 +2120,7 @@ static int rh_submit_urb (urb_t * urb)
 
 /*-------------------------------------------------------------------------*/
 
-static int rh_unlink_urb (urb_t * urb)
+static int rh_unlink_urb (struct urb * urb)
 {
 	ohci_t * ohci = urb->dev->bus->hcpriv;
  
@@ -2153,6 +2153,8 @@ static int hc_reset (ohci_t * ohci)
 	int timeout = 30;
 	int smm_timeout = 50; /* 0,5 sec */
 	 	
+#ifndef __hppa__
+	/* PA-RISC doesn't have SMM, but PDC might leave IR set */
 	if (readl (&ohci->regs->control) & OHCI_CTRL_IR) { /* SMM owns the HC */
 		writel (OHCI_OCR, &ohci->regs->cmdstatus); /* request ownership */
 		dbg("USB HC TakeOver from SMM");
@@ -2163,7 +2165,8 @@ static int hc_reset (ohci_t * ohci)
 				return -1;
 			}
 		}
-	}	
+	}
+#endif	
 		
 	/* Disable HC interrupts */
 	writel (OHCI_INTR_MIE, &ohci->regs->intrdisable);
@@ -2222,15 +2225,24 @@ static int hc_start (ohci_t * ohci)
  	writel (ohci->hc_control, &ohci->regs->control);
  
 	/* Choose the interrupts we care about now, others later on demand */
-	mask = OHCI_INTR_MIE | OHCI_INTR_UE | OHCI_INTR_WDH | OHCI_INTR_SO
-		|OHCI_INTR_SF| OHCI_INTR_RD | OHCI_INTR_FNO| OHCI_INTR_RHSC; /* SW.LEE */
+	mask = OHCI_INTR_MIE | OHCI_INTR_UE | OHCI_INTR_WDH | OHCI_INTR_SO;
 	writel (mask, &ohci->regs->intrenable);
 	writel (mask, &ohci->regs->intrstatus);
 
 #ifdef	OHCI_USE_NPS
-	/* required for AMD-756 and some Mac platforms */
-	writel ((roothub_a (ohci) | RH_A_NPS) & ~RH_A_PSM,
-		&ohci->regs->roothub.a);
+	if(ohci->flags & OHCI_QUIRK_SUCKYIO)
+	{
+		/* NSC 87560 at least requires different setup .. */
+		writel ((roothub_a (ohci) | RH_A_NOCP) &
+			~(RH_A_OCPM | RH_A_POTPGT | RH_A_PSM | RH_A_NPS),
+			&ohci->regs->roothub.a);
+	}
+	else
+	{
+		/* required for AMD-756 and some Mac platforms */
+		writel ((roothub_a (ohci) | RH_A_NPS) & ~RH_A_PSM,
+			&ohci->regs->roothub.a);
+	}
 	writel (RH_HS_LPSC, &ohci->regs->roothub.status);
 #endif	/* OHCI_USE_NPS */
 
@@ -2298,16 +2310,23 @@ static void hc_interrupt (int irq, void * __ohci, struct pt_regs * r)
 	struct ohci_regs * regs = ohci->regs;
  	int ints; 
 
-#if 0
-	if ((ohci->hcca->done_head != 0) && !(le32_to_cpup (&ohci->hcca->done_head) & 0x01)) {
+	/* avoid (slow) readl if only WDH happened */
+	if ((ohci->hcca->done_head != 0)
+			&& !(le32_to_cpup (&ohci->hcca->done_head) & 0x01)) {
 		ints =  OHCI_INTR_WDH;
-	} else
-#endif
-	  if ((ints = (readl (&regs->intrstatus) & readl (&regs->intrenable))) == 0) {
+
+	/* cardbus/... hardware gone before remove() */
+	} else if ((ints = readl (&regs->intrstatus)) == ~(u32)0) {
+		ohci->disabled++;
+		err ("%s device removed!", ohci->ohci_dev->slot_name);
+		return;
+
+	/* interrupt for some other device? */
+	} else if ((ints &= readl (&regs->intrenable)) == 0) {
 		return;
 	}
 
-	dbg("Interrupt: intrstatus=%x frame=%x", ints, le16_to_cpu (ohci->hcca->frame_no));
+	// dbg("Interrupt: %x frame: %x", ints, le16_to_cpu (ohci->hcca->frame_no));
 
 	if (ints & OHCI_INTR_UE) {
 		ohci->disabled++;
@@ -2330,16 +2349,11 @@ static void hc_interrupt (int irq, void * __ohci, struct pt_regs * r)
 		writel (OHCI_INTR_WDH, &regs->intrdisable);	
 		dl_done_list (ohci, dl_reverse_done_list (ohci));
 		writel (OHCI_INTR_WDH, &regs->intrenable); 
-		writel (OHCI_INTR_WDH, &regs->intrstatus); 
-		ints = readl (&regs->intrstatus);
-		dbg("WDH: regs=%p intrstatus=%x\n", regs, ints); 
-		
 	}
   
 	if (ints & OHCI_INTR_SO) {
 		dbg("USB Schedule overrun");
 		writel (OHCI_INTR_SO, &regs->intrenable); 	 
-		writel (OHCI_INTR_SO, &regs->intrstatus); 
 	}
 
 	// FIXME:  this assumes SOF (1/ms) interrupts don't get lost...
@@ -2351,8 +2365,6 @@ static void hc_interrupt (int irq, void * __ohci, struct pt_regs * r)
 		}
 		if (ohci->ed_rm_list[frame] != NULL)
 			writel (OHCI_INTR_SF, &regs->intrenable);	
-		writel (OHCI_INTR_SF, &regs->intrstatus); 
-		dbg("SF: regs=%p intrstatus=%x\n", regs, readl (&regs->intrstatus)); 
 	}
 
 	if (!list_empty (&ohci->timeout_list)) {
@@ -2382,16 +2394,8 @@ static ohci_t * __devinit hc_alloc_ohci (struct pci_dev *dev, void * mem_base)
 		
 	memset (ohci, 0, sizeof (ohci_t));
 
-	printk("hc_alloc_ohci: dev=%x mem_base=%p dev_is_h5400=%d\n", dev, mem_base, dev_is_h5400(dev));
-	if (dev_is_h5400(dev)) {
-		struct pci_pool *hcca_pool = pci_pool_create("[h5400 hcca]", dev, sizeof(*ohci->hcca), 0, 0, 0);
-		printk("calling pci_pool_alloc\n");
-		ohci->hcca = pci_pool_alloc(hcca_pool, 0, &ohci->hcca_dma);
-	} else {
-		ohci->hcca = pci_alloc_consistent (dev, sizeof *ohci->hcca,
-						   &ohci->hcca_dma);
-printk(KERN_WARNING "hcca=%08x  hcca_dma=%08x \n", ohci->hcca, ohci->hcca_dma);
-	}
+	ohci->hcca = pci_alloc_consistent (dev, sizeof *ohci->hcca,
+			&ohci->hcca_dma);
         if (!ohci->hcca) {
                 kfree (ohci);
                 return NULL;
@@ -2421,6 +2425,7 @@ printk(KERN_WARNING "hcca=%08x  hcca_dma=%08x \n", ohci->hcca, ohci->hcca_dma);
 		kfree (ohci);
 		return NULL;
 	}
+	ohci->bus->bus_name = dev->slot_name;
 	ohci->bus->hcpriv = (void *) ohci;
 
 	return ohci;
@@ -2450,8 +2455,9 @@ static void hc_release_ohci (ohci_t * ohci)
 	pci_set_drvdata(ohci->ohci_dev, 0);
 #endif
 	if (ohci->bus) {
-		if (ohci->bus->busnum)
+		if (ohci->bus->busnum != -1)
 			usb_deregister_bus (ohci->bus);
+
 		usb_free_bus (ohci->bus);
 	}
 
@@ -2475,7 +2481,7 @@ static void hc_release_ohci (ohci_t * ohci)
  */
 int __devinit
 hc_add_ohci(struct pci_dev *dev, int irq, void *mem_base, unsigned long flags,
-	    ohci_t **pohci, const char *name, const char *slot_name)
+	    const char *name, const char *slot_name)
 {
 	char buf[8], *bufp = buf;
 	ohci_t * ohci;
@@ -2499,8 +2505,6 @@ hc_add_ohci(struct pci_dev *dev, int irq, void *mem_base, unsigned long flags,
 		return ret;
 	}
 	ohci->flags = flags;
-	if (ohci->flags & OHCI_QUIRK_AMD756)
-		printk (KERN_INFO __FILE__ ": AMD756 erratum 4 workaround\n");
 
 	if (hc_reset (ohci) < 0) {
 		hc_release_ohci (ohci);
@@ -2529,9 +2533,6 @@ hc_add_ohci(struct pci_dev *dev, int irq, void *mem_base, unsigned long flags,
 #ifdef	DEBUG
 	ohci_dump (ohci, 1);
 #endif
-	if (pohci)
-		*pohci = ohci;
-
 	return 0;
 }
 

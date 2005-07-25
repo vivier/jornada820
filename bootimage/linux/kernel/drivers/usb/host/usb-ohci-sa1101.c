@@ -1,9 +1,7 @@
 /*
  *  linux/drivers/usb/usb-ohci-sa1101.c
  *
- *  The outline of this code was taken from Brad Parkers <brad@heeltoe.com>
- *  original OHCI driver modifications, and reworked into a cleaner form
- *  by Russell King <rmk@arm.linux.org.uk>.
+ *  Largely inspired by the usb-ohci-sa1111 driver.
  */
 #include <linux/module.h>
 #include <linux/init.h>

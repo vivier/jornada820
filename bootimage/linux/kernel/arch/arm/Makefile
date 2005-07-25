@@ -13,16 +13,11 @@ GZFLAGS		:=-9
 CFLAGS		+=-Uarm -fno-common -pipe
 
 ifeq ($(CONFIG_FRAME_POINTER),y)
-CFLAGS		:=$(CFLAGS:-fomit-frame-pointer=-mapcs -mno-sched-prolog)
+CFLAGS         :=$(CFLAGS:-fomit-frame-pointer=)
+CFLAGS         +=-fno-omit-frame-pointer -mapcs -mno-sched-prolog
 endif
 
-ifeq ($(CONFIG_SMALL),y)
-CFLAGS		:=$(CFLAGS:-O2=-Os)
-endif
-
-ifeq ($(CONFIG_CPU_XSCALE),y)
-CFLAGS		+= -frename-registers
-endif
+#CFLAGS		:=$(CFLAGS:-O2=-Os)
 
 ifeq ($(CONFIG_DEBUG_INFO),y)
 CFLAGS		+=-g
@@ -44,8 +39,8 @@ arch-y				:=
 arch-$(CONFIG_CPU_32v3)		:=-D__LINUX_ARM_ARCH__=3 -march=armv3
 arch-$(CONFIG_CPU_32v4)		:=-D__LINUX_ARM_ARCH__=4 -march=armv4
 arch-$(CONFIG_CPU_32v5)		:=-D__LINUX_ARM_ARCH__=5 -march=armv5
-arch-$(CONFIG_CPU_XSCALE)	:=-D__LINUX_ARM_ARCH__=5 -mcpu=xscale
-#arch-$(CONFIG_CPU_XSCALE)	:=-D__LINUX_ARM_ARCH__=4 -march=armv4 -Wa,-mxscale
+#arch-$(CONFIG_CPU_XSCALE)	:=-D__LINUX_ARM_ARCH__=5 -mcpu=xscale
+arch-$(CONFIG_CPU_XSCALE)	:=-D__LINUX_ARM_ARCH__=5 -march=armv4 -Wa,-mxscale
 
 # This selects how we optimise for the processor.
 tune-y				:=
@@ -57,8 +52,8 @@ tune-$(CONFIG_CPU_ARM922T)	:=-mtune=arm9tdmi
 tune-$(CONFIG_CPU_ARM926T)	:=-mtune=arm9tdmi
 tune-$(CONFIG_CPU_SA110)	:=-mtune=strongarm110
 tune-$(CONFIG_CPU_SA1100)	:=-mtune=strongarm1100
-tune-$(CONFIG_CPU_XSCALE)	:=-mtune=xscale
-#tune-$(CONFIG_CPU_XSCALE)	:=-mtune=strongarm
+#tune-$(CONFIG_CPU_XSCALE)	:=-mtune=xscale
+tune-$(CONFIG_CPU_XSCALE)	:=-mtune=strongarm
 
 CFLAGS_BOOT	:=$(apcs-y) $(arch-y) $(tune-y) -mshort-load-bytes -msoft-float -Uarm
 CFLAGS		+=$(apcs-y) $(arch-y) $(tune-y) -mshort-load-bytes -msoft-float -Uarm
@@ -137,12 +132,13 @@ endif
 MACHINE		 = sa1100
 endif
 
-ifeq ($(CONFIG_ARCH_PXA),y)
-MACHINE		 = pxa
+ifeq ($(CONFIG_SA1100_JORNADA820),y)
+TEXTADDR	 = 0xc0208000
+MACHINE		 = sa1100
 endif
 
-ifeq ($(CONFIG_ARCH_S3C2410),y)
-MACHINE		 = s3c2410
+ifeq ($(CONFIG_ARCH_PXA),y)
+MACHINE		 = pxa
 endif
 
 ifeq ($(CONFIG_ARCH_L7200),y)
@@ -153,10 +149,8 @@ ifeq ($(CONFIG_ARCH_INTEGRATOR),y)
 MACHINE		 = integrator
 endif
 
-
-ifeq ($(CONFIG_ARCH_AT91RM9200DK),y)
-TEXTADDR	 = 0xc0008000
-MACHINE		 = at91rm9200dk
+ifeq ($(CONFIG_ARCH_AT91RM9200),y)
+MACHINE		 = at91rm9200
 endif
 
 ifeq ($(CONFIG_ARCH_MX1ADS),y)
@@ -184,21 +178,17 @@ ifeq ($(CONFIG_ARCH_OMAHA),y)
 MACHINE                = omaha
 endif
 
-ifeq ($(CONFIG_SA1100_JORNADA820),y)
-TEXTADDR        = 0xc0208000
-MACHINE         = sa1100
-endif
-
 ifeq ($(CONFIG_XIP_KERNEL),y) 
   DATAADDR   := $(TEXTADDR)
   # Replace phys addr with virt addr while keeping offset from base.
   # Virt base addr also defined in include/asm-arm/arch-*/hardware.h
   TEXTADDR    = $(shell echo 0x`echo $(CONFIG_XIP_PHYS_ADDR)|sed -e's/^0x//'` |\
 			awk --non-decimal-data '/[:xdigit:]/ \
-			  {printf("0x%x\n",and($$0,0x001fffff)+0xe8000000)}' )
+			{printf("0x%x\n",and($$0,0x001fffff)+0xe8000000)}' )
   LDSCRIPT    = arch/arm/vmlinux-armv-xip.lds.in
   export DATAADDR
 endif
+
 export	MACHINE PROCESSOR TEXTADDR GZFLAGS CFLAGS_BOOT OBJCOPYFLAGS
 
 # Only set INCDIR if its not already defined above
@@ -237,6 +227,11 @@ LIBS		:=arch/arm/fastfpe/fast-math-emu.o $(LIBS)
 endif
 endif
 
+ifeq ($(findstring y,$(CONFIG_USB_OHCI_SA1111) $(CONFIG_USB_OHCI_AT91)),y)
+   SUBDIRS	+=arch/arm/common
+   CORE_FILES	+=arch/arm/common/nopci.o
+endif
+
 ifeq ($(findstring y,$(CONFIG_ARCH_CLPS7500) $(CONFIG_ARCH_L7200)),y)
 SUBDIRS		+=drivers/acorn/char
 DRIVERS		+=drivers/acorn/char/acorn-char.o
@@ -247,15 +242,8 @@ SUBDIRS		+=drivers/acorn/char
 DRIVERS		+=drivers/acorn/char/acorn-char.o
 endif
 
-ifeq ($(CONFIG_IPAQ_HANDHELD),y)
-SUBDIRS		+= arch/arm/mach-ipaq
-DRIVERS		+= arch/arm/mach-ipaq/mach-ipaq.o
-endif
-
 MAKEBOOT	 =$(MAKE) -C arch/$(ARCH)/boot
 MAKETOOLS	 =$(MAKE) -C arch/$(ARCH)/tools
-
-
 
 # The following is a hack to get 'constants.h' up
 # to date before starting compilation
@@ -366,24 +354,5 @@ j820:;  @$(MAKEBOOT) j820
 	  echo "*** Next, you may run 'make oldconfig'"; \
 	else \
 	  echo "$$CFG does not exist"; \
-	  false ; \
-	fi; \
-	)
-
-%_all:
-	@( \
-	CFG=$(@:_all=); \
-	if [ -f arch/arm/def-configs/$$CFG ]; then \
-	  [ -f .config ] && mv -f .config .config.old; \
-	  cp arch/arm/def-configs/$$CFG .config; \
-	  echo "*** Default configuration for $$CFG installed"; \
-	  make oldconfig; \
-	  echo "*** oldconfig made"; \
-	  make include/linux/version.h; \
-	  make all; \
-	  make zImage modules; \
-	else \
-	  echo "$$CFG does not exist"; \
-	  false; \
 	fi; \
 	)

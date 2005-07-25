@@ -4,7 +4,7 @@
  * 2004/01/22 George Almasi (galmasi@optonline.net)
  * Modelled after the Jornada 720 code.
  * 
- * $Id: jornada820.c,v 1.12 2004/07/15 11:41:26 fare Exp $
+ * $Id: jornada820.c,v 1.13 2005/07/25 09:09:13 fare Exp $
  */
 
 #include <linux/init.h>
@@ -23,10 +23,19 @@
 static struct resource sa1101_resources[] = {
 	[0] = {
 		.start  = JORNADA820_SA1101_BASE,
-		.end    = 0x1bffffff,
+		.end    = JORNADA820_SA1101_BASE+0x3ffffff,
 		.flags  = IORESOURCE_MEM,
 	},
+/* DO WE NEED SOMETHING LIKE THIS? (Excerpted from jornada720.c)
+        [1] = {
+                .start          = IRQ_GPIO1,
+                .end            = IRQ_GPIO1,
+                .flags          = IORESOURCE_IRQ,
+        },
+*/
 };
+
+/* jornada720 has something about dma mask... */
 
 static struct platform_device sa1101_device = {
 	.name       = "sa1101-bus",
@@ -48,6 +57,34 @@ static int __init jornada820_init(void)
 {
   printk("In jornada820_init\n");
 
+  /* allow interrupts: */
+  /* audio et al. */
+  set_GPIO_IRQ_edge(GPIO_JORNADA820_UCB1200,      GPIO_RISING_EDGE);
+  /* sa1101 mux */
+  set_GPIO_IRQ_edge(GPIO_JORNADA820_SA1101_CHAIN, GPIO_RISING_EDGE);
+
+#if 0
+  /* TODO: write the drivers to use these events */
+  /*  ser1 */
+  set_GPIO_IRQ_edge(GPIO_JORNADA820_POWERD,       GPIO_RISING_EDGE|GPIO_FALLING_EDGE);
+  /*  serial port */
+  set_GPIO_IRQ_edge(GPIO_JORNADA820_SERIAL,       GPIO_RISING_EDGE|GPIO_FALLING_EDGE);
+  /*  serial what ? */
+  set_GPIO_IRQ_edge(GPIO_GPIO(18),                GPIO_RISING_EDGE|GPIO_FALLING_EDGE);
+  /*  ledbutton */
+  set_GPIO_IRQ_edge(GPIO_JORNADA820_LEDBUTTON,    GPIO_RISING_EDGE);
+#endif
+
+#if 0
+  /* TODO: This should reset the SA1101 
+  GPDR |= GPIO_GPIO20;
+  GPSR = GPIO_GPIO20;
+  udelay(1);
+  GPCR = GPIO_GPIO20;
+  udelay(1);
+  */
+#endif
+
   /* ------------------- */
   /* Initialize the SSP  */
   /* ------------------- */
@@ -58,6 +95,8 @@ static int __init jornada820_init(void)
   GPDR |= (GPIO_GPIO10 | GPIO_GPIO12 | GPIO_GPIO13);
   GPDR &= ~GPIO_GPIO11;
 
+  if (ssp_init()) printk("ssp_init() failed.\n");
+
   /* we mess with the SSCR0 directly, because there is no ssp_setreg() API, that
      can be called by the keyboard driver */
 
@@ -65,16 +104,26 @@ static int __init jornada820_init(void)
   Ser4SSCR0 = SSCR0_DataSize(8)+SSCR0_Motorola+SSCR0_SSE+SSCR0_SerClkDiv(8);
 //  Ser4SSCR1 = SSCR1_RIE | SSCR1_SClkIactH | SSCR1_SClk1_2P;
 
-  Ser4MCCR0 |= MCCR0_MCE;       /* reenable MCP */
+  ssp_enable();
 
-  /* we can't set the audio divisor here. It will be reset by the generic MCP code. */
-  /* TODO: j820_audio.c driver should take care of this problem */
+  Ser4MCCR0 |= MCCR0_MCE;       /* reenable MCP */
+				/* XXX - Not in matan's kernel(?) */
+
+  /* Initialize the 1101. */
+  GAFR |= GPIO_32_768kHz;
+  GPDR |= GPIO_32_768kHz;
+
+  TUCR = TUCR_3_6864MHz; /* */
+
+  sa1101_probe(SA1101_BASE);
+  sa1101_wake();
+  sa1101_init_irq (GPIO_JORNADA820_SA1101_CHAIN_IRQ);
 
   return platform_add_devices(devices, ARRAY_SIZE(devices));
 
 }
 
-__initcall(jornada820_init);
+arch_initcall(jornada820_init);
 
 /* *********************************************************************** */
 /*              map Jornada 820-specific IO (think SA1101)                 */
@@ -102,6 +151,8 @@ MACHINE_START(JORNADA820, "HP Jornada 820")
      BOOT_PARAMS(0xc0200100)
      MAPIO(jornada820_map_io)
      INITIRQ(sa1100_init_irq)
+//   .init_machine   = jornada820_init,
+     .timer          = &sa1100_timer,
      SOFT_REBOOT
-     MAINTAINER(galmasi@optonline.net)
+     MAINTAINER(http://jornada820.sourceforge.net/)
 MACHINE_END

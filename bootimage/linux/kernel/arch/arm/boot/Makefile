@@ -43,11 +43,6 @@ PARAMS_PHYS	 = 0x00000400
 INITRD_PHYS	 = 0x00800000
 endif
 
-ifeq ($(CONFIG_ARCH_S3C2410),y)
-ZTEXTADDR	 = 0x30f00000
-ZRELADDR	 = 0x30008000
-endif
-
 ifeq ($(CONFIG_ARCH_SHARK),y)
 ZTEXTADDR	 = 0x08508000
 ZRELADDR	 = 0x08008000
@@ -65,7 +60,7 @@ PARAMS_PHYS	 = 0x00000100
 INITRD_PHYS	 = 0x00800000
 endif
 
-ifeq ($(CONFIG_ARCH_AT91RM9200DK),y)
+ifeq ($(CONFIG_ARCH_AT91RM9200),y)
 ZRELADDR	 = 0x20008000
 endif
 
@@ -125,7 +120,6 @@ endif
 ifeq ($(CONFIG_ARCH_ANAKIN),y)
 ZRELADDR	 = 0x20008000
 endif
-
 
 #
 # We now have a PIC decompressor implementation.  Decompressors running

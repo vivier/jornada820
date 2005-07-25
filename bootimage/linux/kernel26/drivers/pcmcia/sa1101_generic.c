@@ -11,13 +11,16 @@
  *
  * George Almasi (galmasi@optonline.net), 2004/1/24
  * Based on the sa1111_generic.c file.
- * $Id: sa1101_generic.c,v 1.4 2004/07/16 16:45:08 fare Exp $
+ * $Id: sa1101_generic.c,v 1.5 2005/07/25 09:09:14 fare Exp $
  */
+#include <linux/config.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/device.h>
 #include <linux/init.h>
+
+#include <pcmcia/ss.h>
 
 #include <linux/interrupt.h>
 #include <asm/mach/irq.h>
@@ -27,15 +30,12 @@
 #include <asm/mach-types.h>
 #include <asm/irq.h>
 #include <asm/arch/hardware.h>
-
 #include <asm/hardware/sa1101.h>
-#include "soc_common.h"
-#include "sa11xx_core.h"
-#include "sa11xx_base.h"
+//#include "soc_common.h"
+//#include "sa11xx_core.h"
+//#include "sa11xx_base.h"
 #include "sa1100_generic.h"
-
 #include "sa1101_generic.h"
-
 
 /*
  * Initialize the PCMCIA subsystem: turn on interrupts, reserve memory
@@ -243,7 +243,6 @@ static int __devexit pcmcia_remove(struct sa1101_dev *dev)
 {
 	soc_common_drv_pcmcia_remove(&dev->dev);
 	release_mem_region(dev->res.start, 512);
-
 	return 0;
 }
 static int pcmcia_suspend(struct sa1101_dev *dev, u32 state)

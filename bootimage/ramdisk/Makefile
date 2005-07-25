@@ -27,6 +27,7 @@ RAMDISKIMAGE=ramdiskimage
 
 all: ramdiskimage.gz
 
+ramdisk: ramdiskimage.gz
 ramdiskimage: cmdfile
 	dd if=/dev/zero of=ramdiskimage count=3072 bs=1024
 	$(MKE2FS) -F ramdiskimage
@@ -60,7 +61,8 @@ cmdfile: cmdfile.in busybox pcmcia
 	  echo "write $$f $$file" ; \
 	done ; \
 	echo "cd /" ; \
-	echo write modules.tar.bz2 modules.tar.bz2 ; ) > $@
+	echo write modules.tar.bz2 modules.tar.bz2 ; \
+	) > $@
 	#for d in `find lib -type d` ; do \
 	#  echo "mkdir /$$d" ; \
 	#done

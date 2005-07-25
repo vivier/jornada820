@@ -61,3 +61,5 @@ static void __exit gpio_exit(void)
 module_init(gpio_init);
 module_exit(gpio_exit);
 
+MODULE_DESCRIPTION("GPIO driver for SA11x0.");
+MODULE_LICENSE("GPL");

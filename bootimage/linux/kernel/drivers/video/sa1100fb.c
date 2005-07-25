@@ -70,7 +70,7 @@
  *	- Big cleanup for dynamic selection of machine type at run time.
  *
  * 2000/07/19: Jamey Hicks <jamey@crl.dec.com>
- *	- Support for Bitsy aka HP iPAQ H3600 added.
+ *	- Support for Bitsy aka Compaq iPAQ H3600 added.
  *
  * 2000/08/07: Tak-Shing Chan <tchan.rd@idthk.com>
  *	       Jeff Sutherland <jsutherland@accelent.com>
@@ -208,10 +208,8 @@
 
 #include "sa1100fb.h"
 
-#ifdef CONFIG_IPAQ_HANDHELD
 void (*sa1100fb_blank_helper)(int blank);
 EXPORT_SYMBOL(sa1100fb_blank_helper);
-#endif
 
 /*
  * IMHO this looks wrong.  In 8BPP, length should be 8.
@@ -267,58 +265,44 @@ static struct sa1100fb_mach_info pal_info __initdata = {
 #endif
 #endif
 
-#ifdef CONFIG_SA1100_H3800
+#ifdef CONFIG_SA1100_H3XXX
 static struct sa1100fb_mach_info h3800_info __initdata = {
-        pixclock:       174757,         bpp:            16,
-        xres:           320,            yres:           240,
+	pixclock:	174757, 	bpp:		16,
+	xres:		320,		yres:		240,
 
-        hsync_len:      3,              vsync_len:      3,
-        left_margin:    12,             upper_margin:   10,
-        right_margin:   17,             lower_margin:   1,
+	hsync_len:	3,		vsync_len:	3,
+	left_margin:	12,		upper_margin:	10,
+	right_margin:	17,		lower_margin:	1,
 
-        sync:           0,		cmap_static:	1,
+	sync:		0,		cmap_static:	1,
 
-        lccr0:          LCCR0_Color | LCCR0_Sngl | LCCR0_Act,
-//      lccr3:          LCCR3_ACBsCntOff | LCCR3_PixFlEdg | LCCR3_OutEnH,
-        lccr3:          LCCR3_ACBsDiv(2) | LCCR3_PixClkDiv(44) |
-                        LCCR3_VrtSnchL | LCCR3_HorSnchL |
-                        LCCR3_ACBsCntOff,
+	lccr0:		LCCR0_Color | LCCR0_Sngl | LCCR0_Act,
+	lccr3:		LCCR3_ACBsCntOff | LCCR3_PixFlEdg | LCCR3_OutEnH,
 };
-#endif
 
-#ifdef CONFIG_SA1100_H3600
 static struct sa1100fb_mach_info h3600_info __initdata = {
-        pixclock:       174757,         bpp:            16,
-        xres:           320,            yres:           240,
+	pixclock:	174757, 	bpp:		16,
+	xres:		320,		yres:		240,
 
-        hsync_len:      3,              vsync_len:      3,
-        left_margin:    12,             upper_margin:   10,
-        right_margin:   17,             lower_margin:   1,
+	hsync_len:	3,		vsync_len:	3,
+	left_margin:	12,		upper_margin:	10,
+	right_margin:	17,		lower_margin:	1,
 
-        sync:           0,		cmap_static:	1,
+	sync:		0,		cmap_static:	1,
 
-        lccr0:          LCCR0_Color | LCCR0_Sngl | LCCR0_Act,
-#if 0
-        lccr3:          LCCR3_ACBsCntOff | LCCR3_OutEnH | LCCR3_PixFlEdg,
-#else
-        lccr3:          LCCR3_ACBsDiv(2) | LCCR3_PixClkDiv(44) |
-                        LCCR3_VrtSnchL | LCCR3_HorSnchL |
-                        LCCR3_ACBsCntOff,
-#endif
-
+	lccr0:		LCCR0_Color | LCCR0_Sngl | LCCR0_Act,
+	lccr3:		LCCR3_ACBsCntOff | LCCR3_OutEnH | LCCR3_PixFlEdg,
 };
 
 static struct sa1100fb_rgb h3600_rgb_16 = {
 	red:	{ offset: 12, length: 4, },
 	green:	{ offset: 7,  length: 4, },
 	blue:	{ offset: 1,  length: 4, },
-	transp:	{ offset: 0,  length: 0, },
+	transp: { offset: 0,  length: 0, },
 };
-#endif
 
-#ifdef CONFIG_SA1100_H3100
 static struct sa1100fb_mach_info h3100_info __initdata = {
-	pixclock:	406977,		bpp:		4,
+	pixclock:	406977, 	bpp:		4,
 	xres:		320,		yres:		240,
 
 	hsync_len:	26,		vsync_len:	41,
@@ -326,7 +310,7 @@ static struct sa1100fb_mach_info h3100_info __initdata = {
 	right_margin:	4,		lower_margin:	0,
 
 	sync:		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
-	cmap_greyscale:	1,
+	cmap_greyscale: 1,
 	cmap_inverse:	1,
 
 	lccr0:		LCCR0_Mono | LCCR0_4PixMono | LCCR0_Sngl | LCCR0_Pas,
@@ -425,6 +409,58 @@ static struct sa1100fb_rgb freebird_rgb_16 = {
 
 #ifdef CONFIG_SA1100_GRAPHICSCLIENT
 static struct sa1100fb_mach_info graphicsclient_info __initdata = {
+// for LQ64D343
+	pixclock:	53500,		bpp:		8,
+	xres:		640,		yres:		480,
+
+	hsync_len:	9,		vsync_len:	9,
+	left_margin:	54,		upper_margin:	24,
+	right_margin:	54,		lower_margin:	32,
+
+	sync:		0,
+
+	lccr0:		LCCR0_Color | LCCR0_Sngl | LCCR0_Act,
+	lccr3:		LCCR3_OutEnH | LCCR3_PixRsEdg | LCCR3_ACBsDiv(2),
+};
+#endif
+
+#ifdef CONFIG_SA1100_GRAPHICSMASTER
+static struct sa1100fb_mach_info graphicsmaster_info __initdata = {
+// for LQ64D343
+	pixclock:	53500,		bpp:		8,
+	xres:		640,		yres:		480,
+
+	hsync_len:	9,		vsync_len:	9,
+	left_margin:	54,		upper_margin:	24,
+	right_margin:	54,		lower_margin:	32,
+
+	sync:		0,
+
+	lccr0:		LCCR0_Color | LCCR0_Sngl | LCCR0_Act,
+	lccr3:		LCCR3_OutEnH | LCCR3_PixRsEdg | LCCR3_ACBsDiv(2),
+};
+#endif
+
+#ifdef CONFIG_SA1100_ADSBITSY
+static struct sa1100fb_mach_info adsbitsy_info __initdata = {
+// for LQ64D343
+	pixclock:	53500,		bpp:		8,
+	xres:		640,		yres:		480,
+
+	hsync_len:	9,		vsync_len:	9,
+	left_margin:	54,		upper_margin:	24,
+	right_margin:	54,		lower_margin:	32,
+
+	sync:		0,
+
+	lccr0:		LCCR0_Color | LCCR0_Sngl | LCCR0_Act,
+	lccr3:		LCCR3_OutEnH | LCCR3_PixRsEdg | LCCR3_ACBsDiv(2),
+};
+#endif
+
+#ifdef CONFIG_SA1100_ADSBITSYPLUS
+static struct sa1100fb_mach_info adsbitsyplus_info __initdata = {
+// for LQ64D343
 	pixclock:	53500,		bpp:		8,
 	xres:		640,		yres:		480,
 
@@ -460,6 +496,25 @@ static struct sa1100fb_mach_info huw_webpanel_info __initdata = {
 };
 #endif
 
+#ifdef CONFIG_SA1100_JORNADA820
+static struct sa1100fb_mach_info j820_info __initdata = {
+  /* no, we do NOT use the same settings as for WinCE.
+   * If we emulate them with pixclock: 237222, we get a lot of flicker.
+   */
+	pixclock:	305000,	bpp:		8,
+	xres:		640,	yres:		480,
+  
+  hsync_len:      3,		vsync_len:      1,
+  left_margin:    2,		upper_margin:   0,
+  right_margin:   2,		lower_margin:   0,
+  
+  sync:           FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+  
+  lccr0:          LCCR0_Color | LCCR0_Dual | LCCR0_DPD | LCCR0_Pas,
+  lccr3:          LCCR3_ACBsDiv(512)
+};
+#endif
+ 
 #ifdef LART_GREY_LCD
 static struct sa1100fb_mach_info lart_grey_info __initdata = {
 	pixclock:	150000,		bpp:		4,
@@ -684,48 +739,6 @@ static struct sa1100fb_mach_info xp860_info __initdata = {
 };
 #endif
 
-#ifdef CONFIG_SA1100_JORNADA56X
-static struct sa1100fb_mach_info jornada56x_info __initdata = {
-        pixclock:       179264,         bpp:            16,
-        xres:           240,            yres:           320,
-
-        hsync_len:      4,              vsync_len:      2,
-        left_margin:    7,             upper_margin:   2,
-        right_margin:   3,             lower_margin:   3,
-
-        sync:           0,		cmap_static:	1,
-
-        lccr0:          LCCR0_Color | LCCR0_Sngl | LCCR0_Act,
-        lccr3:          LCCR3_PixClkDiv(38),
-};
-
-static struct sa1100fb_rgb jornada56x_rgb_16 = {
-	red:	{ offset: 12, length: 4, },
-	green:	{ offset: 7,  length: 4, },
-	blue:	{ offset: 1,  length: 4, },
-	transp:	{ offset: 0,  length: 0, },
-};
-#endif
-
-#ifdef CONFIG_SA1100_JORNADA820
-static struct sa1100fb_mach_info j820_info __initdata = {
-  /* no, we do NOT use the same settings as for WinCE.
-   * If we emulate them with pixclock: 237222, we get a lot of flicker.
-   */
-	pixclock:	305000,	bpp:		8,
-	xres:		640,	yres:		480,
-  
-  hsync_len:      3,		vsync_len:      1,
-  left_margin:    2,		upper_margin:   0,
-  right_margin:   2,		lower_margin:   0,
-  
-  sync:           FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
-  
-  lccr0:          LCCR0_Color | LCCR0_Dual | LCCR0_DPD | LCCR0_Pas,
-  lccr3:          LCCR3_ACBsDiv(512)
-};
-#endif
-
 
 static struct sa1100fb_mach_info * __init
 sa1100fb_get_machine_info(struct sa1100fb_info *fbi)
@@ -747,21 +760,17 @@ sa1100fb_get_machine_info(struct sa1100fb_info *fbi)
 #endif
 	}
 #endif
-#ifdef CONFIG_SA1100_H3100
+#ifdef CONFIG_SA1100_H3XXX
+	if (machine_is_h3600()) {
+		inf = &h3600_info;
+		fbi->rgb[RGB_16] = &h3600_rgb_16;
+	}
 	if (machine_is_h3100()) {
-                inf = &h3100_info;
-        }
-#endif
-#ifdef CONFIG_SA1100_H3600
-        if (machine_is_h3600()) {
-                inf = &h3600_info;
-                fbi->rgb[RGB_16] = &h3600_rgb_16;
-        }
-#endif
-#ifdef CONFIG_SA1100_H3800
-        if (machine_is_h3800()) {
-                inf = &h3800_info;
-        }
+		inf = &h3100_info;
+	}
+	if (machine_is_h3800()) {
+		inf = &h3800_info;
+	}
 #endif
 #ifdef CONFIG_SA1100_BRUTUS
 	if (machine_is_brutus()) {
@@ -784,10 +793,31 @@ sa1100fb_get_machine_info(struct sa1100fb_info *fbi)
 		inf = &graphicsclient_info;
 	}
 #endif
+#ifdef CONFIG_SA1100_GRAPHICSMASTER
+	if (machine_is_graphicsmaster()) {
+		inf = &graphicsmaster_info;
+	}
+#endif
+#ifdef CONFIG_SA1100_ADSBITSY
+	if (machine_is_adsbitsy()) {
+		inf = &adsbitsy_info;
+	}
+#endif
+#ifdef CONFIG_SA1100_ADSBITSYPLUS
+	if (machine_is_adsbitsyplus()) {
+		inf = &adsbitsyplus_info;
+		}
+	}
+#endif
 #ifdef CONFIG_SA1100_HUW_WEBPANEL
 	if (machine_is_huw_webpanel()) {
 		inf = &huw_webpanel_info;
 	}
+#endif
+#ifdef CONFIG_SA1100_JORNADA820
+	if (machine_is_jornada820()) {
+		inf = &j820_info;
+        }
 #endif
 #ifdef CONFIG_SA1100_LART
 	if (machine_is_lart()) {
@@ -845,14 +875,6 @@ sa1100fb_get_machine_info(struct sa1100fb_info *fbi)
 		fbi->rgb[RGB_16] = &stork_dstn_rgb_16;
 #endif
 	}
-#endif
-#ifdef CONFIG_SA1100_JORNADA56X
-	if (machine_is_jornada56x()) {
-		inf = &jornada56x_info;
-	}
-#endif
-#ifdef CONFIG_SA1100_JORNADA820
-        inf = &j820_info;
 #endif
 	return inf;
 }
@@ -1083,7 +1105,7 @@ sa1100fb_validate_var(struct fb_var_screeninfo *var,
 	}
 
 #ifdef CONFIG_CPU_FREQ
-	DPRINTK("dma period = %d ps, clock = %d kHz\n",
+	printk(KERN_DEBUG "dma period = %d ps, clock = %d kHz\n",
 		sa1100fb_display_dma_period(var),
 		cpufreq_get(smp_processor_id()));
 #endif
@@ -1458,9 +1480,13 @@ static void sa1100fb_blank(int blank, struct fb_info *info)
 			for (i = 0; i < fbi->palette_size; i++)
 				sa1100fb_setpalettereg(i, 0, 0, 0, 0, info);
 		sa1100fb_schedule_task(fbi, C_DISABLE);
+		if (sa1100fb_blank_helper)
+			sa1100fb_blank_helper(blank);
 		break;
 
 	case VESA_NO_BLANKING:
+		if (sa1100fb_blank_helper)
+			sa1100fb_blank_helper(blank);
 		if (fbi->fb.disp->visual == FB_VISUAL_PSEUDOCOLOR ||
 		    fbi->fb.disp->visual == FB_VISUAL_STATIC_PSEUDOCOLOR)
 			fb_set_cmap(&fbi->fb.cmap, 1, sa1100fb_setcolreg, info);
@@ -1478,13 +1504,23 @@ static int sa1100fb_updatevar(int con, struct fb_info *info)
  * Calculate the PCD value from the clock rate (in picoseconds).
  * We take account of the PPCR clock setting.
  */
+#define USE_SA1101_MANUAL_FORMULA_FOR_PCD 1
 static inline int get_pcd(unsigned int pixclock)
 {
 	unsigned int pcd;
 
 	if (pixclock) {
+#ifdef USE_SA1101_MANUAL_FORMULA_FOR_PCD
+		/* we use this successfully on the Jornada 820 */
 		pixclock = 4000000000UL/(pixclock/250); /* convert period to frequency */
 		pcd = (cpufreq_get(0)*1000+pixclock)/(2*pixclock)-2; /* Formula from SA1100 manual. */
+#else
+		/* where is this formula from? Does anyone use it? */
+		pcd = cpufreq_get(0) / 100;
+		pcd *= pixclock;
+		pcd /= 10000000;
+		pcd += 1;	/* make up for integer math truncations */
+#endif
 	} else {
 		/*
 		 * People seem to be missing this message.  Make it big.
@@ -1506,6 +1542,7 @@ static inline int get_pcd(unsigned int pixclock)
 	return pcd;
 }
 
+
 /*
  * sa1100fb_activate_var():
  *	Configures LCD Controller based on entries in var parameter.  Settings are      
@@ -1525,6 +1562,7 @@ static int sa1100fb_activate_var(struct fb_var_screeninfo *var, struct sa1100fb_
 	DPRINTK("var: yres=%d vslen=%d um=%d bm=%d\n",
 		var->yres, var->vsync_len,
 		var->upper_margin, var->lower_margin);
+	DPRINTK("pcd=%d\n", pcd);
 
 #if DEBUG_VAR
 	if (var->xres < 16        || var->xres > 1024)
@@ -1583,7 +1621,11 @@ static int sa1100fb_activate_var(struct fb_var_screeninfo *var, struct sa1100fb_
 		LCCR3_ACBsCntOff;
 
 	if (pcd)
+#ifdef USE_SA1101_MANUAL_FORMULA_FOR_PCD
 		new_regs.lccr3 |= pcd;
+#else
+		new_regs.lccr3 |= LCCR3_PixClkDiv(pcd);
+#endif
 
 	DPRINTK("nlccr0 = 0x%08x\n", new_regs.lccr0);
 	DPRINTK("nlccr1 = 0x%08x\n", new_regs.lccr1);
@@ -1661,15 +1703,6 @@ static void sa1100fb_backlight_on(struct sa1100fb_info *fbi)
 	if (machine_is_frodo())
 		frodo_cpld_set (FRODO_CPLD_GENERAL,FRODO_LCD_BACKLIGHT);
 #endif
-#ifdef CONFIG_IPAQ_HANDHELD
-	if (machine_is_ipaq())
-		if (sa1100fb_blank_helper)
-			sa1100fb_blank_helper(0);
-#endif
-#ifdef CONFIG_SA1100_JORNADA56X
-	if (machine_is_jornada56x())
-		JORNADA_GPDPCR = JORNADA_BACKLIGHT; // Turn on the front light
-#endif
 #ifdef CONFIG_SA1100_JORNADA820	
         GPSR = GPIO_JORNADA820_BACKLIGHTON;
 #endif
@@ -1699,15 +1732,6 @@ static void sa1100fb_backlight_off(struct sa1100fb_info *fbi)
 	if (machine_is_frodo())
 		frodo_cpld_clear (FRODO_CPLD_GENERAL,FRODO_LCD_BACKLIGHT);
 #endif
-#ifdef CONFIG_IPAQ_HANDHELD
-	if (machine_is_ipaq())
-		if (sa1100fb_blank_helper)
-			sa1100fb_blank_helper(1);
-#endif
-#ifdef CONFIG_SA1100_JORNADA56X
-	if (machine_is_jornada56x())
-		JORNADA_GPDPSR = JORNADA_BACKLIGHT; // Turn off the front light
-#endif
 #ifdef CONFIG_SA1100_JORNADA820
 	GPCR = GPIO_JORNADA820_BACKLIGHTON;
 #endif
@@ -1729,18 +1753,8 @@ static void sa1100fb_power_up_lcd(struct sa1100fb_info *fbi)
 	if (machine_is_omnimeter())
 		LCDPowerOn();
 #endif
-#ifdef CONFIG_IPAQ_HANDHELD
-	if (machine_is_ipaq())
-		set_h3600_egpio( IPAQ_EGPIO_LCD_POWER );
-#endif
-#ifdef CONFIG_SA1100_JORNADA56X
-	if (machine_is_jornada56x()) {
-		mdelay(5);	// Delay 5 milliseconds.
-		JORNADA_GPDPSR = GPIO_GPIO14;
-		mdelay(2);	// Delay 2 milliseconds.
-		GPSR = GPIO_GPIO24;
-	}
-#endif
+	if (machine_is_h3xxx())
+		set_h3600_egpio( IPAQ_EGPIO_LCD_ON );     /* Turn on power to the LCD */
 #ifdef CONFIG_SA1100_STORK
 	if (machine_is_stork()) {
 		storkSetLCDCPLD(0, 1);
@@ -1751,26 +1765,13 @@ static void sa1100fb_power_up_lcd(struct sa1100fb_info *fbi)
 	if (machine_is_frodo())
 		sa1100fb_backlight_on(fbi);
 #endif
-}
-
-static void sa1100fb_enable_lcd(struct sa1100fb_info *fbi)
-{
-	DPRINTK("LCD enable\n");
-#ifdef CONFIG_IPAQ_HANDHELD
-	if (machine_is_ipaq()) {
-		set_h3600_egpio( IPAQ_EGPIO_LCD_ENABLE );
+#ifdef CONFIG_SA1100_ADSBITSYPLUS
+	if (machine_is_adsbitsyplus()) {
+		ADS_CPLD_PCON &= ~ADS_PCON_PANEL_ON;
+		ADS_CPLD_SUPPC |= ADS_SUPPC_VEE_ON;
 	}
 #endif
-}
 
-static void sa1100fb_disable_lcd(struct sa1100fb_info *fbi)
-{
-	DPRINTK("LCD disable\n");
-#ifdef CONFIG_IPAQ_HANDHELD
-	if (machine_is_ipaq()) {
-		clr_h3600_egpio( IPAQ_EGPIO_LCD_ENABLE );
-	}
-#endif
 }
 
 static void sa1100fb_power_down_lcd(struct sa1100fb_info *fbi)
@@ -1786,10 +1787,8 @@ static void sa1100fb_power_down_lcd(struct sa1100fb_info *fbi)
 	if (machine_is_huw_webpanel())
 		BCR_set(BCR_TFT_NPWR);
 #endif
-#ifdef CONFIG_IPAQ_HANDHELD
-	if (machine_is_ipaq())
-		clr_h3600_egpio( IPAQ_EGPIO_LCD_POWER );
-#endif
+	if (machine_is_h3xxx())
+		clr_h3600_egpio( IPAQ_EGPIO_LCD_ON );
 #ifdef CONFIG_SA1100_STORK
 	if (machine_is_stork()) {
 		storkSetLCDCPLD(0, 0);
@@ -1799,6 +1798,12 @@ static void sa1100fb_power_down_lcd(struct sa1100fb_info *fbi)
 #ifdef CONFIG_SA1100_FRODO
 	if (machine_is_frodo())
 		sa1100fb_backlight_off(fbi);
+#endif
+#ifdef CONFIG_SA1100_ADSBITSYPLUS
+	if (machine_is_adsbitsyplus()) {
+		ADS_CPLD_PCON |= ADS_PCON_PANEL_ON;
+		ADS_CPLD_SUPPC &= ~ADS_SUPPC_VEE_ON;
+	}
 #endif
 }
 
@@ -1895,12 +1900,21 @@ static void sa1100fb_enable_controller(struct sa1100fb_info *fbi)
 	LCCR0 |= LCCR0_LEN;
 
 #ifdef CONFIG_SA1100_GRAPHICSCLIENT
-#error Where is GPIO24 set as an output?  Can we fit this in somewhere else?
 	if (machine_is_graphicsclient()) {
 		// From ADS doc again...same as disable
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		schedule_timeout(20 * HZ / 1000);
-		GPSR |= GPIO_GPIO24;
+		GPDR |= GPIO_GPIO24;
+		GPSR = GPIO_GPIO24;
+	}
+#endif
+#ifdef CONFIG_SA1100_GRAPHICSMASTER
+	if (machine_is_graphicsmaster()) {
+		// From ADS doc again...same as disable
+		set_current_state(TASK_UNINTERRUPTIBLE);
+		schedule_timeout(20 * HZ / 1000);
+		GPDR |= GPIO_GPIO24;
+		GPSR = GPIO_GPIO24;
 	}
 #endif
 
@@ -1924,7 +1938,6 @@ static void sa1100fb_disable_controller(struct sa1100fb_info *fbi)
 	DPRINTK("Disabling LCD controller\n");
 
 #ifdef CONFIG_SA1100_GRAPHICSCLIENT
-#error Where is GPIO24 set as an output?  Can we fit this in somewhere else?
 	if (machine_is_graphicsclient()) {
 		/*
 		 * From ADS internal document:
@@ -1933,6 +1946,22 @@ static void sa1100fb_disable_controller(struct sa1100fb_info *fbi)
 		 *
 		 * We'll wait 20msec.
 		 */
+		GPDR |= GPIO_GPIO24;
+		GPCR |= GPIO_GPIO24;
+		set_current_state(TASK_UNINTERRUPTIBLE);
+		schedule_timeout(20 * HZ / 1000);
+	}
+#endif
+#ifdef CONFIG_SA1100_GRAPHICSMASTER
+	if (machine_is_graphicsmaster()) {
+		/*
+		 * From ADS internal document:
+		 *  GPIO24 should be LOW at least 10msec prior to disabling
+		 *  the LCD interface.
+		 *
+		 * We'll wait 20msec.
+		 */
+		GPDR |= GPIO_GPIO24;
 		GPCR |= GPIO_GPIO24;
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		schedule_timeout(20 * HZ / 1000);
@@ -1956,7 +1985,6 @@ static void sa1100fb_disable_controller(struct sa1100fb_info *fbi)
 
 	LCSR = 0xffffffff;	/* Clear LCD Status Register */
 	LCCR0 &= ~LCCR0_LDM;	/* Enable LCD Disable Done Interrupt */
-	if (0) enable_irq(IRQ_LCD);	/* Enable LCD IRQ */
 	LCCR0 &= ~LCCR0_LEN;	/* Disable LCD Controller */
 
 	schedule_timeout(20 * HZ / 1000);
@@ -2014,7 +2042,6 @@ static void set_ctrlr_state(struct sa1100fb_info *fbi, u_int state)
 			fbi->state = state;
 
 			sa1100fb_backlight_off(fbi);
-			sa1100fb_disable_lcd(fbi);
 			if (old_state != C_DISABLE_CLKCHANGE)
 				sa1100fb_disable_controller(fbi);
 			sa1100fb_power_down_lcd(fbi);
@@ -2065,7 +2092,6 @@ static void set_ctrlr_state(struct sa1100fb_info *fbi, u_int state)
 			sa1100fb_setup_gpio(fbi);
 			sa1100fb_power_up_lcd(fbi);
 			sa1100fb_enable_controller(fbi);
-			sa1100fb_enable_lcd(fbi);
 			sa1100fb_backlight_on(fbi);
 		}
 		break;
@@ -2131,7 +2157,7 @@ sa1100fb_clkchg_notifier(struct notifier_block *nb, unsigned long val,
 
 	switch (val) {
 	case CPUFREQ_MINMAX:
-		DPRINTK("min dma period: %d ps, old clock %d kHz, "
+		printk(KERN_DEBUG "min dma period: %d ps, old clock %d kHz, "
 			"new clock %d kHz\n", sa1100fb_min_dma_period(fbi),
 			mm->cur_freq, mm->new_freq);
 		/* todo: fill in min/max values */
@@ -2143,7 +2169,11 @@ sa1100fb_clkchg_notifier(struct notifier_block *nb, unsigned long val,
 
 	case CPUFREQ_POSTCHANGE:
 		pcd = get_pcd(fbi->fb.var.pixclock);
+#ifdef USE_SA1101_MANUAL_FORMULA_FOR_PCD
 		fbi->reg_lccr3 = (fbi->reg_lccr3 & ~0xff) | pcd;
+#else
+		fbi->reg_lccr3 = (fbi->reg_lccr3 & ~0xff) | LCCR3_PixClkDiv(pcd);
+#endif
 		set_ctrlr_state(fbi, C_ENABLE_CLKCHANGE);
 		break;
 	}
@@ -2195,7 +2225,7 @@ static int __init sa1100fb_map_video_memory(struct sa1100fb_info *fbi)
 	 */
 	fbi->map_size = PAGE_ALIGN(fbi->fb.fix.smem_len + PAGE_SIZE);
 	fbi->map_cpu = consistent_alloc(GFP_KERNEL, fbi->map_size,
-					&fbi->map_dma);
+					&fbi->map_dma, PTE_BUFFERABLE);
 
 	if (fbi->map_cpu) {
 		fbi->screen_cpu = fbi->map_cpu + PAGE_SIZE;

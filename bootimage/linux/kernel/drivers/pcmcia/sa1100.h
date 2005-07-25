@@ -140,10 +140,9 @@ static inline unsigned int sa1100_pcmcia_cmd_time(unsigned int cpu_clock_khz,
  * and memory command width time is 150ns; the PCMCIA 3.3V attribute and
  * memory command width time is 300ns.
  */
-#define SA1100_PCMCIA_IO_ACCESS      (500) /* was 165 */
-#define SA1100_PCMCIA_5V_MEM_ACCESS  (500) /* was 150 */
-#define SA1100_PCMCIA_3V_MEM_ACCESS  (500) /* was 300 */
-
+#define SA1100_PCMCIA_IO_ACCESS      (165)
+#define SA1100_PCMCIA_5V_MEM_ACCESS  (150)
+#define SA1100_PCMCIA_3V_MEM_ACCESS  (300)
 
 /* The socket driver actually works nicely in interrupt-driven form,
  * so the (relatively infrequent) polling is "just to be sure."
@@ -200,14 +199,16 @@ extern struct pcmcia_low_level shannon_pcmcia_ops;
 extern struct pcmcia_low_level pangolin_pcmcia_ops;
 extern struct pcmcia_low_level freebird_pcmcia_ops;
 extern struct pcmcia_low_level pfs168_pcmcia_ops;
-extern struct pcmcia_low_level jornada720_pcmcia_ops;
 extern struct pcmcia_low_level jornada56x_pcmcia_ops;
+extern struct pcmcia_low_level jornada720_pcmcia_ops;
+extern struct pcmcia_low_level jornada820_pcmcia_ops;
 extern struct pcmcia_low_level flexanet_pcmcia_ops;
 extern struct pcmcia_low_level simpad_pcmcia_ops;
 extern struct pcmcia_low_level graphicsmaster_pcmcia_ops;
+extern struct pcmcia_low_level adsagc_pcmcia_ops;
 extern struct pcmcia_low_level adsbitsy_pcmcia_ops;
+extern struct pcmcia_low_level adsbitsyplus_pcmcia_ops;
 extern struct pcmcia_low_level stork_pcmcia_ops;
 extern struct pcmcia_low_level badge4_pcmcia_ops;
-extern struct pcmcia_low_level jornada820_pcmcia_ops;
 
 #endif  /* !defined(_PCMCIA_SA1100_H) */

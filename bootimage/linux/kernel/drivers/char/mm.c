@@ -125,3 +125,5 @@ static void __exit memaccess_exit(void){
 
 module_init(memaccess_init);
 module_exit(memaccess_exit);
+
+MODULE_LICENSE("GPL");

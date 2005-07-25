@@ -1,9 +1,10 @@
+# Jornada820 version based on Kconfig from linux 2.6.11.9
+# $Id: Kconfig,v 1.2 2005/07/25 09:09:11 fare Exp $
+
 #
 # For a description of the syntax of this configuration file,
 # see Documentation/kbuild/kconfig-language.txt.
 #
-# Jornada820 version based on Kconfig 1.29 from cvs.handhelds.org
-# $Id: Kconfig,v 1.1 2004/07/03 13:29:33 fare Exp $
 
 mainmenu "Linux Kernel Configuration"
 
@@ -59,23 +60,27 @@ config RWSEM_GENERIC_SPINLOCK
 config RWSEM_XCHGADD_ALGORITHM
 	bool
 
+config GENERIC_CALIBRATE_DELAY
+	bool
+	default y
+
 config GENERIC_BUST_SPINLOCK
 	bool
 
 config GENERIC_ISA_DMA
 	bool
 
-source "init/Kconfig"
+config GENERIC_IOMAP
+	bool
+	default y
 
+source "init/Kconfig"
 
 menu "System Type"
 
 choice
 	prompt "ARM system type"
 	default ARCH_RPC
-
-config ARCH_ADIFCC
-	bool "ADIFCC-based"
 
 config ARCH_CLPS7500
 	bool "Cirrus-CL-PS7500FE"
@@ -85,6 +90,8 @@ config ARCH_CLPS711X
 
 config ARCH_CO285
 	bool "Co-EBSA285"
+	select FOOTBRIDGE
+	select FOOTBRIDGE_ADDIN
 
 config ARCH_EBSA110
 	bool "EBSA-110"
@@ -103,6 +110,7 @@ config ARCH_CAMELOT
 
 config ARCH_FOOTBRIDGE
 	bool "FootBridge"
+	select FOOTBRIDGE
 
 config ARCH_INTEGRATOR
 	bool "Integrator"
@@ -112,6 +120,9 @@ config ARCH_IOP3XX
 
 config ARCH_IXP4XX
 	bool "IXP4xx-based"
+
+config ARCH_IXP2000
+	bool "IXP2400/2800-based"
 
 config ARCH_L7200
 	bool "LinkUp-L7200"
@@ -123,7 +134,7 @@ config ARCH_L7200
 	  <http://www.linkupsys.com/>
 
 	  If you have any questions or comments about the Linux kernel port
-	  to this board, send e-mail to sjhill@cotw.com.
+	  to this board, send e-mail to <sjhill@cotw.com>.
 
 config ARCH_PXA
 	bool "PXA2xx-based"
@@ -141,7 +152,7 @@ config ARCH_S3C2410
 	bool "Samsung S3C2410"
 	help
 	  Samsung S3C2410X CPU based systems, such as the Simtec Electronics
-	  BAST (http://www.simtec.co.uk/products/EB110ITX/), the IPAQ 1940 or
+	  BAST (<http://www.simtec.co.uk/products/EB110ITX/>), the IPAQ 1940 or
 	  the Samsung SMDK2410 development board (and derviatives).
 
 config ARCH_SHARK
@@ -158,10 +169,18 @@ config ARCH_LH7A40X
 config ARCH_OMAP
 	bool "TI OMAP"
 
-config ARCH_VERSATILE_PB
-	bool "Versatile PB"
+config ARCH_VERSATILE
+	bool "Versatile"
 	help
-	  This enables support for ARM Ltd Versatile PB board.
+	  This enables support for ARM Ltd Versatile board.
+
+config ARCH_IMX
+	bool "IMX"
+
+config ARCH_H720X
+	bool "Hynix-HMS720x-based"
+	help
+	  This enables support for systems based on the Hynix HMS720x
 
 endchoice
 
@@ -177,6 +196,8 @@ source "arch/arm/mach-iop3xx/Kconfig"
 
 source "arch/arm/mach-ixp4xx/Kconfig"
 
+source "arch/arm/mach-ixp2000/Kconfig"
+
 source "arch/arm/mach-pxa/Kconfig"
 
 source "arch/arm/mach-sa1100/Kconfig"
@@ -187,7 +208,11 @@ source "arch/arm/mach-s3c2410/Kconfig"
 
 source "arch/arm/mach-lh7a40x/Kconfig"
 
-source "lab/Kconfig"
+source "arch/arm/mach-imx/Kconfig"
+
+source "arch/arm/mach-h720x/Kconfig"
+
+source "arch/arm/mach-versatile/Kconfig"
 
 # Definitions to make life easier
 config ARCH_ACORN
@@ -195,26 +220,9 @@ config ARCH_ACORN
 	depends on ARCH_RPC
 	default y
 
-#####################################################################
-# Footbridge support
-config FOOTBRIDGE
+config TIMER_ACORN
 	bool
-	depends on ARCH_CO285 || ARCH_FOOTBRIDGE
-	default y
-
-config FOOTBRIDGE_HOST
-	bool
-	depends on ARCH_CATS || ARCH_EBSA285_HOST || ARCH_NETWINDER || ARCH_PERSONAL_SERVER
-	default y
-
-config FOOTBRIDGE_ADDIN
-	bool
-	depends on ARCH_CO285 || ARCH_EBSA285_ADDIN
-	default y
-
-config ARCH_EBSA285
-	bool
-	depends on ARCH_EBSA285_HOST || ARCH_EBSA285_ADDIN
+	depends on ARCH_ACORN || ARCH_CLPS7500
 	default y
 
 #####################################################################
@@ -222,6 +230,16 @@ config ARCH_EBSA285
 config SA1111
 	bool
 	depends on ASSABET_NEPONSET || SA1100_ADSBITSY || SA1100_BADGE4 || SA1100_CONSUS || SA1100_GRAPHICSMASTER || SA1100_JORNADA720 || ARCH_LUBBOCK || SA1100_PFS168 || SA1100_PT_SYSTEM3 || SA1100_XP860
+	default y
+
+config SHARP_LOCOMO
+	bool
+	depends on SA1100_COLLIE
+	default y
+
+config SHARP_SCOOP
+	bool
+	depends on PXA_SHARPSL || SA1100_COLLIE
 	default y
 
 config FORCE_MAX_ZONEORDER
@@ -242,20 +260,44 @@ config XSCALE_PMU
 	depends on CPU_XSCALE && !XSCALE_PMU_TIMER
 	default y
 
-source "arch/arm/common/ipaq/Kconfig"
-
 endmenu
-
 
 menu "General setup"
 
 # Select various configuration options depending on the machine type
+
+config SMP
+	bool "Symmetric Multi-Processing (EXPERIMENTAL)"
+	depends on EXPERIMENTAL && n
+	help
+	  This enables support for systems with more than one CPU. If you have
+	  a system with only one CPU, like most personal computers, say N. If
+	  you have a system with more than one CPU, say Y.
+
+	  If you say N here, the kernel will run on single and multiprocessor
+	  machines, but will use only one CPU of a multiprocessor machine. If
+	  you say Y here, the kernel will run on many, but not all, single
+	  processor machines. On a single processor machine, the kernel will
+	  run faster if you say N here.
+
+	  See also the <file:Documentation/smp.tex>,
+	  <file:Documentation/smp.txt>, <file:Documentation/i386/IO-APIC.txt>,
+	  <file:Documentation/nmi_watchdog.txt> and the SMP-HOWTO available at
+	  <http://www.linuxdoc.org/docs.html#howto>.
+
+	  If you don't know what to do here, say N.
+
+config NR_CPUS
+	int "Maximum number of CPUs (2-32)"
+	depends on SMP
+	default "4"
+
 config DISCONTIGMEM
 	bool
-	depends on ARCH_EDB7211 || ARCH_SA1100 || ARCH_LH7A40X
+	depends on ARCH_EDB7211 || ARCH_SA1100 || (ARCH_LH7A40X && !LH7A40X_CONTIGMEM)
 	default y
 	help
-	  Say Y to upport efficient handling of discontiguous physical memory,
+	  Say Y to support efficient handling of discontiguous physical memory,
 	  for architectures which are either NUMA (Non-Uniform Memory Access)
 	  or have huge holes in the physical address space for other reasons.
 	  See <file:Documentation/vm/numa> for more.
@@ -263,7 +305,7 @@ config DISCONTIGMEM
 # Now handle the bus types
 config PCI
 	bool "PCI support" if ARCH_INTEGRATOR_AP
-	default y if ARCH_FTVPCI || ARCH_SHARK || FOOTBRIDGE_HOST || ARCH_IOP3XX || ARCH_IXP4XX
+	default y if ARCH_SHARK || FOOTBRIDGE_HOST || ARCH_IOP3XX || ARCH_IXP4XX || ARCH_IXP2000
 	help
 	  Find out whether you have a PCI motherboard. PCI is the name of a
 	  bus system, i.e. the way the CPU talks to the other stuff inside
@@ -276,11 +318,6 @@ config PCI
 	  doesn't.
 
 # Select the host bridge type
-config PCI_HOST_PLX90X0
-	bool
-	depends on PCI && ARCH_FTVPCI
-	default y
-
 config PCI_HOST_VIA82C505
 	bool
 	depends on PCI && ARCH_SHARK
@@ -291,14 +328,19 @@ config ICST525
 	depends on ARCH_INTEGRATOR
 	default y
 
+config ICST307
+	bool
+	depends on ARCH_VERSATILE
+	default y
+
 config ARM_AMBA
 	bool
-	depends on ARCH_INTEGRATOR || ARCH_VERSATILE_PB
+	depends on ARCH_INTEGRATOR || ARCH_VERSATILE
 	default y
 
 config ISA
 	bool
-	depends on FOOTBRIDGE_HOST || ARCH_SHARK || ARCH_CLPS7500 || ARCH_EBSA110 || ARCH_CDB89712 || ARCH_EDB7211 || ARCH_SA1100
+	depends on FOOTBRIDGE_HOST || ARCH_SHARK || ARCH_CLPS7500 || ARCH_EBSA110 || ARCH_CDB89712 || ARCH_EDB7211 || ARCH_SA1100 || ARCH_MX1ADS
 	default y
 	help
 	  Find out whether you have ISA slots on your motherboard.  ISA is the
@@ -314,58 +356,84 @@ config ISA_DMA
 
 config FIQ
 	bool
-	depends on ARCH_ACORN || ARCH_L7200 || ARCH_LH7A400
+	depends on ARCH_ACORN || ARCH_L7200
 	default y
 
 # Compressed boot loader in ROM.  Yes, we really want to ask about
 # TEXT and BSS so we preserve their values in the config files.
-config ZBOOT_ROM
-	bool "Compressed boot loader in ROM/flash"
-	help
-	  Say Y here if you intend to execute your compressed kernel image (zImage)
-	  directly from ROM or flash.  If unsure, say N.
-
 config ZBOOT_ROM_TEXT
 	hex "Compressed ROM boot loader base address"
 	default "0"
 	help
-	  The base address for zImage.  Unless you have special requirements, you
-	  should not change this value.
+	  The physical address at which the ROM-able zImage is to be
+	  placed in the target.  Platforms which normally make use of
+	  ROM-able zImage formats normally set this to a suitable
+	  value in their defconfig file.
+
+	  If ZBOOT_ROM is not enabled, this has no effect.
 
 config ZBOOT_ROM_BSS
 	hex "Compressed ROM boot loader BSS address"
 	default "0"
 	help
-	  The base address of 64KiB of read/write memory, which must be available
-	  while the decompressor is running.  Unless you have special requirements,
-	  you should not change this value.
+	  The base address of 64KiB of read/write memory in the target
+	  for the ROM-able zImage, which must be available while the
+	  decompressor is running.  Platforms which normally make use of
+	  ROM-able zImage formats normally set this to a suitable
+	  value in their defconfig file.
 
-config CPU_FREQ
-	bool "Support CPU clock change (EXPERIMENTAL)"
-	depends on (ARCH_SA1100 || ARCH_INTEGRATOR || ARCH_PXA) && EXPERIMENTAL
+	  If ZBOOT_ROM is not enabled, this has no effect.
+
+config ZBOOT_ROM
+	bool "Compressed boot loader in ROM/flash"
+	depends on ZBOOT_ROM_TEXT != ZBOOT_ROM_BSS
 	help
-	  CPU clock scaling allows you to change the clock speed of the
-	  running CPU on the fly. This is a nice method to save battery power,
-	  because the lower the clock speed, the less power the CPU
-	  consumes. Note that this driver doesn't automatically change the CPU
-	  clock speed, you need some userland tools (which still have to be
-	  written) to implement the policy. If you don't understand what this
-	  is all about, it's safe to say 'N'.
+	  Say Y here if you intend to execute your compressed kernel image
+	  (zImage) directly from ROM or flash.  If unsure, say N.
 
+config XIP_KERNEL
+	bool "Kernel Execute-In-Place from ROM"
+	depends on !ZBOOT_ROM
+	help
+	  Execute-In-Place allows the kernel to run from non-volatile storage
+	  directly addressable by the CPU, such as NOR flash. This saves RAM
+	  space since the text section of the kernel is not loaded from flash
+	  to RAM.  Read-write sections, such as the data section and stack,
+	  are still copied to RAM.  The XIP kernel is not compressed since
+	  it has to run directly from flash, so it will take more space to
+	  store it.  The flash address used to link the kernel object files,
+	  and for storing it, is configuration dependent. Therefore, if you
+	  say Y here, you must know the proper physical address where to
+	  store the kernel image depending on your own flash memory usage.
 
-# CPUfreq on SA11x0 is special -- it _needs_ the userspace governor
+	  Also note that the make target becomes "make xipImage" rather than
+	  "make zImage" or "make Image".  The final kernel binary to put in
+	  ROM memory will be arch/arm/boot/xipImage.
+
+	  If unsure, say N.
+
+config XIP_PHYS_ADDR
+	hex "XIP Kernel Physical Location"
+	depends on XIP_KERNEL
+	default "0x00080000"
+	help
+	  This is the physical address in your flash memory the kernel will
+	  be linked for and stored to.  This address is dependent on your
+	  own flash usage.
+
+if (ARCH_SA1100 || ARCH_INTEGRATOR)
+
+source "drivers/cpufreq/Kconfig"
 
 config CPU_FREQ_SA1100
 	bool
-	depends on CPU_FREQ && ( SA1100_LART || SA1100_JORNADA820 )
+	depends on CPU_FREQ && (SA1100_LART || SA1100_PLEB || SA1100_JORNADA820 )
 	default y
-	select CPU_FREQ_24_API if SYSCTL
 
 config CPU_FREQ_SA1110
 	bool
 	depends on CPU_FREQ && (SA1100_ASSABET || SA1100_CERF || SA1100_PT_SYSTEM3)
 	default y
-	select CPU_FREQ_24_API if SYSCTL
 
 config CPU_FREQ_INTEGRATOR
 	tristate "CPUfreq driver for ARM Integrator CPUs"
@@ -374,13 +442,9 @@ config CPU_FREQ_INTEGRATOR
 	help
 	  This enables the CPUfreq driver for ARM Integrator CPUs.
 
-	  For details, take a look at linux/Documentation/cpu-freq.
+	  For details, take a look at <file:Documentation/cpu-freq>.
 
 	  If in doubt, say Y.
-
-if (CPU_FREQ_INTEGRATOR) || (CPU_FREQ_SA1110) || (CPU_FREQ_SA1100)
-
-source "drivers/cpufreq/Kconfig"
 
 endif
 
@@ -403,7 +467,7 @@ config FPE_NWFPE
 
 config FPE_NWFPE_XP
 	bool "Support extended precision"
-	depends on FPE_NWFPE
+	depends on FPE_NWFPE && !CPU_BIG_ENDIAN
 	help
 	  Say Y to include 80-bit support in the kernel floating-point
 	  emulator.  Otherwise, only 32 and 64-bit support is compiled in.
@@ -426,6 +490,18 @@ config FPE_FASTFPE
 	  for scientific calculations, but you have to check this for yourself.
 	  If you do not feel you need a faster FP emulation you should better
 	  choose NWFPE.
+
+config VFP
+	bool "VFP-format floating point maths"
+	depends on CPU_V6 || CPU_ARM926T
+	help
+	  Say Y to include VFP support code in the kernel. This is needed
+	  if your hardware includes a VFP unit.
+
+	  Please see <file:Documentation/arm/VFP/release-notes.txt> for
+	  release notes and additional status information.
+
+	  Say N if your target does not have VFP hardware.
 
 source "fs/Kconfig.binfmt"
 
@@ -545,7 +621,7 @@ config CMDLINE
 
 config LEDS
 	bool "Timer and CPU usage LEDs"
-	depends on ARCH_NETWINDER || ARCH_EBSA110 || ARCH_EBSA285 || ARCH_FTVPCI || ARCH_SHARK || ARCH_CO285 || ARCH_SA1100 || ARCH_LUBBOCK || MACH_MAINSTONE || ARCH_PXA_IDP || ARCH_INTEGRATOR || ARCH_CDB89712 || ARCH_P720T || ARCH_OMAP || ARCH_VERSATILE_PB
+	depends on ARCH_NETWINDER || ARCH_EBSA110 || ARCH_EBSA285 || ARCH_SHARK || ARCH_CO285 || ARCH_SA1100 || ARCH_LUBBOCK || MACH_MAINSTONE || ARCH_PXA_IDP || ARCH_INTEGRATOR || ARCH_CDB89712 || ARCH_P720T || ARCH_OMAP || ARCH_VERSATILE || ARCH_IMX
 	help
 	  If you say Y here, the LEDs on your machine will be used
 	  to provide useful information about your current system status.
@@ -558,8 +634,8 @@ config LEDS
 	  system, but the driver will do nothing.
 
 config LEDS_TIMER
-	bool "Timer LED" if LEDS && (ARCH_NETWINDER || ARCH_EBSA285 || ARCH_SHARK || MACH_MAINSTONE || ARCH_CO285 || ARCH_SA1100 || ARCH_LUBBOCK || ARCH_PXA_IDP || ARCH_INTEGRATOR || ARCH_P720T || ARCH_VERSATILE_PB)
-	depends on ARCH_NETWINDER || ARCH_EBSA110 || ARCH_EBSA285 || ARCH_FTVPCI || ARCH_SHARK || ARCH_CO285 || ARCH_SA1100 || ARCH_LUBBOCK || MACH_MAINSTONE || ARCH_PXA_IDP || ARCH_INTEGRATOR || ARCH_CDB89712 || ARCH_P720T || ARCH_OMAP || ARCH_VERSATILE_PB
+	bool "Timer LED" if LEDS && (ARCH_NETWINDER || ARCH_EBSA285 || ARCH_SHARK || MACH_MAINSTONE || ARCH_CO285 || ARCH_SA1100 || ARCH_LUBBOCK || ARCH_PXA_IDP || ARCH_INTEGRATOR || ARCH_P720T || ARCH_VERSATILE || ARCH_IMX || MACH_OMAP_H2 || MACH_OMAP_PERSEUS2)
+	depends on ARCH_NETWINDER || ARCH_EBSA110 || ARCH_EBSA285 || ARCH_SHARK || ARCH_CO285 || ARCH_SA1100 || ARCH_LUBBOCK || MACH_MAINSTONE || ARCH_PXA_IDP || ARCH_INTEGRATOR || ARCH_CDB89712 || ARCH_P720T || ARCH_OMAP || ARCH_VERSATILE || ARCH_IMX
 	default y if ARCH_EBSA110
 	help
 	  If you say Y here, one of the system LEDs (the green one on the
@@ -574,7 +650,7 @@ config LEDS_TIMER
 
 config LEDS_CPU
 	bool "CPU usage LED"
-	depends on LEDS && (ARCH_NETWINDER || ARCH_EBSA285 || ARCH_SHARK || ARCH_CO285 || ARCH_SA1100 || ARCH_LUBBOCK || MACH_MAINSTONE || ARCH_PXA_IDP || ARCH_INTEGRATOR || ARCH_P720T || ARCH_VERSATILE_PB)
+	depends on LEDS && (ARCH_NETWINDER || ARCH_EBSA285 || ARCH_SHARK || ARCH_CO285 || ARCH_SA1100 || ARCH_LUBBOCK || MACH_MAINSTONE || ARCH_PXA_IDP || ARCH_INTEGRATOR || ARCH_P720T || ARCH_VERSATILE || ARCH_IMX || MACH_OMAP_H2 || MACH_OMAP_PERSEUS2)
 	help
 	  If you say Y here, the red LED will be used to give a good real
 	  time indication of CPU usage, by lighting whenever the idle task
@@ -615,7 +691,7 @@ source "drivers/acorn/block/Kconfig"
 
 source "net/Kconfig"
 
-if ARCH_CLPS7500 || ARCH_IOP3XX || ARCH_IXP4XX || ARCH_L7200 || ARCH_LH7A40X || ARCH_FTVPCI || ARCH_PXA || ARCH_RPC || ARCH_S3C2410 || ARCH_SA1100 || ARCH_SHARK || FOOTBRIDGE
+if ARCH_CLPS7500 || ARCH_IOP3XX || ARCH_IXP4XX || ARCH_L7200 || ARCH_LH7A40X || ARCH_PXA || ARCH_RPC || ARCH_S3C2410 || ARCH_SA1100 || ARCH_SHARK || FOOTBRIDGE
 source "drivers/ide/Kconfig"
 endif
 
@@ -636,7 +712,7 @@ source "drivers/input/Kconfig"
 
 source "drivers/char/Kconfig"
 
-## source "drivers/i2c/Kconfig"
+source "drivers/i2c/Kconfig"
 
 #source "drivers/l3/Kconfig"
 
@@ -654,181 +730,12 @@ source "drivers/misc/Kconfig"
 
 source "drivers/usb/Kconfig"
 
+source "drivers/mmc/Kconfig"
 
-menu "Kernel hacking"
-
-# RMK wants arm kernels compiled with frame pointers so hardwire this to y.
-# If you know what you are doing and are willing to live without stack
-# traces, you can get a slightly smaller kernel by setting this option to
-# n, but then RMK will have to kill you ;).
-config FRAME_POINTER
-	bool "Compile with frame pointers"
-	default y
-	help
-	  If you say N here, the resulting kernel will be slightly smaller and
-	  faster. However, when a problem occurs with the kernel, the
-	  information that is reported is severely limited. Most people
-	  should say Y here.
-
-config DEBUG_USER
-	bool "Verbose user fault messages"
-	help
-	  When a user program crashes due to an exception, the kernel can
-	  print a brief message explaining what the problem was. This is
-	  sometimes helpful for debugging but serves no purpose on a
-	  production system. Most people should say N here.
-
-	  In addition, you need to pass user_debug=N on the kernel command
-	  line to enable this feature.  N consists of the sum of:
-
-	      1 - undefined instruction events
-	      2 - system calls
-	      4 - invalid data aborts
-	      8 - SIGSEGV faults
-	     16 - SIGBUS faults
-
-config DEBUG_INFO
-	bool "Include GDB debugging information in kernel binary"
-	help
-	  Say Y here to include source-level debugging information in the
-	  `vmlinux' binary image. This is handy if you want to use gdb or
-	  addr2line to debug the kernel. It has no impact on the in-memory
-	  footprint of the running kernel but it can increase the amount of
-	  time and disk space needed for compilation of the kernel. If in
-	  doubt say N.
-
-config DEBUG_KERNEL
-	bool "Kernel debugging"
-	help
-	  Say Y here if you are developing drivers or trying to debug and
-	  identify kernel problems.
-
-config LL_PXA_JTAG
-	bool "Low-level printasciis over JTAG instead of serial on PXA."
-	depends on ARCH_PXA
-	help
-	  If you don't know what this is, you shouldn't compile it into your
-	  kernel. It'll make it crash.
-
-config DEBUG_SLAB
-	bool "Debug memory allocations"
-	depends on DEBUG_KERNEL
-	help
-	  Say Y here to have the kernel do limited verification on memory
-	  allocation as well as poisoning memory on free to catch use of freed
-	  memory.
-
-config MAGIC_SYSRQ
-	bool "Magic SysRq key"
-	depends on DEBUG_KERNEL
-	help
-	  If you say Y here, you will have some control over the system even
-	  if the system crashes for example during kernel debugging (e.g., you
-	  will be able to flush the buffer cache to disk, reboot the system
-	  immediately or dump some status information). This is accomplished
-	  by pressing various keys while holding SysRq (Alt+PrintScreen). It
-	  also works on a serial console (on PC hardware at least), if you
-	  send a BREAK and then within 5 seconds a command keypress. The
-	  keys are documented in <file:Documentation/sysrq.txt>. Don't say Y
-	  unless you really know what this hack does.
-
-config DEBUG_SPINLOCK
-	bool "Spinlock debugging"
-	depends on DEBUG_KERNEL
-	help
-	  Say Y here and build SMP to catch missing spinlock initialization
-	  and certain other kinds of spinlock errors commonly made.  This is
-	  best used in conjunction with the NMI watchdog so that spinlock
-	  deadlocks are also debuggable.
-
-config DEBUG_WAITQ
-	bool "Wait queue debugging"
-	depends on DEBUG_KERNEL
-
-config DEBUG_BUGVERBOSE
-	bool "Verbose BUG() reporting (adds 70K)"
-	depends on DEBUG_KERNEL
-	help
-	  Say Y here to make BUG() panics output the file name and line number
-	  of the BUG call as well as the EIP and oops trace.  This aids
-	  debugging but costs about 70-100K of memory.
-
-config DEBUG_ERRORS
-	bool "Verbose kernel error messages"
-	depends on DEBUG_KERNEL
-	help
-	  This option controls verbose debugging information which can be
-	  printed when the kernel detects an internal error. This debugging
-	  information is useful to kernel hackers when tracking down problems,
-	  but mostly meaningless to other people. It's safe to say Y unless
-	  you are concerned with the code size or don't want to see these
-	  messages.
-
-# These options are only for real kernel hackers who want to get their hands dirty. 
-config DEBUG_LL
-	bool "Kernel low-level debugging functions"
-	depends on DEBUG_KERNEL
-	help
-	  Say Y here to include definitions of printascii, printchar, printhex
-	  in the kernel.  This is helpful if you are debugging code that
-	  executes before the console is initialized.
-
-	  Be careful while using this option. With this option enabled, kernel
-	  often locks up during some MMU operations (such as iotable_init) at
-	  early stages, so make sure you disable this option after you get your
-	  kernel up to the point where you can use printk instead.
-
-config DEBUG_ICEDCC
-	bool "Kernel low-level debugging via EmbeddedICE DCC channel"
-	depends on DEBUG_LL
-	help
-	  Say Y here if you want the debug print routines to direct their
-	  output to the EmbeddedICE macrocell's DCC channel using
-	  co-processor 14. This is known to work on the ARM9 style ICE
-	  channel.
-
-	  It does include a timeout to ensure that the system does not
-	  totally freeze when there is nothing connected to read.
-
-config DEBUG_DC21285_PORT
-	bool "Kernel low-level debugging messages via footbridge serial port"
-	depends on DEBUG_LL && FOOTBRIDGE
-	help
-	  Say Y here if you want the debug print routines to direct their
-	  output to the serial port in the DC21285 (Footbridge). Saying N
-	  will cause the debug messages to appear on the first 16550
-	  serial port.
-
-config DEBUG_CLPS711X_UART2
-	bool "Kernel low-level debugging messages via UART2"
-	depends on DEBUG_LL && ARCH_CLPS711X
-	help
-	  Say Y here if you want the debug print routines to direct their
-	  output to the second serial port on these devices.  Saying N will
-	  cause the debug messages to appear on the first serial port.
-
-config DEBUG_S3C2410_PORT
-	depends on DEBUG_LL && ARCH_S3C2410
-	bool "Kernel low-level debugging messages via S3C2410 UART"
-	help
-	  Say Y here if you want debug print routines to go to one of the
-	  S3C2410 internal UARTs. The chosen UART must have been configured
-	  before it is used.
-
-config DEBUG_S3C2410_UART
-	depends on DEBUG_LL && ARCH_S3C2410
-	int "S3C2410 UART to use for low-level debug"
-	default "0"
-	help
-	  Choice for UART for kernel low-level using S3C2410 UARTS,
-	  should be between zero and two. The port must have been
-	  initalised by the boot-loader before use.
-
-endmenu
+source "arch/arm/Kconfig.debug"
 
 source "security/Kconfig"
 
 source "crypto/Kconfig"
 
 source "lib/Kconfig"
-

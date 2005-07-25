@@ -1,10 +1,11 @@
-$Id: TODO,v 1.20 2005/07/21 21:04:15 fare Exp $ -*- Fundamental -*-
+$Id: TODO,v 1.21 2005/07/25 09:09:03 fare Exp $ -*- Fundamental -*-
 
 Kernel 2.4
 * move on, dude!
 * maybe fix issues (that may reappear in 2.6?):
  * APM kills the machine if kapmd is killed. Workaround: rmmod apm before.
  * cardmgr oopses while holding the pcmcia lock if run after pivoting to rootfs
+* 802.11b works with orinoco...
 
 Kernel 2.6
 * fix the PCMCIA driver
@@ -15,13 +16,13 @@ Kernel 2.6
 * ensure that backlight control works on fb
 * get external VGA working and/or some swap-on-VRAM
 * get modem working?
-* get some spiffy 802.11g card working!
+* get some spiffy 802.11 card working!
 * play nicer with booting to/from WinCE (and autobooting from WinCE to Linux?)
 * particularly, find a way to keep (approximate?) time while rebooting.
 
 Bootdisk
-* make the initrd work with udev ???
-* move to using early-userspace on kernel 2.6 ???
+* make the initrd work with udev ??? (when 2.6 works only)
+* move to using early-userspace on kernel 2.6 ??? (when 2.6 works only)
 * have usbmgr or whatever is required for USB in the ramdiskimage
 (* have blockdev in busybox?)
 (* have pcmcia-cs from CVS?)
@@ -87,13 +88,66 @@ j820_keyb.c:
 usb:
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------
-versioning
+2.4
 
-migrate to a tool that knows about 3-way merges instead of CVS,
-and insert sources for the official kernel, the official arm kernel (if different),
-the handhelds.org kernel, the latest j720 kernel (if different), our latest release kernel
-and our experimental kernels.
+NFS swap. Since NBD swap doesn't seem to be supported anymore.
+	http://sourceforge.net/project/showfiles.php?group_id=82543
 
-DARCS? monotone? arch?
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+2.6
+
+FILES=( $(zcat /usr/src/j820/bootimage/2.6.7-my4.gz | grep '+++ my' | perl -npe 's/^\++ my3\/(\S*)\s.*$/$1/') )
+
+* merge matan's patch.
+* merge differences about sa1111 into sa1101
+	k26/arch/arm/common/sa1111.c kernel26matan/arch/arm/common/sa1111.c
+
+See articles in
+http://lwn.net/Kernel/
+http://lwn.net/Articles/driver-porting/
+http://lwn.net/Articles/2.6-kernel-api
+http://lwn.net/Articles/95312/
+http://kerneltrap.org/node/3513
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+2.4 unhh branch
+We're using 2.4.27-vrs1 instead of the handhelds.org version,
+as a basis for the kernel.
+
+* Use the latest uclibc buildroot, since the current Makefile is obsolete.
+
+* Check if the ARM stuff has all been merged into 2.4.30?
+
+* cardmgr segfaults and dies while grabbing the pcmcia lock.
+ The kernel has a null pointer dereference (actually dereference
+ of 0x100 as an octet) happening in static function do_io_probe
+ from drivers/pcmcia/rsrc_mgr.c, right after an
+ increment-by-8-and-check that only branches backwards.
+ I guess somewhere I'm feeding the pcmcia system an offset
+ to a sa1101 register instead of the address of said register.
+ Maybe some macro somewhere doesn't do the right thing?
+
+* To locate the bug, we may try to merge the vrs1 kernel
+ with parts of the hh kernel, until we nail the problem... GAH!
+
+* USB is disabled for the moment.
+ Getting the USB to compile with 2.4.27-vrs1 entails to
+ backport some pci layer emulation from sa1111 to sa1101 or so.
+ Does anyone understand whether I should adapt the sa1111 code
+ to sa1101, or leave an essentially blank template,
+ or do something altogether different? Would it actually work
+ to just modify existing sa1111 code into sa11x1 code, with #ifdef
+ surrounding the sa1101 or sa1111 code (supposing you never
+ compile a kernel simultaneously for sa1101 and sa1111 anyway)?
+
+------>8------>8------>8------>8------>8------>8------>8------>8------>8------
+2.6 unhh branch
+It compiles for me, but crashes even before it reaches the framebuffer.
+Gotta get my serial cable before I debug more.
+
+
+K26HH=/usr/src/j820/bootimage/linux/upstream/kernel26
+K26U=/usr/src/j820/bootimage-unhh/linux/upstream/kernel26
+K26=/usr/src/j820/bootimage-unhh/linux/kernel26
 
 ------>8------>8------>8------>8------>8------>8------>8------>8------>8------

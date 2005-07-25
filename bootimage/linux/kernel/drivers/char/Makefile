@@ -17,30 +17,29 @@ FONTMAPFILE = cp437.uni
 O_TARGET := char.o
 
 obj-y	 += mem.o tty_io.o n_tty.o tty_ioctl.o raw.o pty.o misc.o random.o
-
-obj-y += mm.o
+obj-y	 += mm.o
 
 # All of the (potential) objects that export symbols.
 # This list comes from 'grep -l EXPORT_SYMBOL *.[hc]'.
 
-export-objs	:=	busmouse.o console.o keyboard.o sysrq.o \
+export-objs     :=	busmouse.o console.o keyboard.o sysrq.o \
 			misc.o pty.o random.o selection.o serial.o \
 			sonypi.o tty_io.o tty_ioctl.o generic_serial.o \
-			au1000_gpio.o axim_ts.o
-
+			au1000_gpio.o vac-serial.o hp_psaux.o nvram.o \
+			scx200.o fetchop.o
 
 mod-subdirs	:=	joystick ftape drm drm-4.0 pcmcia
 
-list-multi	:=	
+list-multi	:=
 
-KEYMAP	 =defkeymap.o
-KEYBD	 =pc_keyb.o
-CONSOLE	 =console.o
-SERIAL	 =serial.o
+KEYMAP   =defkeymap.o
+KEYBD    =pc_keyb.o
+CONSOLE  =console.o
+SERIAL   =serial.o
 
 ifeq ($(ARCH),s390)
   KEYMAP   =
-  KEYBD	   =
+  KEYBD    =
   CONSOLE  =
   SERIAL   =
 endif
@@ -49,11 +48,15 @@ ifeq ($(ARCH),mips)
   ifneq ($(CONFIG_PC_KEYB),y)
     KEYBD    =
   endif
+  ifeq ($(CONFIG_VR41XX_KIU),y)
+    KEYMAP   =
+    KEYBD    = vr41xx_keyb.o
+  endif
 endif
 
 ifeq ($(ARCH),s390x)
   KEYMAP   =
-  KEYBD	   =
+  KEYBD    =
   CONSOLE  =
   SERIAL   =
 endif
@@ -69,14 +72,43 @@ ifeq ($(ARCH),m68k)
    SERIAL   =
 endif
 
+ifeq ($(ARCH),parisc)
+   ifdef CONFIG_GSC_PS2
+      KEYBD   = hp_psaux.o hp_keyb.o
+   else
+      KEYBD   =
+   endif
+   ifdef CONFIG_SERIAL_MUX
+      CONSOLE += mux.o
+   endif
+   ifdef CONFIG_PDC_CONSOLE
+      CONSOLE += pdc_console.o
+   endif
+endif
+
 ifdef CONFIG_Q40
   KEYBD += q40_keyb.o
   SERIAL = serial.o
 endif
 
+ifdef CONFIG_APOLLO
+  KEYBD += dn_keyb.o
+endif
+
+ifeq ($(ARCH),parisc)
+   ifdef CONFIG_GSC_PS2
+      KEYBD   = hp_psaux.o hp_keyb.o
+   else
+      KEYBD   =
+   endif
+   ifdef CONFIG_PDC_CONSOLE
+      CONSOLE += pdc_console.o
+   endif
+endif
+
 ifeq ($(ARCH),arm)
   KEYMAP     :=
-  KEYBD	     :=
+  KEYBD      :=
   ifeq ($(CONFIG_PC_KEYMAP),y)
     KEYMAP   := defkeymap.o
   endif
@@ -86,17 +118,16 @@ ifeq ($(ARCH),arm)
   ifeq ($(CONFIG_KMI_KEYB),y)
     KEYBD    += amba_kmi_keyb.o
   endif
-  ifeq ($(CONFIG_S3C2410_KEYB),y)
-    KEYBD    += s3c2410_kbd.o
-    KEYMAP   := defkeymap-s3c2410.o
-  endif
   ifeq ($(CONFIG_SA1111),y)
     ifeq ($(CONFIG_SA1100_JORNADA720),y)
       KEYBD    = jornada720_keyb.o
       KEYMAP   = jornada720map.o
     else
-      KEYBD    = sa1111_keyb.o
+      KEYBD    += sa1111_keyb.o
     endif
+  endif
+  ifeq ($(CONFIG_SA1100_JORNADA820),y)
+    KEYBD    += j820_keyb.o
   endif
   ifeq ($(CONFIG_ARCH_EDB7211),y)
     KEYBD    += edb7211_keyb.o
@@ -112,57 +143,50 @@ ifeq ($(ARCH),arm)
   ifeq ($(CONFIG_SA1100_CERF_CPLD),y)
     KEYBD    += cerf_keyb.o
   endif
-  ifeq ($(CONFIG_IPAQ_HANDHELD),y)
-    KEYBD    += h3600_keyboard.o
-  endif
-  ifeq ($(CONFIG_ARCH_AXIM),y)
-    KEYBD    += h3600_keyboard.o
-  endif
   ifeq ($(CONFIG_ARCH_FORTUNET),y)
     KEYMAP   := defkeymap.o
   endif
-  ifeq ($(CONFIG_SA1100_JORNADA820),y)
-    KEYBD    += j820_keyb.o
+  ifeq ($(CONFIG_ARCH_GUIDEA07),y)
+    KEYMAP   := defkeymap.o
   endif
 endif
 
 ifeq ($(ARCH),sh)
   KEYMAP   =
-  KEYBD	   =
+  KEYBD    =
   CONSOLE  =
   ifeq ($(CONFIG_SH_HP600),y)
   KEYMAP   = defkeymap.o
-  KEYBD	   = scan_keyb.o hp600_keyb.o
+  KEYBD    = scan_keyb.o hp600_keyb.o
   CONSOLE  = console.o
   endif
   ifeq ($(CONFIG_SH_DMIDA),y)
   # DMIDA does not connect the HD64465 PS/2 keyboard port
   # but we allow for USB keyboards to be plugged in.
   KEYMAP   = defkeymap.o
-  KEYBD	   = # hd64465_keyb.o pc_keyb.o
+  KEYBD    = # hd64465_keyb.o pc_keyb.o
   CONSOLE  = console.o
   endif
   ifeq ($(CONFIG_SH_EC3104),y)
   KEYMAP   = defkeymap.o
-  KEYBD	   = ec3104_keyb.o
+  KEYBD    = ec3104_keyb.o
   CONSOLE  = console.o
   endif
   ifeq ($(CONFIG_SH_DREAMCAST),y)
   KEYMAP   = defkeymap.o
-  KEYBD	   =
+  KEYBD    =
   CONSOLE  = console.o
   endif
 endif
 
 ifeq ($(CONFIG_DECSTATION),y)
   KEYMAP   =
-  KEYBD	   =
-  SERIAL   = decserial.o
+  KEYBD    =
 endif
 
 ifeq ($(CONFIG_BAGET_MIPS),y)
-  KEYBD	   =
-  SERIAL   =
+  KEYBD    =
+  SERIAL   = vac-serial.o
 endif
 
 ifeq ($(CONFIG_NINO),y)
@@ -174,7 +198,7 @@ ifneq ($(CONFIG_SUN_SERIAL),)
 endif
 
 ifeq ($(CONFIG_QTRONIX_KEYBOARD),y)
-  KEYBD	   = qtronix.o
+  KEYBD    = qtronix.o
   KEYMAP   = qtronixmap.o
 endif
 
@@ -184,12 +208,11 @@ endif
 
 obj-$(CONFIG_VT) += vt.o vc_screen.o consolemap.o consolemap_deftbl.o $(CONSOLE) selection.o
 obj-$(CONFIG_SERIAL) += $(SERIAL)
+obj-$(CONFIG_PARPORT_SERIAL) += parport_serial.o
 obj-$(CONFIG_SERIAL_HCDP) += hcdp_serial.o
-obj-$(CONFIG_TS_AU1000_ADS7846) += au1000_ts.o
-obj-$(CONFIG_TOUCHSCREEN_S3C2410) += s3c2410_ts.o
+obj-$(CONFIG_TS_AU1X00_ADS7846) += au1000_ts.o
+obj-$(CONFIG_SERIAL_DEC) += decserial.o
 obj-$(CONFIG_TOUCHSCREEN_ANAKIN) += anakin_ts.o
-obj-$(CONFIG_AXIM_TS) += axim_ts.o
-obj-$(CONFIG_AXIM_KEY) += axim_key.o
 
 ifndef CONFIG_SUN_KEYBOARD
   obj-$(CONFIG_VT) += keyboard.o $(KEYMAP) $(KEYBD)
@@ -197,6 +220,7 @@ else
   obj-$(CONFIG_PCI) += keyboard.o $(KEYMAP)
 endif
 
+obj-$(CONFIG_HIL) += hp_keyb.o
 obj-$(CONFIG_MAGIC_SYSRQ) += sysrq.o
 obj-$(CONFIG_ATARI_DSP56K) += dsp56k.o
 obj-$(CONFIG_ROCKETPORT) += rocket.o
@@ -213,6 +237,7 @@ obj-$(CONFIG_RISCOM8) += riscom8.o
 obj-$(CONFIG_ISI) += isicom.o
 obj-$(CONFIG_ESPSERIAL) += esp.o
 obj-$(CONFIG_SYNCLINK) += synclink.o
+obj-$(CONFIG_SYNCLINKMP) += synclinkmp.o
 obj-$(CONFIG_N_HDLC) += n_hdlc.o
 obj-$(CONFIG_SPECIALIX) += specialix.o
 obj-$(CONFIG_AMIGA_BUILTIN_SERIAL) += amiserial.o
@@ -224,8 +249,13 @@ obj-$(CONFIG_SERIAL167) += serial167.o
 obj-$(CONFIG_MVME147_SCC) += generic_serial.o vme_scc.o
 obj-$(CONFIG_MVME162_SCC) += generic_serial.o vme_scc.o
 obj-$(CONFIG_BVME6000_SCC) += generic_serial.o vme_scc.o
+obj-$(CONFIG_HVC_CONSOLE) += hvc_console.o
 obj-$(CONFIG_SERIAL_TX3912) += generic_serial.o serial_tx3912.o
 obj-$(CONFIG_TXX927_SERIAL) += serial_txx927.o
+obj-$(CONFIG_SERIAL_TXX9) += generic_serial.o serial_txx9.o
+obj-$(CONFIG_IP22_SERIAL) += sgiserial.o
+obj-$(CONFIG_AU1X00_UART) += au1x00-serial.o
+obj-$(CONFIG_SGI_L1_SERIAL) += sn_serial.o
 
 subdir-$(CONFIG_RIO) += rio
 subdir-$(CONFIG_INPUT) += joystick
@@ -233,11 +263,14 @@ subdir-$(CONFIG_INPUT) += joystick
 obj-$(CONFIG_ATIXL_BUSMOUSE) += atixlmouse.o
 obj-$(CONFIG_LOGIBUSMOUSE) += logibusmouse.o
 obj-$(CONFIG_PRINTER) += lp.o
+obj-$(CONFIG_TIPAR) += tipar.o
+obj-$(CONFIG_OBMOUSE) += obmouse.o
 
 ifeq ($(CONFIG_INPUT),y)
 obj-y += joystick/js.o
 endif
 
+obj-$(CONFIG_FETCHOP) += fetchop.o
 obj-$(CONFIG_BUSMOUSE) += busmouse.o
 obj-$(CONFIG_DTLK) += dtlk.o
 obj-$(CONFIG_R3964) += n_r3964.o
@@ -251,8 +284,11 @@ obj-$(CONFIG_ADBMOUSE) += adbmouse.o
 obj-$(CONFIG_PC110_PAD) += pc110pad.o
 obj-$(CONFIG_MK712_MOUSE) += mk712.o
 obj-$(CONFIG_RTC) += rtc.o
+obj-$(CONFIG_GEN_RTC) += genrtc.o
 obj-$(CONFIG_EFI_RTC) += efirtc.o
-obj-$(CONFIG_S3C2410_RTC) += s3c-rtc.o
+obj-$(CONFIG_SGI_DS1286) += ds1286.o
+obj-$(CONFIG_MIPS_RTC) += mips_rtc.o
+obj-$(CONFIG_SGI_IP27_RTC) += ip27-rtc.o
 obj-$(CONFIG_SA1100_RTC) += sa1100-rtc.o
 obj-$(CONFIG_PXA_RTC) += sa1100-rtc.o
 obj-$(CONFIG_OMAHA_RTC) += omaha-rtc.o
@@ -262,11 +298,17 @@ endif
 obj-$(CONFIG_TOSHIBA) += toshiba.o
 obj-$(CONFIG_I8K) += i8k.o
 obj-$(CONFIG_DS1620) += ds1620.o
+obj-$(CONFIG_DS1742) += ds1742.o
 obj-$(CONFIG_INTEL_RNG) += i810_rng.o
 obj-$(CONFIG_AMD_RNG) += amd768_rng.o
+obj-$(CONFIG_HW_RANDOM) += hw_random.o
+obj-$(CONFIG_AMD_PM768) += amd76x_pm.o
+obj-$(CONFIG_BRIQ_PANEL) += briq_panel.o
 
 obj-$(CONFIG_ITE_GPIO) += ite_gpio.o
-obj-$(CONFIG_AU1000_GPIO) += au1000_gpio.o
+obj-$(CONFIG_AU1X00_GPIO) += au1000_gpio.o
+obj-$(CONFIG_AU1X00_USB_TTY) += au1000_usbtty.o
+obj-$(CONFIG_AU1X00_USB_RAW) += au1000_usbraw.o
 obj-$(CONFIG_COBALT_LCD) += lcd.o
 
 obj-$(CONFIG_QIC02_TAPE) += tpqic02.o
@@ -278,7 +320,7 @@ subdir-$(CONFIG_PCMCIA) += pcmcia
 subdir-$(CONFIG_AGP) += agp
 
 ifeq ($(CONFIG_FTAPE),y)
-obj-y	    += ftape/ftape.o
+obj-y       += ftape/ftape.o
 endif
 
 obj-$(CONFIG_H8) += h8.o
@@ -286,6 +328,8 @@ obj-$(CONFIG_PPDEV) += ppdev.o
 obj-$(CONFIG_DZ) += dz.o
 obj-$(CONFIG_NWBUTTON) += nwbutton.o
 obj-$(CONFIG_NWFLASH) += nwflash.o
+obj-$(CONFIG_SCx200) += scx200.o
+obj-$(CONFIG_SCx200_GPIO) += scx200_gpio.o
 obj-$(CONFIG_SA1100_CONSUS) += consusbutton.o
 
 # Only one watchdog can succeed. We probe the hardware watchdog
@@ -310,13 +354,17 @@ obj-$(CONFIG_MACHZ_WDT) += machzwd.o
 obj-$(CONFIG_SH_WDT) += shwdt.o
 obj-$(CONFIG_EUROTECH_WDT) += eurotechwdt.o
 obj-$(CONFIG_ALIM7101_WDT) += alim7101_wdt.o
+obj-$(CONFIG_ALIM1535_WDT) += alim1535d_wdt.o
 obj-$(CONFIG_INDYDOG) += indydog.o
 obj-$(CONFIG_SC1200_WDT) += sc1200wdt.o
+obj-$(CONFIG_SCx200_WDT) += scx200_wdt.o
 obj-$(CONFIG_WAFER_WDT) += wafer5823wdt.o
 obj-$(CONFIG_SA1100_WATCHDOG) += sa1100_wdt.o
-obj-$(CONFIG_PXA_WATCHDOG) += sa1100_wdt.o
+obj-$(CONFIG_EPXA_WATCHDOG) += epxa_wdt.o
 obj-$(CONFIG_OMAHA_WATCHDOG) += omaha_wdt.o
 obj-$(CONFIG_SOFT_WATCHDOG) += softdog.o
+obj-$(CONFIG_INDYDOG) += indydog.o
+obj-$(CONFIG_8xx_WDT) += mpc8xx_wdt.o
 
 # I2C char devices
 obj-$(CONFIG_I2C_DS1307) += ds1307.o
@@ -326,26 +374,15 @@ ifeq ($(CONFIG_MWAVE),y)
   obj-y += mwave/mwave.o
 endif
 
-obj-$(CONFIG_NEWTONKBD) += newtonkbd.o
-
-export-objs += h3600_backpaq_fpga.o
-obj-$(CONFIG_TOUCHSCREEN_H3600) += h3600_ts.o
-obj-$(CONFIG_H3600_STOWAWAY) += h3600_stowaway.o
-obj-$(CONFIG_H3800_MICROKBD) += h3600_microkbd.o
-obj-$(CONFIG_H3600_BACKPAQ_FPGA) += h3600_backpaq_fpga.o
-obj-$(CONFIG_H3600_BACKPAQ_ACCEL) += h3600_backpaq_accel.o
-obj-$(CONFIG_H3600_BACKPAQ_GASGAUGE) += h3600_backpaq_gasgauge.o
-obj-$(CONFIG_H3600_BACKPAQ_SRAM) += h3600_backpaq_sram.o
-obj-$(CONFIG_SA1100_LIRC) += lirc_sir.o
-obj-$(CONFIG_SA1100_PROFILER) += profiler.o
-obj-$(CONFIG_SA1100_JORNADA56X) += jornada56x_ts.o
-
-obj-$(CONFIG_H5400_BUZZER) += h5400_buzzer.o
-
 ifeq ($(CONFIG_ARCH_ACORN),y)
 mod-subdirs	+= ../acorn/char
 subdir-y	+= ../acorn/char
 obj-y		+= ../acorn/char/acorn-char.o
+endif
+
+subdir-$(CONFIG_IPMI_HANDLER) += ipmi
+ifeq ($(CONFIG_IPMI_HANDLER),y)
+  obj-y += ipmi/ipmi.o
 endif
 
 include $(TOPDIR)/Rules.make
@@ -361,9 +398,6 @@ consolemap_deftbl.c: $(FONTMAPFILE) conmakehash
 consolemap_deftbl.o: consolemap_deftbl.c $(TOPDIR)/include/linux/types.h
 
 .DELETE_ON_ERROR:
-
-defkeymap-s3c2410.c: defkeymap-s3c2410.map
-	set -e ; loadkeys --mktable $< | sed -e 's/^static *//' > $@
 
 defkeymap.c: defkeymap.map
 	set -e ; loadkeys --mktable $< | sed -e 's/^static *//' > $@
