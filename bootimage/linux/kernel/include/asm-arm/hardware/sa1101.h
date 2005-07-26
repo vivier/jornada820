@@ -31,7 +31,7 @@ extern int sa1101_pcmcia_shutdown(void);
 
 #undef readl
 #undef writel
-#define readl(a) sa1101_readreg(_SA1101( _USB( 0x100 * (int)(a) )))
-#define writel(d, a) sa1101_writereg(d, _SA1101( _USB( 0x100 * (int)(a) )))
+#define readl(a) sa1101_readreg(SA1101_p2v( _USB( 0x100 * (int)(a) )))
+#define writel(d, a) sa1101_writereg(d, SA1101_p2v( _USB( 0x100 * (int)(a) )))
 
 #endif  /* _ASM_ARCH_SA1101 */
