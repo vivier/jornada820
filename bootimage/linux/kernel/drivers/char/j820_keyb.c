@@ -47,22 +47,22 @@
 
 /* I fixed George's keymap. Also mapped Power to F12, Fn to AltGr -- fare */
 static char kbmap[128] = {
-/* 00-07: */   0, 59,  2, 16, 30, 44, 15,  0,
-/* 08-0F: */   0, 60,  3, 17, 31, 45, 42,  0,
-/* 10-17: */   0, 61,  4, 18, 32, 46,  0, 56,
-/* 18-1F: */ 126, 62,  5, 19, 33, 47,  0, 41,
-/* 20-27: */   0, 63,  6, 20, 34, 48,  0,  0,
-/* 28-2F: */  57, 64,  7, 21, 35, 49,  0,  0,
-/* 30-37: */ 100, 65,  8, 22, 36, 50, 51,  0,
-/* 38-3F: */  83, 66,  9, 23, 37, 39, 52,  0,
-/* 40-47: */   0, 67, 10, 24, 38, 40, 53,103,
-/* 48-4F: */ 108, 68, 11, 25, 26, 27, 28,105,
-/* 50-57: */ 106, 87, 12, 13, 14, 43, 54,  0,
-/* 58-5F: */   0,  0,  0,  0,  0,  0,  0,  0,
-/* 60-67: */   1,  0,  0,  0,  0,  0,  0,  0,
-/* 68-6F: */  29,  0,  0,  0,  0,  0,  0,  0,
-/* 70-77: */  88,  0,  0,  0,  0,  0,  0,  0,
-/* 78-7F: */   0,  0,  0,  0,  0,  0,  0,  0
+/*00-07:*/ KEY_RESERVED, KEY_F1      , KEY_1       , KEY_Q       , KEY_A        , KEY_Z         , KEY_TAB       , KEY_RESERVED,
+/*08-0F:*/ KEY_RESERVED, KEY_F2      , KEY_2       , KEY_W       , KEY_S        , KEY_X         , KEY_LEFTSHIFT , KEY_RESERVED,
+/*10-17:*/ KEY_RESERVED, KEY_F3      , KEY_3       , KEY_E       , KEY_D        , KEY_C         , KEY_RESERVED  , KEY_LEFTALT,
+/*18-1F:*/ KEY_LEFTMETA, KEY_F4      , KEY_4       , KEY_R       , KEY_F        , KEY_V         , KEY_RESERVED  , KEY_GRAVE,
+/*20-27:*/ KEY_RESERVED, KEY_F5      , KEY_5       , KEY_T       , KEY_G        , KEY_B         , KEY_RESERVED  , KEY_RESERVED,
+/*28-2F:*/ KEY_SPACE   , KEY_F6      , KEY_6       , KEY_Y       , KEY_H        , KEY_N         , KEY_RESERVED  , KEY_RESERVED,
+/*30-37:*/ KEY_RIGHTALT, KEY_F7      , KEY_7       , KEY_U       , KEY_J        , KEY_M         , KEY_COMMA     , KEY_RESERVED,
+/*38-3F:*/ KEY_DELETE  , KEY_F8      , KEY_8       , KEY_I       , KEY_K        , KEY_SEMICOLON , KEY_DOT       , KEY_RESERVED,
+/*40-47:*/ KEY_RESERVED, KEY_F9      , KEY_9       , KEY_O       , KEY_L        , KEY_APOSTROPHE, KEY_SLASH     , KEY_UP,
+/*48-4F:*/ KEY_DOWN    , KEY_F10     , KEY_0       , KEY_P       , KEY_LEFTBRACE, KEY_RIGHTBRACE, KEY_ENTER     , KEY_LEFT,
+/*50-57:*/ KEY_RIGHT   , KEY_SYSRQ   , KEY_MINUS   , KEY_EQUAL   , KEY_BACKSPACE, KEY_BACKSLASH , KEY_RIGHTSHIFT, KEY_RESERVED,
+/*58-5F:*/ KEY_RESERVED, KEY_RESERVED, KEY_RESERVED, KEY_RESERVED, KEY_RESERVED , KEY_RESERVED  , KEY_RESERVED  , KEY_RESERVED,
+/*60-67:*/ KEY_ESC     , KEY_RESERVED, KEY_RESERVED, KEY_RESERVED, KEY_RESERVED , KEY_RESERVED  , KEY_RESERVED  , KEY_RESERVED,
+/*68-6F:*/ KEY_LEFTCTRL, KEY_RESERVED, KEY_RESERVED, KEY_RESERVED, KEY_RESERVED , KEY_RESERVED  , KEY_RESERVED  , KEY_RESERVED,
+/*70-77:*/ KEY_POWER   , KEY_RESERVED, KEY_RESERVED, KEY_RESERVED, KEY_RESERVED , KEY_RESERVED  , KEY_RESERVED  , KEY_RESERVED,
+/*78-7F:*/ KEY_RESERVED, KEY_RESERVED, KEY_RESERVED, KEY_RESERVED, KEY_RESERVED , KEY_RESERVED  , KEY_RESERVED  , KEY_RESERVED
 };
 
 int j820_kbd_setkeycode(unsigned int scancode, unsigned int keycode)
