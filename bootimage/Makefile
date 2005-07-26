@@ -339,8 +339,16 @@ ${KBUILDDIR26}/target/lib/modules: force
 
 # ------------------- build ramdisk image ----------------------------------
 
-ramdisk: modules
+ramdisk: modules do-ramdisk
+do-ramdisk:
 	${MAKE} -C ramdisk TARGET=${TARGET} OS=${OS} ramdisk
 
-ramdisk26: modules26
+ramdisk26: modules26 do-ramdisk26
+do-ramdisk26:
 	${MAKE} -C ramdisk TARGET=${TARGET} OS=${OS} ramdisk26
+
+# ---------------- shortcuts used during development -----------------------
+
+just-j820-from-modules: \
+	do-modules-compilation do-modules-tarbz2 \
+	do-ramdisk just-j820
