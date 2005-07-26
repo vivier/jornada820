@@ -12,6 +12,7 @@
 #include <linux/interrupt.h>
 #include <linux/kbd_ll.h>
 #include <linux/init.h>
+#include <linux/input.h>
 #include <linux/delay.h>
 #include <linux/kbd_kern.h>
 #include <linux/pc_keyb.h>
