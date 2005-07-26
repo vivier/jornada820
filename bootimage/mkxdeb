@@ -53,6 +53,8 @@ dpkg
 dialog apt # aptitude
 localeconf localepurge locales localization-config
 
+sudo m4
+
 procps psmisc
 
 pump
@@ -68,7 +70,8 @@ pcmcia-cs wireless-tools
 )
 CONSOLE_PACKAGES=(
 console-tools
-fbset fbiterm
+fbset
+# fbiterm
 # fbi
 # fbgetty
 
