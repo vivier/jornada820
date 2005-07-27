@@ -38,7 +38,7 @@ ARM26PATCH_URL	= ${KERNEL_FTP}/v2.6/${ARM26PATCH}
 
 BUSYBOXVER		= 1.00
 BUSYBOXTAR		= busybox-${BUSYBOXVER}.tar.bz2
-BUSYBOXDIR		= ramdisk/busybox/busybox-${BUSYBOXVER}
+BUSYBOXDIR		= ramdisk/busybox/busybox
 
 PCMCIAVER		= 3.2.8
 PCMCIATAR		= pcmcia-cs-${PCMCIAVER}.tar.gz
@@ -78,10 +78,6 @@ RAMDISKIMAGE		= ${TOPDIR}/ramdisk/ramdiskimage.gz
 RAMDISKIMAGE26		= ${TOPDIR}/ramdisk/ramdiskimage26.gz
 
 # -------------- default targets -------------------------------------------
-GOALS = j820 j820-26
-DIRT = \
-	ramdisk/ramdiskimage* \
-	ramdisk/cmdfile ramdisk/cmdfile26 ramdisk/modules*.tar.bz2 \
 
 help::
 	@$${PAGER:-cat} HELP
@@ -259,7 +255,10 @@ uclibc-distclean:
 
 # ------------------ build the boot image ----------------------------------
 
-j820: config depend ramdisk do-j820
+j820: all-configuration all-compilation
+all-configuration: config depend
+all-compilation: ramdisk do-j820
+
 do-j820:
 	${MAKE} -C ${KBUILDDIR} \
 	    ARCH=arm \
@@ -276,6 +275,15 @@ kernel-compilation:
 	    INSTALL_MOD_PATH=${MODDIR} \
 	    DEPMOD=true \
 	    zImage modules modules_install
+
+modules-compilation:
+	mkdir -p ${MODDIR} && \
+	${MAKE} -C ${KBUILDDIR} \
+		ARCH=arm \
+		CROSS_COMPILE=${CROSS_COMPILE} \
+		INSTALL_MOD_PATH=${MODDIR} \
+		DEPMOD=true \
+		modules modules_install
 
 all-kernel-compilation: kbuildtree config depend kernel-compilation
 
@@ -305,6 +313,14 @@ do-j820-26:
 	    zImage j820
 	cp ${KBUILDDIR26}/arch/arm/boot/j820/j820 j820-26
 
+modules26-compilation:
+	mkdir -p ${MODDIR26} && \
+	${MAKE} -C ${KBUILDDIR26} \
+		ARCH=arm \
+		CROSS_COMPILE=${CROSS_COMPILE} \
+		INSTALL_MOD_PATH=${MODDIR26} \
+		DEPMOD=true \
+		modules modules_install
 
 # ---------------- Initial configuration and dependences -------------------
 
@@ -353,43 +369,25 @@ ${KBUILDDIR26}/.config: force
 	( cmp -s .config arch/arm/configs/jornada820_defconfig || \
 	cat .config > arch/arm/configs/jornada820_defconfig )
 
-# ------------------- build loadable modules -------------------------------
+# ------------------- package loadable modules -----------------------------
 
 modules: config depend do-modules
 
-do-modules: do-modules-compilation do-modules-tarbz2
+do-modules: modules-compilation modules-tarbz2
 
-do-modules-tarbz2:
+modules-tarbz2:
 	cd ${KBUILDDIR}/target && \
 	tar -jcf modules.tar.bz2 --owner 0 --group 0 lib/modules/ && \
 	ln -f modules.tar.bz2 ${TOPDIR}/ramdisk/modules.tar.bz2
-
-do-modules-compilation:
-	mkdir -p ${MODDIR} && \
-	${MAKE} -C ${KBUILDDIR} \
-		ARCH=arm \
-		CROSS_COMPILE=${CROSS_COMPILE} \
-		INSTALL_MOD_PATH=${MODDIR} \
-		DEPMOD=true \
-		modules modules_install
 
 modules26: config26 do-modules26
 
 do-modules26: ramdisk/modules26.tar.bz2
 
-ramdisk/modules26.tar.bz2: ${KBUILDDIR26}/target/lib/modules
+modules26-tarbz2:
 	cd ${KBUILDDIR26}/target && \
 	tar -jcf modules.tar.bz2 --owner 0 --group 0 lib/modules && \
 	ln -f modules.tar.bz2 ${TOPDIR}/ramdisk/modules26.tar.bz2
-
-${KBUILDDIR26}/target/lib/modules: force
-	mkdir -p ${MODDIR26} && \
-	${MAKE} -C ${KBUILDDIR26} \
-		ARCH=arm \
-		CROSS_COMPILE=${CROSS_COMPILE} \
-		INSTALL_MOD_PATH=${MODDIR26} \
-		DEPMOD=true \
-		modules modules_install
 
 # ------------------- build ramdisk image ----------------------------------
 
@@ -468,12 +466,15 @@ ramdisk/busybox/${BUSYBOXTAR}:
 	cd ramdisk/busybox/ && \
 	wget http://busybox.net/downloads/${BUSYBOXTAR}
 
-busybox-dir: ramdisk/busybox/busybox-dir
-ramdisk/busybox/busybox-dir: ramdisk/busybox/${BUSYBOXTAR}
-	tar jxfC ${BUSYBOXTAR} ramdisk/busybox/ &&
-	touch $@
+busybox-dir:
+	[ -d ${BUSYBOXDIR} ] || make do-busybox-dir
 
-# If you use the latest busybox, then BUSYBOXDIR above should be ramdisk/busybox/busybox
+do-busybox-dir: ramdisk/busybox/${BUSYBOXTAR}
+	cd ramdisk/busybox/ && \
+	rm -rf busybox ; \
+	tar jxf ${BUSYBOXTAR} && \
+	mv busybox-${BUSYBOXVER} busybox
+
 busybox-svn:
 	cd ramdisk/busybox/ && \
 	svn co svn://busybox.net/trunk/busybox
@@ -494,14 +495,14 @@ ramdisk/busybox/busybox.bin: busybox-dir busybox-compile
 
 pcmcia:	pcmcia-install
 pcmcia-install: pcmcia-dir cardmgr cardctl
-pcmcia-dir: ramdisk/pcmcia/pcmcia-dir
+pcmcia-dir:
+	[ -d ${PCMCIADIR} ] || make do-pcmcia-dir
 pcmcia-tar: ramdisk/pcmcia/${PCMCIATAR}
 ramdisk/pcmcia/${PCMCIATAR}:
 	cd ramdisk/pcmcia/ && \
 	wget http://pcmcia-cs.sourceforge.net/ftp/${PCMCIATAR}
-ramdisk/pcmcia/pcmcia-dir: ramdisk/pcmcia/${PCMCIATAR}
-	tar zxfC ${PCMCIATAR} ramdisk/pcmcia/ && \
-	touch $@
+do-pcmcia-dir: ramdisk/pcmcia/${PCMCIATAR}
+	tar zxfC ${PCMCIATAR} ramdisk/pcmcia/
 
 PCMCIA_CFLAGS	= -Os -static -s \
 	-I../include/static -I../include -I../modules \
@@ -518,13 +519,13 @@ pcmcia-compile:
 	$(CROSS_GCC) $(PCMCIA_CFLAGS) cardmgr.c lex_config.c yacc_config.c -o cardmgr && \
 	cp cardctl cardmgr ../..
 
-# ---------------- shortcuts used during development -----------------------
-
-just-j820-from-modules: \
-	do-modules-compilation do-modules-tarbz2 \
-	do-ramdisk just-j820
-
 # ----------------------- cleaning up --------------------------------------
+GOALS = j820 j820-26
+DIRT = \
+	ramdisk/ramdiskimage* \
+	ramdisk/cmdfile ramdisk/cmdfile26 ramdisk/modules*.tar.bz2 \
+OLDCRUFT = \
+	ramdisk/*/*-dir busybox/busybox-1.00 busybox/src
 
 localclean::
 	-${RM} ${DIRT}
@@ -544,12 +545,18 @@ pcmciaclean:
 # remove everything but the expensively downloaded files in upstream/
 mrproper:: localclean
 	-${RM} -rf linux/build linux/upstream/*/ \
-		${BUSYBOXDIR} ramdisk/busybox/busybox-dir \
-		${PCMCIADIR} ramdisk/pcmcia/pcmcia-dir
+		${BUSYBOXDIR} ${PCMCIADIR}
 
 nocruft:
-	-${RM} `find . -name '*~' -o -name '.#*'`
+	-${RM} -rf `find . -name '*~' -o -name '.#*'` \
+		$(OLDCRUFT)
 
 distclean:: mrproper nocruft
 	-${RM} -rf ${BUILDROOT} linux/upstream \
 		ramdisk/*/*.tar.* \
+
+# ---------------- shortcuts used during development -----------------------
+
+just-j820-from-modules: \
+	modules-compilation modules-tarbz2 \
+	do-ramdisk just-j820
