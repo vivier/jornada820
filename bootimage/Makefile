@@ -192,7 +192,11 @@ uclibc-config: uclibc-setup
 	make -C uclibc/buildroot oldconfig
 
 toolchain: uclibc-config
-	make -C uclibc/buildroot uclibc
+	# Is there a target we can give to uclibc's buildroot to only
+	# compile the toolchain and none of the rest of the runtime,
+	# in case we want a toolchain now and a runtime later?
+	# "toolchain" or "uclibc" doesn't work, as of svn revision 10929
+	make -C uclibc/buildroot
 
 everything: toolchain
 	make -C uclibc/buildroot
