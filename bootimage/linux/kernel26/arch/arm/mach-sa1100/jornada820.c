@@ -4,7 +4,7 @@
  * 2004/01/22 George Almasi (galmasi@optonline.net)
  * Modelled after the Jornada 720 code.
  * 
- * $Id: jornada820.c,v 1.13 2005/07/25 09:09:13 fare Exp $
+ * $Id: jornada820.c,v 1.14 2005/07/27 06:09:32 fare Exp $
  */
 
 #include <linux/init.h>
@@ -15,6 +15,8 @@
 #include <asm/mach/serial_sa1100.h>
 #include <asm/irq.h>
 #include <asm/hardware.h>
+#include <asm/hardware/sa1101.h>
+#include <asm/hardware/ssp.h>
 #include <asm/delay.h>
 #include <linux/device.h>
 #include "generic.h"

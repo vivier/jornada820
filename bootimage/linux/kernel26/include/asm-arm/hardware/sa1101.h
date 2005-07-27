@@ -1,6 +1,6 @@
 /*
  * File created for Jornada 820... (?)
- * $Id: sa1101.h,v 1.8 2004/07/10 19:41:13 fare Exp $
+ * $Id: sa1101.h,v 1.9 2005/07/27 06:09:35 fare Exp $
  */
 #ifndef _ASM_ARCH_SA1101
 #define _ASM_ARCH_SA1101
@@ -14,7 +14,9 @@
 
 /* TODO: driver interface */
 /*------------------------*/
-extern int sa1101_probe(struct device *dev);
+//extern int sa1101_probe(struct device *dev);
+extern int sa1101_probe(unsigned long phys_addr);
+
 
 extern void sa1101_wake(void);
 extern void sa1101_doze(void);
