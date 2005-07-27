@@ -204,6 +204,32 @@ SOUND_PACKAGES=(
 madplay sox aumix
 )
 
+MY_CONFIG=(
+/etc/inittab		# save memory, don't open VTs
+/etc/gpm.conf		# configure the mouse
+/etc/X11/XF86Config-4	# got the mode with fbset -x; DontVTSwitch because it hoses the kbd_mode
+/etc/X11/vtinit.sh	# let X change kbd_mode -k
+/etc/X11/Xmodmap	# US modmap in -k mode. Plus exchange mouse buttons 2 and 3.
+/etc/fb.modes		# got the mode with fbset
+/etc/sudoers		# allow users to use kbd_mode
+/etc/syslog.conf	# log to vt10, not to precious small CF.
+/etc/init.d/klogd	# use flag -c 1 to avoid annoying messages
+/etc/pcmcia/config.opts	# remove the PC-specific crap
+# xinitrc		# xterm +sb -geometry 1x1 -e sudo kbd_mode -k ; xmodmap /etc/X11/Xmodmap
+
+#/etc/resolv.conf
+#/etc/hosts
+#/etc/hostname
+#/etc/issue
+#/etc/passwd
+#/etc/group
+#/etc/ssh/id*
+#/etc/default/dictd
+#/etc/network/interfaces
+
+)
+
+
 ABORT () {
   print -r "$*" >&2
   exit 42
