@@ -7,7 +7,17 @@ export PATH
 
 EXTRAVERSION	= -j820
 
-KERNEL_FTP	= ftp://ftp.bz2.fr.kernel.org/pub/linux/kernel
+# We might have to pick a uclibc revision that works for us.
+# Last revision I was successful with is 10929, aka "{2005-07-27}".
+# Beware that said revision doesn't build for me with gcc 4.0.1 or gcc-3.4 and
+############## I HAD TO SYMLINK THE gcc IN /usr/bin TO gcc-3.3. ##############
+# Note: kernel 2.4 contains gcc-isms and requires gcc 3.3, which itself
+# might not be compiled by a more recent gcc.
+# Try HEAD if you're adventurous, 10929 if not.
+# If you try anything more recent, please report what works for you.
+UCLIBC_SVN_REVISION = "HEAD"
+
+KERNEL_FTP	= ftp://ftp.bz2.us.kernel.org/pub/linux/kernel
 ARM_FTP		= ftp://ftp.arm.linux.org.uk/pub/armlinux/source/kernel-patches
 JORNADA7XX	= http://wwwcip.informatik.uni-erlangen.de/~simigern/jornada-7xx/linux-2.4.31-j720-4/
 
@@ -170,36 +180,82 @@ upstream-kernel26: linux26 arm26patch
 
 # ------------------ optional: build the toolchain -------------------------
 
+# Is there a target we can give to uclibc's buildroot
+# to only compile the toolchain and none of the rest of the runtime,
+# in case we want a toolchain now and a runtime later?
+# "toolchain" or "uclibc" doesn't work, as of svn revision 10929
+toolchain: uclibc-config
+	make -C uclibc/buildroot
+
+everything: toolchain
+	make -C uclibc/buildroot
+
 gcc_version:
 	${CROSS_GCC} -v
 
 uclibc-svn:
-	cd uclibc && svn co svn://uclibc.org/trunk/buildroot
+	cd uclibc && \
+	svn co -r ${UCLIBC_SVN_REVISION} svn://uclibc.org/trunk/buildroot
 
 uclibc-setup: uclibc-svn
+	### This configures buildroot for our purposes.
 	cp uclibc/buildroot.config ${BUILDROOT}/.config
+	### This is because uclibc revision 10929 otherwise borks.
+	### Hopefully we can get rid of it later.
 	[ -f ${BUILDROOT}/toolchain/uClibc/uClibc.config.bak ] || \
 	cp ${BUILDROOT}/toolchain/uClibc/uClibc.config \
 	   ${BUILDROOT}/toolchain/uClibc/uClibc.config.bak
 	cp uclibc/uclibc.config ${BUILDROOT}/toolchain/uClibc/uClibc.config
+	### This is in case someday we'd like to get the kernel compiled
+	### through uclibc's buildroot
 	#make -C ${BUILDROOT} ${BUILDROOT}/toolchain_build_arm/uClibc/.unpacked
 	#-ln -sf ../../../../linux/linux.mk \
 	#       ../../../../linux/Config.in \
 	#       uclibc/buildroot/package/linux/ ; \
 	#perl -p -i.bak -e 'if (m,package/linux/Config.in,) { $$A = 1 } ; unless ($$A) { s,endmenu,source "package/linux/Config.in"\nendmenu,s }' uclibc/buildroot/package/Config.in
 
+uclibc-menuconfig: uclibc-setup
+	make -C uclibc/buildroot menuconfig
+	( cmp -s uclibc/buildroot/.config uclibc/buildroot.config || \
+	cat uclibc/buildroot/.config > uclibc/buildroot.config )
+
 uclibc-config: uclibc-setup
 	make -C uclibc/buildroot oldconfig
 
-toolchain: uclibc-config
-	# Is there a target we can give to uclibc's buildroot to only
-	# compile the toolchain and none of the rest of the runtime,
-	# in case we want a toolchain now and a runtime later?
-	# "toolchain" or "uclibc" doesn't work, as of svn revision 10929
-	make -C uclibc/buildroot
+# remove all the built stuff so we can try again a new compilation
+uclibc-clean:
+	${RM} -rf uclibc/buildroot/*build_arm
 
-everything: toolchain
-	make -C uclibc/buildroot
+# remove all uclibc svn sources
+uclibc-drop-sources:
+	cd uclibc/buildroot/ && \
+	${RM} -rf Makefile Config.in \
+		docs target toolchain package
+
+# remove everything except the expensive downloads in dl/
+uclibc-mrproper: uclibc-clean uclibc-drop-sources
+
+# remove everything except the useful binaries
+toolchain-keep-only-binaries: uclibc-drop-sources
+	cd uclibc/buildroot/ && \
+	${RM} -rf dl
+# Note that the uclibc toolchain cares about the path it was created
+# to reside in, so if you care where that is, or want to make it so it
+# can be redistributed, build it with BUILDROOT=/usr/local/uclibc or so.
+# Also, it appears that when the toolchain is built, mostly the only
+# directory that matters is build_arm, but some stuff in toolchain_build_arm
+# is necessary too. I didn't dig to find out what to delete and what to keep.
+# Maybe only the ccache cache is required?
+# This will matter to you if you don't have 600 MB that sits around just for
+# that, like I do. If you find a way to sort the chaff from the grain, tell me.
+# Surely there's something in the uclibc documentation that will tell you.
+# There might even be a hidden script or make target to delete everything
+# but what is necessary for the toolchain to work.
+# Oh: symlinks are your friends.
+
+# remove everything about uclibc
+uclibc-distclean:
+	${RM} -rf uclibc/buildroot
 
 # ------------------ build the boot image ----------------------------------
 
@@ -436,9 +492,6 @@ ${BUSYBOXDIR}/_install/bin/busybox:
 
 ramdisk/busybox/busybox.bin: busybox-dir busybox-compile
 
-
-PCMCIA_CFLAGS	= -Os -I../include/static -I../../../../linux/kernel/include -I../include -I../modules -static -s
-
 pcmcia:	pcmcia-install
 pcmcia-install: pcmcia-dir cardmgr cardctl
 pcmcia-dir: ramdisk/pcmcia/pcmcia-dir
@@ -449,6 +502,11 @@ ramdisk/pcmcia/${PCMCIATAR}:
 ramdisk/pcmcia/pcmcia-dir: ramdisk/pcmcia/${PCMCIATAR}
 	tar zxfC ${PCMCIATAR} ramdisk/pcmcia/ && \
 	touch $@
+
+PCMCIA_CFLAGS	= -Os -static -s \
+	-I../include/static -I../include -I../modules \
+	-I../../../../linux/kernel/include
+
 pcmcia-compile:
 	@-cd ${PCMCIADIR}/include/linux && \
 	${LN} -s ../pcmcia/config.h . && \
@@ -483,12 +541,15 @@ pcmciaclean:
 	[ -d ${PCMCIADIR} ] && make -C ${PCMCIADIR} clean
 	-${RM} ramdisk/pcmcia/cardmgr ramdisk/pcmcia/cardctl
 
+# remove everything but the expensively downloaded files in upstream/
 mrproper:: localclean
 	-${RM} -rf linux/build linux/upstream/*/ \
 		${BUSYBOXDIR} ramdisk/busybox/busybox-dir \
 		${PCMCIADIR} ramdisk/pcmcia/pcmcia-dir
 
-distclean:: mrproper
+nocruft:
+	-${RM} `find . -name '*~' -o -name '.#*'`
+
+distclean:: mrproper nocruft
 	-${RM} -rf ${BUILDROOT} linux/upstream \
 		ramdisk/*/*.tar.* \
-		`find . -name '*~' -o -name '.#*'`
