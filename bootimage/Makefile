@@ -43,7 +43,7 @@ ARM26PATCH_URL	= ${KERNEL_FTP}/v2.6/${ARM26PATCH}
 # ------------- directories for source and build ----------------------------
 
 DLDIR			= ${TOPDIR}/dl
-BUILDDIR		= ${TOPDIR}/build
+BUILDDIR		= ${TOPDIR}/work
 RAMDISKDIR		= ${TOPDIR}/ramdisk
 CONFDIR			= ${TOPDIR}/conf
 KERNELDIR		= ${TOPDIR}/linux/kernel
@@ -186,14 +186,9 @@ kbuildtree26:: upstream-kernel26
 	cp -fal ${KUPSTREAMDIR26}/. ${KBUILDDIR26}/.
 	cp -fal ${KERNELDIR26}/. ${KBUILDDIR26}/.
 	perl -pi -e '${K26MAKEFILE_TRANS}' ${KBUILDIR26}/Makefile
-	cp -fal ${KERNELDIR26} linux/build/
-	perl -pi.bak -e 's/^EXTRAVERSION.*=.*$$/EXTRAVERSION = ${EXTRAVERSION}/ ; \
-		s/^ARCH\s*:= .*$$/ARCH := arm/ ; \
-		s/^\#?CROSS_COMPILE\s*=.*$$/CROSS_COMPILE = ${CROSS_COMPILE}/ ; \
-		' linux/build/kernel/Makefile
 
 ourtree26:
-	cp -fal ${KERNELDIR26} linux/build/
+	cp -fal ${KERNELDIR26}/. ${KBUILDDIR26}/.
 
 ${KUPSTREAMDIR26HH}/CVS/Root ${KUPSTREAMDIR26HH}/CVS/Repository:
 	mkdir -p ${KUPSTREAMDIR26HH}/CVS ; cd ${KUPSTREAMDIR26HH}/CVS || exit 2 ; \
@@ -521,7 +516,8 @@ DIRT = \
 	ramdisk/cmdfile ramdisk/cmdfile26 ramdisk/modules*.tar.bz2
 OLDCRUFT = \
 	ramdisk/pcmcia/ ramdisk/busybox ramdisk/modules*.tar.bz2 \
-	ramdisk/ramdiskimage* ramdisk/cmdfile* ramdisk/lib
+	ramdisk/ramdiskimage* ramdisk/cmdfile* ramdisk/lib \
+	linux/upstream linux/build uclibc/buildroot
 
 localclean::
 	-${RM} ${DIRT}
@@ -556,17 +552,3 @@ distclean:: mrproper nocruft
 just-j820-from-modules: \
 	modules-compilation modules-tarbz2 \
 	do-ramdisk just-j820
-
-
-
-
-
-
-
-
-
-
-
-
-
-
