@@ -20,7 +20,7 @@ EXTRAVERSION	= -j820
 # If you try anything more recent, please report what works for you.
 UCLIBC_SVN_REVISION = "HEAD"
 
-KERNEL_FTP	= ftp://ftp.bz2.us.kernel.org/pub/linux/kernel
+KERNEL_FTP	= ftp://ftp.bz2.de.kernel.org/pub/linux/kernel
 ARM_FTP		= ftp://ftp.arm.linux.org.uk/pub/armlinux/source/kernel-patches
 JORNADA7XX	= http://wwwcip.informatik.uni-erlangen.de/~simigern/jornada-7xx/linux-2.4.31-j720-4/
 
@@ -72,9 +72,9 @@ K24PATCHES		:= ${DLDIR}/${ARM24PATCH}
 K24EXTENSIONS		:= 
 K24MAKEFILE_TRANS	:= ${KMAKEFILE_TRANS}
 
-K24PATCHES		:= ${DLDIR}/${ARM26PATCH}
-K24EXTENSIONS		:= 
-K24MAKEFILE_TRANS	:= ${K26MAKEFILE_TRANS}
+K26PATCHES		:= ${DLDIR}/${ARM26PATCH}
+K26EXTENSIONS		:= 
+K26MAKEFILE_TRANS	:= ${K26MAKEFILE_TRANS}
 
 BUSYBOXVER		= 1.00
 BUSYBOXTAR		= busybox-${BUSYBOXVER}.tar.bz2
