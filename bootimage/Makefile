@@ -475,7 +475,7 @@ busybox-svn:
 busybox-compile: ${BUILDDIR}/busybox.bin
 ${BUILDDIR}/busybox.bin:
 	@cd ${BUSYBOXDIR} && \
-	cp ${TOPDIR}/ramdisk/busybox/busybox.cfg .config && \
+	cp ${TOPDIR}/ramdisk/busybox/busybox.config .config && \
 	${MAKE}	CROSS=${CROSS_COMPILE} oldconfig && \
 	${MAKE} CROSS=${CROSS_COMPILE} busybox && \
 	${MAKE} CROSS=${CROSS_COMPILE} install && \
