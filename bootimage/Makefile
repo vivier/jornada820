@@ -5,8 +5,6 @@ TOOLCHAINPATH	= ${BUILDROOT}/build_arm/staging_dir/bin
 PATH:=${TOOLCHAINPATH}:${PATH}
 export PATH
 
-$(shell mkdir -p work dl upstream)
-
 EXTRAVERSION	= -j820
 
 # We might have to pick a uclibc revision that works for us.
@@ -89,7 +87,7 @@ PCMCIADIR		= ${BUILDDIR}/pcmcia-cs-${PCMCIAVER}
 #SCHEMIX_URL	= http://ftp.gnu.org/savannah/files/schemix/schemix.pkg/0.2.1/schemix-0.2.1.tar.gz
 #KALLSYMS_ORIG	= http://www.atomicrocketturtle.com/kernels/2.4/linux-2.4.9-kallsyms.patch
 KALLSYMS24PATCH	= linux-2.4.31-kallsyms.patch.bz2
-KALLSYMS_URL	= http://jornada820.sourceforge.net/files/upstream/$(KALLSYMS24PATH)
+KALLSYMS_URL	= http://jornada820.sourceforge.net/files/upstream/${KALLSYMS24PATCH}
 
 CROSS_GCC	= ${CROSS_COMPILE}gcc
 
@@ -100,7 +98,7 @@ CROSS_GCC	= ${CROSS_COMPILE}gcc
 # ------------- programs ---------------------------------------------------
 
 LN			= ln
-MKDIR			= mkdir
+MKDIR			= mkdir -p
 TEE			= tee
 TOUCH			= touch
 CP			= cp -f
@@ -109,6 +107,9 @@ MKE2FS		 	= mke2fs
 DEBUGFS		 	= debugfs
 E2FSCK		 	= e2fsck
 CANONICAL_PATH          = /bin:/usr/bin
+
+
+$(shell ${MKDIR} ${BUILDDIR} ${DLDIR} ${UPSTREAMDIR})
 
 # -------------- default targets -------------------------------------------
 
@@ -127,7 +128,6 @@ K24MAKEFILE_TRANS	:= ${K24MAKEFILE_TRANS} \
 
 schemix-cvs: ${UPSTREAMDIR}/schemix/Makefile
 ${UPSTREAMDIR}/schemix/Makefile:
-	mkdir -p ${UPSTREAMDIR} && \
 	cd ${UPSTREAMDIR} && \
 	cvs -z3 -d:ext:anoncvs@savannah.nongnu.org:/cvsroot/schemix \
 		co schemix && \
@@ -142,7 +142,7 @@ endif
 # --------------------- kernel build tree ----------------------------------
 
 kbuildtree:: upstream-kernel
-	mkdir -p ${KBUILDDIR} &&
+	${MKDIR} ${KBUILDDIR}
 	cp -fal ${KUPSTREAMDIR}/. ${KBUILDDIR}/.
 	cp -fal ${KERNELDIR}/. ${KBUILDDIR}/.
 	perl -pi -e '${K24MAKEFILE_TRANS}' ${KBUILDIR}/Makefile
@@ -151,39 +151,35 @@ ourtree:
 	cp -fal ${KERNELDIR}/. ${KBUILDDIR}/.
 
 ${KUPSTREAMDIRHH}/CVS/Root ${KUPSTREAMDIRHH}/CVS/Repository:
-	mkdir -p ${KUPSTREAMDIRHH}/CVS ; cd ${KUPSTREAMDIRHH}/CVS || exit 2 ; \
+	${MKDIR} ${KUPSTREAMDIRHH}/CVS ; cd ${KUPSTREAMDIRHH}/CVS || exit 2 ; \
 	echo :pserver:anoncvs@cvs.handhelds.org:/cvs > Root ; \
 	echo linux/kernel > Repository ; \
 	touch Entries ; \
 	grep -q ':pserver:anoncvs@cvs.handhelds.org:2401/cvs' ~/.cvspass || \
 	echo '/1 :pserver:anoncvs@cvs.handhelds.org:2401/cvs Ay=0=h<Z' >> ~/.cvspass
 ${KUPSTREAMDIRHH}/Makefile: ${KUPSTREAMDIRHH}/CVS/Root
-	cd ${KUPSTREAMDIRHH} && cvs -z9 update -dfP && \
-	touch Makefile
+	cd ${KUPSTREAMDIRHH} && cvs -z9 update -dfP && touch Makefile
 
 upstream-kernel:
 	[ -f ${KUPSTREAMDIR}/Makefile ] || make do-upstream-kernel
 do-upstream-kernel: linux24-dir ${K24EXTENSIONS} ${K24PATCHES}
 	bzcat ${K24PATCHES} | ( cd ${KUPSTREAMDIR} && patch -p1 -E )
 linux24-dir: ${DLDIR}/${KERNEL24_TB2}
-	cd ${UPSTREAMDIR} && \
-	rm -rf ${KERNEL24} && \
-	tar jxf ${DLDIR}/${KERNEL24_TB2}
+	rm -rf ${KERNEL24}
+	tar jxfC ${DLDIR}/${KERNEL24_TB2} ${UPSTREAMDIR}
 ${DLDIR}/${KERNEL24_TB2}:
-	mkdir -p ${DLDIR} && cd ${DLDIR} && \
 	wget -c ${KERNEL24_URL}
 ${DLDIR}/${ARM24PATCH}:
-	mkdir -p ${DLDIR} && cd ${DLDIR} && \
 	wget -c ${ARM24PATCH_URL}
+get-kallsyms: ${DLDIR}/${KALLSYMS24PATCH}
 ${DLDIR}/${KALLSYMS24PATCH}:
-	mkdir -p ${DLDIR} && cd ${DLDIR} && \
 	wget -c ${KALLSYMS_URL}
 
 
 # --------------------- kernel build tree, v2.6 ----------------------------
 
 kbuildtree26:: upstream-kernel26
-	mkdir -p ${KBUILDDIR26} &&
+	${MKDIR} ${KBUILDDIR26}
 	cp -fal ${KUPSTREAMDIR26}/. ${KBUILDDIR26}/.
 	cp -fal ${KERNELDIR26}/. ${KBUILDDIR26}/.
 	perl -pi -e '${K26MAKEFILE_TRANS}' ${KBUILDIR26}/Makefile
@@ -192,28 +188,31 @@ ourtree26:
 	cp -fal ${KERNELDIR26}/. ${KBUILDDIR26}/.
 
 ${KUPSTREAMDIR26HH}/CVS/Root ${KUPSTREAMDIR26HH}/CVS/Repository:
-	mkdir -p ${KUPSTREAMDIR26HH}/CVS ; cd ${KUPSTREAMDIR26HH}/CVS || exit 2 ; \
+	${MKDIR} ${KUPSTREAMDIR26HH}/CVS ; cd ${KUPSTREAMDIR26HH}/CVS || exit 2 ; \
 	echo :pserver:anoncvs@cvs.handhelds.org:/cvs > Root ; \
 	echo linux/kernel26 > Repository ; \
 	touch Entries ; \
 	grep -q ':pserver:anoncvs@cvs.handhelds.org:2401/cvs' ~/.cvspass || \
 	echo '/1 :pserver:anoncvs@cvs.handhelds.org:2401/cvs Ay=0=h<Z' >> ~/.cvspass
 
-old-${KUPSTREAMDIR26}/Makefile: ${KUPSTREAMDIR26}/CVS/Root
-	cd ${KUPSTREAMDIR26} && cvs -z9 update -dfP && \
-	touch Makefile
+${KUPSTREAMDIR26HH}/Makefile: ${KUPSTREAMDIR26HH}/CVS/Root
+	cd ${KUPSTREAMDIR26HH} && cvs -z9 update -dfP && touch Makefile
 
 linux26: ${DLDIR}/${KERNEL26_TB2}
 ${DLDIR}/${KERNEL26_TB2}:
-	mkdir -p ${DLDIR} && cd ${DLDIR} && \
 	wget -c ${KERNEL26_URL}
+linux26-dir: linux26
+	rm -rf ${KERNEL26}
+	tar jxfC ${DLDIR}/${KERNEL26_TB2} ${UPSTREAMDIR}
+
 
 arm26patch: ${DLDIR}/${ARM26PATCH}
 ${DLDIR}/${ARM26PATCH}:
-	mkdir -p ${DLDIR} && cd ${DLDIR} && \
 	wget -c ${ARM26PATCH_URL}
 
-upstream-kernel26: linux26 arm26patch
+upstream-kernel26:
+	[ -f ${KUPSTREAMDIR26}/Makefile ] || make do-upstream-kernel26
+do-upstream-kernel26: linux26-dir ${K26EXTENSIONS} ${K26PATCHES}
 	[ -f ${KUPSTREAMDIR26}/Makefile ] || ( \
 	cd ${UPSTREAMDIR} && \
 	tar jxf ${DLDIR}/${KERNEL26_TB2} && \
@@ -314,7 +313,7 @@ do-j820:
 	cp ${KBUILDDIR}/arch/arm/boot/j820/j820 j820
 
 kernel-compilation:
-	mkdir -p ${TARGETDIR} && \
+	${MKDIR} ${TARGETDIR}
 	${MAKE} -C {KBUILDDIR} \
 	    ARCH=arm \
 	    CROSS_COMPILE=${CROSS_COMPILE} \
@@ -323,7 +322,7 @@ kernel-compilation:
 	    zImage modules modules_install
 
 modules-compilation:
-	mkdir -p ${TARGETDIR} && \
+	${MKDIR} ${TARGETDIR}
 	${MAKE} -C ${KBUILDDIR} \
 		ARCH=arm \
 		CROSS_COMPILE=${CROSS_COMPILE} \
@@ -344,8 +343,8 @@ just-j820:
 
 j820-26: config26 modules26 ramdisk26 do-j820-26
 do-j820-26:
-	mkdir -p ${TARGETDIR26} && \
-	${MAKE} -C ${KBUILDDIR26}\
+	${MKDIR} ${TARGETDIR26}
+	${MAKE} -C ${KBUILDDIR26} \
 	    ARCH=arm \
 	    CROSS_COMPILE=${CROSS_COMPILE} \
 	    INITRD=${RAMDISKIMAGE26} \
@@ -354,7 +353,7 @@ do-j820-26:
 	cp ${KBUILDDIR26}/arch/arm/boot/j820/j820 j820-26
 
 modules26-compilation:
-	mkdir -p ${TARGETDIR26} && \
+	${MKDIR} ${TARGETDIR26}
 	${MAKE} -C ${KBUILDDIR26} \
 		ARCH=arm \
 		CROSS_COMPILE=${CROSS_COMPILE} \
@@ -458,7 +457,6 @@ ${RAMDISKIMAGE26}.gz: ${RAMDISKIMAGE26}
 busybox:	busybox-dir busybox-compile
 
 ${DLDIR}/${BUSYBOXTAR}:
-	mkdir -p ${DLDIR} && cd ${DLDIR} && \
 	wget -c ${BUSYBOXURL}
 
 busybox-dir:
@@ -489,7 +487,6 @@ pcmcia-dir:
 	[ -d ${PCMCIADIR} ] || make do-pcmcia-dir
 pcmcia-tar: ${DLDIR}/${PCMCIATAR}
 ${DLDIR}/${PCMCIATAR}:
-	mkdir -p ${DLDIR} && cd ${DLDIR} && \
 	wget -c ${PCMCIAURL}
 do-pcmcia-dir: ${DLDIR}/${PCMCIATAR}
 	rm -rf ${PCMCIADIR}
