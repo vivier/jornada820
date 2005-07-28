@@ -5,17 +5,18 @@ TOOLCHAINPATH	= ${BUILDROOT}/build_arm/staging_dir/bin
 PATH:=${TOOLCHAINPATH}:${PATH}
 export PATH
 
-$(shell mkdir -p build dl upstream)
+$(shell mkdir -p work dl upstream)
 
 EXTRAVERSION	= -j820
 
 # We might have to pick a uclibc revision that works for us.
 # Last revision I was successful with is 10929, aka "{2005-07-27}".
-# Beware that said revision doesn't build for me with gcc 4.0.1 or gcc-3.4 and
-############## I HAD TO SYMLINK THE gcc IN /usr/bin TO gcc-3.3. ##############
+# Beware that said revision doesn't build for me with gcc 4.0.1 or gcc-3.4
+# on a x86_64, where I HAD TO SYMLINK THE gcc IN /usr/bin TO gcc-3.3.
+# But revision 10941 did work with gcc 4.0.1 on a i386.
 # Note: kernel 2.4 contains gcc-isms and requires gcc 3.3, which itself
-# might not be compiled by a more recent gcc.
-# Try HEAD if you're adventurous, 10929 if not.
+# seems to not be compilable by a more recent gcc in a 64-bit safe way.
+# Try HEAD if you're adventurous, 10929 or 10941 if not.
 # If you try anything more recent, please report what works for you.
 UCLIBC_SVN_REVISION = "HEAD"
 
@@ -167,7 +168,7 @@ do-upstream-kernel: linux24-dir ${K24EXTENSIONS} ${K24PATCHES}
 linux24-dir: ${DLDIR}/${KERNEL24_TB2}
 	cd ${UPSTREAMDIR} && \
 	rm -rf ${KERNEL24} && \
-	tar jxf ${KERNEL24_TB2}
+	tar jxf ${DLDIR}/${KERNEL24_TB2}
 ${DLDIR}/${KERNEL24_TB2}:
 	mkdir -p ${DLDIR} && cd ${DLDIR} && \
 	wget -c ${KERNEL24_URL}
@@ -215,7 +216,7 @@ ${DLDIR}/${ARM26PATCH}:
 upstream-kernel26: linux26 arm26patch
 	[ -f ${KUPSTREAMDIR26}/Makefile ] || ( \
 	cd ${UPSTREAMDIR} && \
-	tar jxf ${KERNEL26_TB2} && \
+	tar jxf ${DLDIR}/${KERNEL26_TB2} && \
 	if [ -n "${ARM26PATCH}" ] ; then \
 	cd kernel26 && \
 	bzcat ../${ARM26PATCH} | patch -p1 -E ; fi )
