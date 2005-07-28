@@ -315,16 +315,14 @@ do-j820:
 	cp ${KBUILDDIR}/arch/arm/boot/j820/j820 j820
 
 kernel-compilation:
-	${MKDIR} ${TARGETDIR}
 	${MAKE} -C {KBUILDDIR} \
 	    ARCH=arm \
 	    CROSS_COMPILE=${CROSS_COMPILE} \
-	    INSTALL_MOD_PATH=${TARGETDIR} \
-	    DEPMOD=true \
-	    zImage modules modules_install
+	    zImage
 
 modules-compilation:
 	${MKDIR} ${TARGETDIR}
+	${RM} -rf ${TARGETDIR}/lib/modules/${KERNELVERSION}
 	${MAKE} -C ${KBUILDDIR} \
 		ARCH=arm \
 		CROSS_COMPILE=${CROSS_COMPILE} \
@@ -332,7 +330,9 @@ modules-compilation:
 		DEPMOD=true \
 		modules modules_install
 
-all-kernel-compilation: kbuildtree config depend kernel-compilation
+all-kernel-compilation: \
+	kbuildtree config depend \
+	kernel-compilation modules-compilation
 
 just-j820:
 	${MAKE} -C ${KBUILDDIR} \
@@ -345,17 +345,16 @@ just-j820:
 
 j820-26: config26 modules26 ramdisk26 do-j820-26
 do-j820-26:
-	${MKDIR} ${TARGETDIR26}
 	${MAKE} -C ${KBUILDDIR26} \
 	    ARCH=arm \
 	    CROSS_COMPILE=${CROSS_COMPILE} \
 	    INITRD=${RAMDISKIMAGE26} \
-	    INSTALL_MOD_PATH=${TARGETDIR26} \
 	    zImage j820
 	cp ${KBUILDDIR26}/arch/arm/boot/j820/j820 j820-26
 
 modules26-compilation:
 	${MKDIR} ${TARGETDIR26}
+	${RM} -rf ${TARGETDIR}/lib/modules/${KERNELVERSION}
 	${MAKE} -C ${KBUILDDIR26} \
 		ARCH=arm \
 		CROSS_COMPILE=${CROSS_COMPILE} \
