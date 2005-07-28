@@ -1,24 +1,20 @@
 #
 # PCMCIA Card Configuration Database
 #
-# config 1.237 2003/12/07 07:07:26 (David Hinds)
+# config 1.230 2003/08/29 15:46:24 (David Hinds)
 #
+
 # config.opts is now included at the very end.  In general, it is a
 # good idea to add things to that file rather than to this one.
-#
 
 #
 # Device driver definitions
 #
 # These should generally not be changed!
 #
-# For drivers that depend on multiple modules, the definitions here
-# assume that "modprobe" will resolve all dependencies.  Current
-# versions of cardmgr use modprobe by default but will fall back on
-# insmod if modprobe is unavailable.  On such a system, you must
-# explicitly specify module dependencies in this file.  Here, those
-# module dependencies are listed but commented out.
-#
+
+device "com20020_cs"
+  class "network" module "com20020_cs"
 
 device "3c589_cs"
   class "network" module "3c589_cs"
@@ -40,7 +36,7 @@ device "oti12_cs"
   class "cdrom" module "oti12_cs"
 
 device "pcnet_cs"
-  #class "network" module "8390", "pcnet_cs"
+  #class "network" module "net/8390", "pcnet_cs"
   class "network" module "pcnet_cs"
 
 device "smc91c92_cs"
@@ -97,6 +93,9 @@ device "3c574_cs"
 device "teles_cs"
   class "teles" module "teles_cs"
 
+device "avma1_cs"
+  class "avma1" module "avma1_cs"
+
 device "ray_cs"
   class "network" module "ray_cs"
 
@@ -131,11 +130,13 @@ device "pcilynx_cb"
 device "ohci1394_cb"
   class "ieee1394" module "cb_enabler", "ohci1394_cb"
 
-# dummy drivers
+#
+# Arcnet adapter definitions
+#
 
-device "dummy_cs" module "dummy_cs"
-
-device "dummy_cb" module "cb_enabler", "dummy_cb"
+card "PCM20 Arcnet Adapter"
+  version "Contemporary Control Systems, Inc.", "PCM20 Arcnet Adapter"
+  bind "com20020_cs"
 
 #
 # Ethernet adapter definitions
@@ -383,6 +384,10 @@ card "Eiger Labs EPX-ET 10BT Ethernet"
 
 card "ELECOM Laneed LD-CDF"
   version "Laneed", "LD-CDF"
+  bind "pcnet_cs"
+
+card "ELECOM Laneed LD-CDL/T"
+  version "Laneed", "LD-CDL/T"
   bind "pcnet_cs"
 
 card "EZLink 4109 Ethernet"
@@ -667,10 +672,6 @@ card "PRETEC CompactLAN Ethernet"
   version "PRETEC", "Ethernet CompactLAN 10baseT 3.3V"
   bind "pcnet_cs"
 
-card "PRETEC CompactLAN Ethernet"
-  version "PRETEC", "Ethernet CompactLAN 10BaseT 3.3V"
-  bind "pcnet_cs"
-
 card "Psion Gold Card Ethernet"
   version "Psion Dacom", "Gold Card Ethernet"
   bind "pcnet_cs"
@@ -934,6 +935,10 @@ card "Dynalink L100C Fast Ethernet"
   version "DYNALINK", "L100C"
   bind "smc91c92_cs"
 
+card "Dynalink L100C16"
+  version "Dynalink", "L100C16"
+  bind "axnet_cs"
+
 card "EXP ThinLan-110 Fast Ethernet"
   version "PCMCIA", "Fast Ethernet PCCard"
   bind "smc91c92_cs"
@@ -1044,7 +1049,7 @@ card "NE2000 Compatible Fast Ethernet"
 card "Asix AX88190 Fast Ethernet"
   version "PCMCIA", "FastEthernet", "V", "1.0"
   manfid 0x021b, 0x0202
-  bind "pcnet_cs"
+  bind "axnet_cs"
 
 card "Asix AX88190 Fast Ethernet"
   #version "PCMCIA", "10/100 Ethernet Card"
@@ -1106,6 +1111,10 @@ card "Xircom CompactCard Ethernet"
   version "Xircom", "*", "CFE-10"
   bind "pcnet_cs"
 
+card "Conceptronic CON100TCL"
+  manfid 0x10ec, 0x8139
+  bind "pcnet_cs"
+
 card "Xircom CE3-10/100 Fast Ethernet"
   version "Xircom", "*", "CE3-10/100"
   bind "xirc2ps_cs"
@@ -1134,6 +1143,19 @@ card "350 Series Wireless LAN Adapter"
   manfid 0x015f, 0x000a
   bind "airo_cs"
 
+card "Actiontec HWC01170-01"
+  version "ACTIONTEC", "PRISM Wireless LAN PC Card"
+  bind "orinoco_cs"
+
+card "ARtem Onair Version 1.0"
+  #version "ARtem", "Onair", "Version 1.0"
+  manfid 0x0268, 0x0001
+  bind "orinoco_cs"
+
+card "ASUS SpaceLink WL-100"
+  manfid 0x02aa, 0x0002
+  bind "orinoco_cs"
+
 card "3Com AirConnect"
   version "3Com", "3CRWE737A AirConnect Wireless LAN PC Card"
   bind "orinoco_cs"
@@ -1145,20 +1167,6 @@ card "Aironet PC4500"
 card "Aironet PC4800"
   manfid 0x015f, 0x0007
   bind "airo_cs"
-
-card "AirWay 802.11 Adapter (PCMCIA)"
-  #version "AirWay", "802.11 Adapter (PCMCIA)"
-  manfid 0x0261, 0x0002
-  bind "orinoco_cs"
-
-card "ARtem Onair Version 1.0"
-  #version "ARtem", "Onair", "Version 1.0"
-  manfid 0x0268, 0x0001
-  bind "orinoco_cs"
-
-card "ASUS SpaceLink WL-100"
-  manfid 0x02aa, 0x0002
-  bind "orinoco_cs"
 
 card "AT&T WaveLAN Adapter"
   version "AT&T", "WaveLAN/PCMCIA"
@@ -1232,6 +1240,10 @@ card "Linksys WPC11 11Mbps 802.11b WLAN Card"
   manfid 0x0274, 0x1613
   bind "orinoco_cs"
 
+card "Linksys WPC11 11Mbps 802.11b WLAN Card"
+  manfid 0x0274, 0x1612
+  bind "orinoco_cs"
+
 card "Linksys WCF12 Wireless CompactFlash Card"
   manfid 0x028a, 0x0673
   bind "orinoco_cs"
@@ -1296,6 +1308,10 @@ card "SAMSUNG 11Mbps WLAN Card"
   version "SAMSUNG", "11Mbps WLAN Card"
   bind "orinoco_cs"
 
+card "ISL37300P"
+  version "PCMCIA", "11M WLAN Card v2.5"
+  bind "orinoco_cs"
+
 card "Sandisk Connect SDWCFB-000"
   manfid 0xd601, 0x0005
   bind "orinoco_cs"
@@ -1316,6 +1332,19 @@ card "Xircom Wireless Network Adapter"
 card "ZCOMAX AirRunner/XI-300"
   #version "ZCOMAX", "AirRunner/XI-300"
   manfid 0xd601, 0x0002
+  bind "orinoco_cs"
+
+card "AirWay 802.11 Adapter (PCMCIA)"
+  #version "AirWay", "802.11 Adapter (PCMCIA)"
+  manfid 0x0261, 0x0002
+  bind "orinoco_cs"
+
+card "NetGear MA401RA"
+  manfid 0x000b, 0x7300
+  bind "orinoco_cs"
+
+card "Conceptronic CON11Cpro"
+  manfid 0xc250, 0x0002
   bind "orinoco_cs"
 
 #
@@ -2113,6 +2142,10 @@ card "Quatech SPP-100 Parallel Port Card"
 card "TELES S0/PC ISDN"
   version "TELES", "S0/PC"
   bind "teles_cs"
+
+card "AVM S0/PC ISDN"
+  version "AVM", "ISDN A"
+  bind "avma1_cs"
 
 #
 # CardBus cards

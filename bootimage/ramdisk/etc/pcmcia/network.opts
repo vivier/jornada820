@@ -14,20 +14,29 @@ case "$ADDRESS" in
     # Use BOOTP (via /sbin/bootpc, or /sbin/pump)? [y/n]
     BOOTP="n"
     # Use DHCP (via /sbin/dhcpcd, /sbin/dhclient, or /sbin/pump)? [y/n]
-    DHCP="y"
+    DHCP="n"
     # If you need to explicitly specify a hostname for DHCP requests
     DHCP_HOSTNAME=""
+    # Use PPP over Ethernet (via the pppoe package)? [y/n]
+    PPPOE="n"
+    # Use WHEREAMI (via the whereami package)? [y/n]
+    WHEREAMI="n"
     # Host's IP address, netmask, network address, broadcast address
-    IPADDR="10.31.0.16"
+    IPADDR=""
     NETMASK="255.255.255.0"
-    NETWORK="10.31.0.0"
-    BROADCAST="10.31.0.255"
+    NETWORK="10.0.1.0"
+    BROADCAST="10.0.1.255"
     # Gateway address for static routing
-    GATEWAY="10.31.0.1"
+    GATEWAY="10.0.1.1"
     # Things to add to /etc/resolv.conf for this interface
     DOMAIN=""
     SEARCH=""
-    DNS_1="10.31.0.1"
+    # The nameserver IP addresses specified here complement the
+    # nameservers already defined in /etc/resolv.conf.  These nameservers
+    # will be added to /etc/resolv.conf automatically when the PCMCIA
+    # network connection is established and removed from this file when
+    # the connection is broken.
+    DNS_1=""
     DNS_2=""
     DNS_3=""
     # NFS mounts, should be listed in /etc/fstab
@@ -37,6 +46,8 @@ case "$ADDRESS" in
     # For IPX interfaces, the frame type and network number
     IPX_FRAME=""
     IPX_NETNUM=""
+    # Run ipmasq? [y/n]  (see the Debian ipmasq package)
+    IPMASQ="n"
     # Extra stuff to do after setting up the interface
     start_fn () { return; }
     # Extra stuff to do before shutting down the interface
@@ -46,3 +57,19 @@ case "$ADDRESS" in
     NO_FUSER=n
     ;;
 esac
+
+# This tries to use Debian's network setup in /etc/network/interfaces
+# if no settings are given higher up in this file.  You can delete it
+# if that isn't desired.
+
+is_true $DHCLIENT || is_true $WHEREAMI || \
+is_true $PUMP || is_true $BOOTP || is_true $DHCP || \
+if [ -z "$IPADDR" ] && [ -x /sbin/ifup ] && [ -x /sbin/ifdown ] ; then
+    INFO="Debian network setup"
+    start_fn () {
+	log /sbin/ifup $1
+    }
+    stop_fn () {
+	log /sbin/ifdown $1
+    }
+fi

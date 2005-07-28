@@ -35,6 +35,11 @@ RESOLV=/etc/resolv.conf
 # Note : we need the wireless parameters to be set up before IP parameters,
 # so that we can perform DHCP over the Wireless link if needed. Jean II
 O_INFO=$INFO ; INFO=
+if [ -x ./wireless ] ; then
+    . ./wireless
+else
+    . /etc/pcmcia/wireless
+fi
 INFO=$O_INFO
 
 bootp_setup ()
@@ -54,6 +59,16 @@ case "$ACTION" in
 
     [ -n "$IF_PORT" ] && /sbin/ifport $DEVICE $IF_PORT
 
+    if is_true $WHEREAMI && [ -x /usr/sbin/whereami ] ; then
+	log "/usr/sbin/whereami --run_from pcmcia --syslog --hint $DEVICE" \
+	    || exit 1
+    fi
+
+    if is_true $PPPOE ; then
+	log /sbin/ifconfig $DEVICE up
+	log "/usr/sbin/pppd call dsl-provider" || exit 1
+    fi
+
     if is_true $PUMP ; then
 	log "/sbin/pump -i $DEVICE > /dev/null" || exit 1
     elif is_true $BOOTP ; then
@@ -70,7 +85,7 @@ case "$ACTION" in
 	else
 	    exit 1
 	fi
-    elif is_true $DHCP ; then
+    elif is_true $DHCP || is_true $DHCLIENT ; then
 	bootp_setup
 	HN=${DHCP_HOSTNAME:+-h $DHCP_HOSTNAME}
 	if [ -x /sbin/dhcpcd ] ; then
@@ -86,7 +101,8 @@ case "$ACTION" in
 		    sleep 2 ; if [ ! -e $L ] ; then break ; fi
 		done
 		rm -f $L
-		if [ -e /etc/dhcpc/resolv.conf ] ; then
+		if [ -e /etc/dhcpc/resolv.conf -a \
+		     ! -x /sbin/resolvconf ] ; then # Deb - resolvconf suppt
 		    echo "# $DEVICE begin" > $RESOLV.N
 		    chmod og+r $RESOLV.N
 		    cat /etc/dhcpc/resolv.conf >> $RESOLV.N
@@ -98,8 +114,6 @@ case "$ACTION" in
 	    log "/sbin/dhclient $DEVICE >/dev/null 2>&1" || exit 1
 	elif [ -x /sbin/pump ] ; then
 	    log "/sbin/pump $HN -i $DEVICE > /dev/null" || exit 1
-	elif [ -x /etc/foo ] ; then
-	    log "/etc/foo udhcp $DEVICE > /dev/null" || exit 1
 	else
 	    exit 1
 	fi
@@ -127,12 +141,21 @@ case "$ACTION" in
 	chmod og+r $RESOLV.N
 	[ -n "$DOMAIN" ] && echo "domain $DOMAIN" >> $RESOLV.N
 	[ -n "$SEARCH" ] && echo "search $SEARCH" >> $RESOLV.N
-	for DNS in $DNSSRVS $DNS_1 $DNS_2 $DNS_3 ; do
+	for DNS in ${DNSSRVS:-$DNS_1 $DNS_2 $DNS_3} ; do
 	    echo "nameserver $DNS" >> $RESOLV.N
 	done
 	echo "# $DEVICE end" >> $RESOLV.N
+	if [ -x /sbin/resolvconf ]; then # Deb - resolvconf suppt
+	    sed -e '1d; $d' $RESOLV.N | /sbin/resolvconf -a $DEVICE
+	    rm $RESOLV.N
+    	else
 	sed -e "/# $DEVICE begin/,/# $DEVICE end/d" $RESOLV >> $RESOLV.N
 	mv $RESOLV.N $RESOLV
+	fi
+    fi
+
+    if test -x /usr/sbin/ipmasq && is_true "$IPMASQ" ; then
+	/usr/sbin/ipmasq
     fi
 
     # Handle NFS mounts
@@ -152,7 +175,8 @@ case "$ACTION" in
     stop_fn $DEVICE
 
     if is_true $PUMP || is_true $BOOTP || is_true $DHCP || \
-    	[ -n "$IPADDR" ] ; then
+    	is_true $DHCLIENT || is_true $WHEREAMI || \
+	[ -n "$IPADDR" ] ; then
 
 	# Shut down all NFS mounts on this interface
 	nfsstop ()
@@ -172,7 +196,7 @@ case "$ACTION" in
 
 	if is_true $PUMP ; then
 	    log pump -r -i $DEVICE
-	elif is_true $DHCP ; then
+	elif is_true $DHCP || is_true $DHCLIENT ; then
 	    if [ -x /sbin/dhcpcd ] ; then
 		PID=`cat /var/run/dhcpcd-$DEVICE.pid 2>/dev/null`
 		if [ -n "$PID" ] ; then
@@ -190,13 +214,30 @@ case "$ACTION" in
 	fi
     fi
 
+    if is_true $PPPOE ; then
+        PID=`ps axw | grep "[ /]pppd call dsl-provider *\$" | \
+	    awk '{print $1}'`
+	if [ -n "$PID" ] ; then kill -TERM $PID; fi
+    fi
+
+    if is_true $WHEREAMI && [ -x /usr/sbin/whereami ] ; then
+	log "/usr/sbin/whereami --run_from pcmcia-stop \
+	    --syslog --hint $DEVICE,stop" || exit 1
+    fi
+
     # Remove nameservers
+    if [ -x /sbin/resolvconf ]; then # Deb - resolvconf suppt
+	/sbin/resolvconf -d $DEVICE
+    else
     if grep -q "# $DEVICE begin" $RESOLV ; then
 	sed -e "/# $DEVICE begin/,/# $DEVICE end/d"	$RESOLV > $RESOLV.N
 	mv $RESOLV.N $RESOLV
     fi
+    fi
 
-    log /sbin/ifconfig $DEVICE down
+    if [ -n "$IPADDR" ] ; then
+	log /sbin/ifconfig $DEVICE down
+    fi
     ;;
 
 'check')
@@ -226,7 +267,9 @@ case "$ACTION" in
 	done
     }
     DESTS=`netstat -ntuw | getdests`
-    /sbin/ifuser $DEVICE $DESTS && exit 1
+    if [ -n "$DESTS" ]; then
+	/sbin/ifuser $DEVICE $DESTS && exit 1
+    fi
     ;;
 
 'cksum')

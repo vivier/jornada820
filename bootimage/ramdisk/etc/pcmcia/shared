@@ -2,6 +2,8 @@
 # shared 1.31 2002/08/19 03:21:11 (David Hinds)
 #
 
+umask 022
+
 usage ()
 {
     echo "usage: $0 [action] [device name]"
@@ -33,7 +35,8 @@ log ()
 	RET=0
 	LOG=/var/run/cardmgr.out
 	do_eval $* >$LOG 2>&1
-	if [ $? -ne 0 ] ; then RET=$? ; echo "$*" ; fi
+	RET=$?
+	if [ $RET -ne 0 ] ; then echo "$*" ; fi
 	cat $LOG 1>&2 ; rm -f $LOG
 	return $RET
     fi
@@ -121,11 +124,11 @@ chk_simple ()
 {
     # usage: chk_simple [new-address]
     ADDRESS=""
-    OLD=`set | grep -v '^OLD=' | md5sum`
+    OLD=`set | grep -E -v '^OLD=|FUNCNAME=' | md5sum`
     ADDRESS="$1"
     . $0.opts
     ADDRESS=""
-    NEW=`set | grep -v '^OLD=' | md5sum`
+    NEW=`set | grep -E -v '^OLD=|FUNCNAME=' | md5sum`
     [ "$OLD" = "$NEW" ]
 }
 
@@ -158,6 +161,8 @@ get_info ()
 	SCHEME=`cat /var/lib/pcmcia/scheme`
     elif [ -f /var/run/pcmcia-scheme ] ; then
 	SCHEME=`cat /var/run/pcmcia-scheme`
+    else
+	SCHEME=`cat /var/lib/misc/pcmcia-scheme`
     fi	
     if [ -z "$SCHEME" ] ; then SCHEME="default" ; fi
     if [ -z "$CLASS" -o -z "$MANFID" ] ; then
@@ -169,6 +174,12 @@ get_info ()
 	grep_stab $1 < $STAB || usage
 	eval `/sbin/cardctl info $SOCKET`
     fi
+}
+
+# Added to avoid calling mknod on devfs systems
+log_mknod ()
+{
+    test -c /dev/.devfsd || log mknod "$@"
 }
 
 # A bit of stuff to do right away...
