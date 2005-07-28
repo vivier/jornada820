@@ -1,9 +1,11 @@
 CROSS_COMPILE	= arm-linux-uclibc-
 TOPDIR		= $(shell pwd)
-BUILDROOT	= ${TOPDIR}/uclibc/buildroot
+BUILDROOT	= ${TOPDIR}/buildroot
 TOOLCHAINPATH	= ${BUILDROOT}/build_arm/staging_dir/bin
 PATH:=${TOOLCHAINPATH}:${PATH}
 export PATH
+
+$(shell mkdir -p build dl upstream)
 
 EXTRAVERSION	= -j820
 
@@ -21,7 +23,9 @@ KERNEL_FTP	= ftp://ftp.bz2.us.kernel.org/pub/linux/kernel
 ARM_FTP		= ftp://ftp.arm.linux.org.uk/pub/armlinux/source/kernel-patches
 JORNADA7XX	= http://wwwcip.informatik.uni-erlangen.de/~simigern/jornada-7xx/linux-2.4.31-j720-4/
 
-KERNEL24	= linux-2.4.31
+KVER		= 2.4.31
+KERNEL24	= linux-${KVER}
+KERNELVERSION	= ${KVER}${EXTRAVERSION}
 KERNEL24_TB2	= ${KERNEL24}.tar.bz2
 KERNEL24_URL	= ${KERNEL_FTP}/v2.4/${KERNEL24_TB2}
 #ARM24PATCH	= patch-2.4.27-vrs1.bz2
@@ -36,13 +40,55 @@ KERNEL26_URL	= ${KERNEL_FTP}/v2.6/${KERNEL26_TB2}
 ARM26PATCH	= patch-2.6.12.3.bz2
 ARM26PATCH_URL	= ${KERNEL_FTP}/v2.6/${ARM26PATCH}
 
+# ------------- directories for source and build ----------------------------
+
+DLDIR			= ${TOPDIR}/dl
+BUILDDIR		= ${TOPDIR}/build
+RAMDISKDIR		= ${TOPDIR}/ramdisk
+CONFDIR			= ${TOPDIR}/conf
+KERNELDIR		= ${TOPDIR}/linux/kernel
+KERNELDIR26		= ${TOPDIR}/linux/kernel26
+UPSTREAMDIR		= ${TOPDIR}/upstream
+KBUILDDIR		= ${BUILDDIR}/kernel
+TARGETDIR		= ${BUILDDIR}/target
+KUPSTREAMDIR		= ${UPSTREAMDIR}/${KERNEL24}
+RAMDISKIMAGE		= ${TARGETDIR}/ramdiskimage
+KBUILDDIR26		= ${BUILDDIR}/kernel26
+TARGETDIR26		= ${BUILDDIR}/target26
+KUPSTREAMDIR26		= ${UPSTREAMDIR}/${KERNEL26}
+RAMDISKIMAGE26		= ${TARGETDIR26}/ramdiskimage
+KUPSTREAMDIRHH		= ${UPSTREAMDIR}/kernel-hh
+KUPSTREAMDIR26HH	= ${UPSTREAMDIR}/kernel26-hh
+
+# -------------- xxx ----------------------------------
+
+KMAKEFILE_TRANS	:= \
+		s/^EXTRAVERSION.*=.*$$/EXTRAVERSION = ${EXTRAVERSION}/ ; \
+		s/^ARCH\s*:= .*$$/ARCH := arm/ ; \
+		s/^\#?CROSS_COMPILE\s*=.*$$/CROSS_COMPILE = ${CROSS_COMPILE}/ ;
+
+K24PATCHES		:= ${DLDIR}/${ARM24PATCH}
+K24EXTENSIONS		:= 
+K24MAKEFILE_TRANS	:= ${KMAKEFILE_TRANS}
+
+K24PATCHES		:= ${DLDIR}/${ARM26PATCH}
+K24EXTENSIONS		:= 
+K24MAKEFILE_TRANS	:= ${K26MAKEFILE_TRANS}
+
 BUSYBOXVER		= 1.00
 BUSYBOXTAR		= busybox-${BUSYBOXVER}.tar.bz2
-BUSYBOXDIR		= ramdisk/busybox/busybox
+BUSYBOXURL		= http://busybox.net/downloads/${BUSYBOXTAR}
+BUSYBOXDIR		= ${BUILDDIR}/busybox-${BUSYBOXVER}
 
 PCMCIAVER		= 3.2.8
 PCMCIATAR		= pcmcia-cs-${PCMCIAVER}.tar.gz
-PCMCIADIR		= ramdisk/pcmcia/pcmcia-cs-${PCMCIAVER}
+PCMCIAURL		= http://pcmcia-cs.sourceforge.net/ftp/${PCMCIATAR}
+PCMCIADIR		= ${BUILDDIR}/pcmcia-cs-${PCMCIAVER}
+
+#SCHEMIX_URL	= http://ftp.gnu.org/savannah/files/schemix/schemix.pkg/0.2.1/schemix-0.2.1.tar.gz
+#KALLSYMS_ORIG	= http://www.atomicrocketturtle.com/kernels/2.4/linux-2.4.9-kallsyms.patch
+KALLSYMS24PATCH	= linux-2.4.31-kallsyms.patch.bz2
+KALLSYMS_URL	= http://jornada820.sourceforge.net/files/upstream/$(KALLSYMS24PATH)
 
 CROSS_GCC	= ${CROSS_COMPILE}gcc
 
@@ -63,20 +109,6 @@ DEBUGFS		 	= debugfs
 E2FSCK		 	= e2fsck
 CANONICAL_PATH          = /bin:/usr/bin
 
-# ------------- directories for source and build ----------------------------
-
-KERNELDIR		= linux/kernel
-KBUILDDIR		= linux/build/kernel
-KUPSTREAMDIR		= linux/upstream/kernel
-KERNELDIR26		= linux/kernel26
-KBUILDDIR26		= linux/build/kernel26
-KUPSTREAMDIR26		= linux/upstream/kernel26
-MODDIR			= ${TOPDIR}/${KBUILDDIR}/target
-MODDIR26		= ${TOPDIR}/${KBUILDDIR26}/target
-
-RAMDISKIMAGE		= ${TOPDIR}/ramdisk/ramdiskimage.gz
-RAMDISKIMAGE26		= ${TOPDIR}/ramdisk/ramdiskimage26.gz
-
 # -------------- default targets -------------------------------------------
 
 help::
@@ -84,55 +116,76 @@ help::
 
 all:: j820
 
+
+# --------------------- schemix (optional) ---------------------------------
+ifneq (${SCHEME},)
+K24PATCHES		:= ${K24PATCHES} ${DLDIR}/${KALLSYMS24PATCH} 
+K24EXTENSIONS		:= ${K24EXTENSIONS} schemix-src
+K24MAKEFILE_TRANS	:= ${K24MAKEFILE_TRANS} \
+				s/^SUBDIRS\s*=(.*)$$/SUBDIRS =$$1 schemix/ ;
+
+schemix-cvs: ${UPSTREAMDIR}/schemix/Makefile
+${UPSTREAMDIR}/schemix/Makefile:
+	mkdir -p ${UPSTREAMDIR} && \
+	cd ${UPSTREAMDIR} && \
+	cvs -z3 -d:ext:anoncvs@savannah.nongnu.org:/cvsroot/schemix \
+		co schemix && \
+	cd schemix && \
+	echo '(load "schemix-make-init.scm")' | ${SCHEME}
+
+schemix-src: schemix-cvs
+	cp -fal ${UPSTREAMDIR}/schemix ${KUPSTREAMDIR}/
+
+endif
+
 # --------------------- kernel build tree ----------------------------------
 
 kbuildtree:: upstream-kernel
-	mkdir -p linux/build/
-	cp -fal ${KUPSTREAMDIR} linux/build/
-	cp -fal ${KERNELDIR} linux/build/
-	perl -pi -e 's/^EXTRAVERSION.*=.*$$/EXTRAVERSION = ${EXTRAVERSION}/ ; \
-		s/^ARCH\s*:= .*$$/ARCH := arm/ ; \
-		s/^\#?CROSS_COMPILE\s*=.*$$/CROSS_COMPILE = ${CROSS_COMPILE}/ ; \
-		' linux/build/kernel/Makefile
+	mkdir -p ${KBUILDDIR} &&
+	cp -fal ${KUPSTREAMDIR}/. ${KBUILDDIR}/.
+	cp -fal ${KERNELDIR}/. ${KBUILDDIR}/.
+	perl -pi -e '${K24MAKEFILE_TRANS}' ${KBUILDIR}/Makefile
 
 ourtree:
-	cp -fal ${KERNELDIR} linux/build/
+	cp -fal ${KERNELDIR}/. ${KBUILDDIR}/.
 
-${KUPSTREAMDIR}-hh/CVS/Root ${KUPSTREAMDIR}-hh/CVS/Repository:
-	mkdir -p ${KUPSTREAMDIR}-hh/CVS ; cd ${KUPSTREAMDIR}-hh/CVS || exit 2 ; \
+${KUPSTREAMDIRHH}/CVS/Root ${KUPSTREAMDIRHH}/CVS/Repository:
+	mkdir -p ${KUPSTREAMDIRHH}/CVS ; cd ${KUPSTREAMDIRHH}/CVS || exit 2 ; \
 	echo :pserver:anoncvs@cvs.handhelds.org:/cvs > Root ; \
 	echo linux/kernel > Repository ; \
 	touch Entries ; \
 	grep -q ':pserver:anoncvs@cvs.handhelds.org:2401/cvs' ~/.cvspass || \
 	echo '/1 :pserver:anoncvs@cvs.handhelds.org:2401/cvs Ay=0=h<Z' >> ~/.cvspass
-
-${KUPSTREAMDIR}-hh/Makefile: ${KUPSTREAMDIR}-hh/CVS/Root
-	cd ${KUPSTREAMDIR}-hh && cvs -z9 update -dfP && \
+${KUPSTREAMDIRHH}/Makefile: ${KUPSTREAMDIRHH}/CVS/Root
+	cd ${KUPSTREAMDIRHH} && cvs -z9 update -dfP && \
 	touch Makefile
 
-linux24: linux/upstream/${KERNEL24_TB2}
-linux/upstream/${KERNEL24_TB2}:
-	mkdir -p linux/upstream && cd linux/upstream && \
+upstream-kernel:
+	[ -f ${KUPSTREAMDIR}/Makefile ] || make do-upstream-kernel
+do-upstream-kernel: linux24-dir ${K24EXTENSIONS} ${K24PATCHES}
+	bzcat ${K24PATCHES} | ( cd ${KUPSTREAMDIR} && patch -p1 -E )
+linux24-dir: ${DLDIR}/${KERNEL24_TB2}
+	cd ${UPSTREAMDIR} && \
+	rm -rf ${KERNEL24} && \
+	tar jxf ${KERNEL24_TB2}
+${DLDIR}/${KERNEL24_TB2}:
+	mkdir -p ${DLDIR} && cd ${DLDIR} && \
 	wget -c ${KERNEL24_URL}
-
-arm24patch: linux/upstream/${ARM24PATCH}
-linux/upstream/${ARM24PATCH}:
-	mkdir -p linux/upstream && cd linux/upstream && \
+${DLDIR}/${ARM24PATCH}:
+	mkdir -p ${DLDIR} && cd ${DLDIR} && \
 	wget -c ${ARM24PATCH_URL}
+${DLDIR}/${KALLSYMS24PATCH}:
+	mkdir -p ${DLDIR} && cd ${DLDIR} && \
+	wget -c ${KALLSYMS_URL}
 
-upstream-kernel: linux24 arm24patch
-	[ -f ${KUPSTREAMDIR}/Makefile ] || ( \
-	cd linux/upstream && \
-	tar jxf ${KERNEL24_TB2} && \
-	mv ${KERNEL24} kernel && \
-	cd kernel && \
-	bzcat ../${ARM24PATCH} | patch -p1 -E )
 
 # --------------------- kernel build tree, v2.6 ----------------------------
 
 kbuildtree26:: upstream-kernel26
-	mkdir -p linux/build/
-	cp -fal ${KUPSTREAMDIR26} linux/build/
+	mkdir -p ${KBUILDDIR26} &&
+	cp -fal ${KUPSTREAMDIR26}/. ${KBUILDDIR26}/.
+	cp -fal ${KERNELDIR26}/. ${KBUILDDIR26}/.
+	perl -pi -e '${K26MAKEFILE_TRANS}' ${KBUILDIR26}/Makefile
 	cp -fal ${KERNELDIR26} linux/build/
 	perl -pi.bak -e 's/^EXTRAVERSION.*=.*$$/EXTRAVERSION = ${EXTRAVERSION}/ ; \
 		s/^ARCH\s*:= .*$$/ARCH := arm/ ; \
@@ -142,8 +195,8 @@ kbuildtree26:: upstream-kernel26
 ourtree26:
 	cp -fal ${KERNELDIR26} linux/build/
 
-old-${KUPSTREAMDIR26}/CVS/Root ${KUPSTREAMDIR26}/CVS/Repository:
-	mkdir -p ${KUPSTREAMDIR26}/CVS ; cd ${KUPSTREAMDIR26}/CVS || exit 2 ; \
+${KUPSTREAMDIR26HH}/CVS/Root ${KUPSTREAMDIR26HH}/CVS/Repository:
+	mkdir -p ${KUPSTREAMDIR26HH}/CVS ; cd ${KUPSTREAMDIR26HH}/CVS || exit 2 ; \
 	echo :pserver:anoncvs@cvs.handhelds.org:/cvs > Root ; \
 	echo linux/kernel26 > Repository ; \
 	touch Entries ; \
@@ -154,22 +207,20 @@ old-${KUPSTREAMDIR26}/Makefile: ${KUPSTREAMDIR26}/CVS/Root
 	cd ${KUPSTREAMDIR26} && cvs -z9 update -dfP && \
 	touch Makefile
 
-linux26: linux/upstream/${KERNEL26_TB2}
-linux/upstream/${KERNEL26_TB2}:
-	mkdir -p linux/upstream && cd linux/upstream && \
+linux26: ${DLDIR}/${KERNEL26_TB2}
+${DLDIR}/${KERNEL26_TB2}:
+	mkdir -p ${DLDIR} && cd ${DLDIR} && \
 	wget -c ${KERNEL26_URL}
 
-arm26patch: linux/upstream/${ARM26PATCH}
-linux/upstream/${ARM26PATCH}:
-	if [ -n "${ARM26PATCH}" ] ; then \
-	mkdir -p linux/upstream && cd linux/upstream && \
-	wget -c ${ARM26PATCH_URL} ; fi
+arm26patch: ${DLDIR}/${ARM26PATCH}
+${DLDIR}/${ARM26PATCH}:
+	mkdir -p ${DLDIR} && cd ${DLDIR} && \
+	wget -c ${ARM26PATCH_URL}
 
 upstream-kernel26: linux26 arm26patch
 	[ -f ${KUPSTREAMDIR26}/Makefile ] || ( \
-	cd linux/upstream && \
+	cd ${UPSTREAMDIR} && \
 	tar jxf ${KERNEL26_TB2} && \
-	mv ${KERNEL26} kernel26 && \
 	if [ -n "${ARM26PATCH}" ] ; then \
 	cd kernel26 && \
 	bzcat ../${ARM26PATCH} | patch -p1 -E ; fi )
@@ -181,50 +232,49 @@ upstream-kernel26: linux26 arm26patch
 # in case we want a toolchain now and a runtime later?
 # "toolchain" or "uclibc" doesn't work, as of svn revision 10929
 toolchain: uclibc-config
-	make -C uclibc/buildroot
+	make -C ${BUILDROOT}
 
 everything: toolchain
-	make -C uclibc/buildroot
+	make -C ${BUILDROOT}
 
 gcc_version:
 	${CROSS_GCC} -v
 
 uclibc-svn:
-	cd uclibc && \
 	svn co -r ${UCLIBC_SVN_REVISION} svn://uclibc.org/trunk/buildroot
 
 uclibc-setup: uclibc-svn
 	### This configures buildroot for our purposes.
-	cp uclibc/buildroot.config ${BUILDROOT}/.config
+	cp ${CONFDIR}/buildroot.config ${BUILDROOT}/.config
 	### This is because uclibc revision 10929 otherwise borks.
 	### Hopefully we can get rid of it later.
 	[ -f ${BUILDROOT}/toolchain/uClibc/uClibc.config.bak ] || \
 	cp ${BUILDROOT}/toolchain/uClibc/uClibc.config \
 	   ${BUILDROOT}/toolchain/uClibc/uClibc.config.bak
-	cp uclibc/uclibc.config ${BUILDROOT}/toolchain/uClibc/uClibc.config
+	cp ${CONFDIR}/uclibc.config ${BUILDROOT}/toolchain/uClibc/uClibc.config
 	### This is in case someday we'd like to get the kernel compiled
 	### through uclibc's buildroot
 	#make -C ${BUILDROOT} ${BUILDROOT}/toolchain_build_arm/uClibc/.unpacked
 	#-ln -sf ../../../../linux/linux.mk \
 	#       ../../../../linux/Config.in \
-	#       uclibc/buildroot/package/linux/ ; \
-	#perl -p -i.bak -e 'if (m,package/linux/Config.in,) { $$A = 1 } ; unless ($$A) { s,endmenu,source "package/linux/Config.in"\nendmenu,s }' uclibc/buildroot/package/Config.in
+	#       ${BUILDROOT}/package/linux/ ; \
+	#perl -p -i.bak -e 'if (m,package/linux/Config.in,) { $$A = 1 } ; unless ($$A) { s,endmenu,source "package/linux/Config.in"\nendmenu,s }' ${BUILDROOT}/package/Config.in
 
 uclibc-menuconfig: uclibc-setup
-	make -C uclibc/buildroot menuconfig
-	( cmp -s uclibc/buildroot/.config uclibc/buildroot.config || \
-	cat uclibc/buildroot/.config > uclibc/buildroot.config )
+	make -C ${BUILDROOT} menuconfig
+	( cmp -s ${BUILDROOT}/.config ${CONFDIR}/buildroot.config || \
+	cat ${BUILDROOT}/.config > ${CONFDIR}/buildroot.config )
 
 uclibc-config: uclibc-setup
-	make -C uclibc/buildroot oldconfig
+	make -C ${BUILDROOT} oldconfig
 
 # remove all the built stuff so we can try again a new compilation
 uclibc-clean:
-	${RM} -rf uclibc/buildroot/*build_arm
+	${RM} -rf ${BUILDROOT}/*build_arm
 
 # remove all uclibc svn sources
 uclibc-drop-sources:
-	cd uclibc/buildroot/ && \
+	cd ${BUILDROOT}/ && \
 	${RM} -rf Makefile Config.in \
 		docs target toolchain package
 
@@ -233,7 +283,7 @@ uclibc-mrproper: uclibc-clean uclibc-drop-sources
 
 # remove everything except the useful binaries
 toolchain-keep-only-binaries: uclibc-drop-sources
-	cd uclibc/buildroot/ && \
+	cd ${BUILDROOT}/ && \
 	${RM} -rf dl
 # Note that the uclibc toolchain cares about the path it was created
 # to reside in, so if you care where that is, or want to make it so it
@@ -251,7 +301,7 @@ toolchain-keep-only-binaries: uclibc-drop-sources
 
 # remove everything about uclibc
 uclibc-distclean:
-	${RM} -rf uclibc/buildroot
+	${RM} -rf ${BUILDROOT}
 
 # ------------------ build the boot image ----------------------------------
 
@@ -268,20 +318,20 @@ do-j820:
 	cp ${KBUILDDIR}/arch/arm/boot/j820/j820 j820
 
 kernel-compilation:
-	mkdir -p ${MODDIR} && \
+	mkdir -p ${TARGETDIR} && \
 	${MAKE} -C {KBUILDDIR} \
 	    ARCH=arm \
 	    CROSS_COMPILE=${CROSS_COMPILE} \
-	    INSTALL_MOD_PATH=${MODDIR} \
+	    INSTALL_MOD_PATH=${TARGETDIR} \
 	    DEPMOD=true \
 	    zImage modules modules_install
 
 modules-compilation:
-	mkdir -p ${MODDIR} && \
+	mkdir -p ${TARGETDIR} && \
 	${MAKE} -C ${KBUILDDIR} \
 		ARCH=arm \
 		CROSS_COMPILE=${CROSS_COMPILE} \
-		INSTALL_MOD_PATH=${MODDIR} \
+		INSTALL_MOD_PATH=${TARGETDIR} \
 		DEPMOD=true \
 		modules modules_install
 
@@ -296,29 +346,23 @@ just-j820:
 	    j820
 	cp ${KBUILDDIR}/arch/arm/boot/j820/j820 j820
 
-
-sandisk: j820
-	mount /mnt/sandisk/; cp j820 /mnt/sandisk/; umount /mnt/sandisk/
-sandisk-fare:
-	( mount /dev/sda1 /mnt && ( ls -l j820-26; cp -f j820-26 /mnt ; umount /mnt ) ; echo -e '\007' )
-
 j820-26: config26 modules26 ramdisk26 do-j820-26
 do-j820-26:
-	mkdir -p ${MODDIR26} && \
+	mkdir -p ${TARGETDIR26} && \
 	${MAKE} -C ${KBUILDDIR26}\
 	    ARCH=arm \
 	    CROSS_COMPILE=${CROSS_COMPILE} \
 	    INITRD=${RAMDISKIMAGE26} \
-	    INSTALL_MOD_PATH=${MODDIR26} \
+	    INSTALL_MOD_PATH=${TARGETDIR26} \
 	    zImage j820
 	cp ${KBUILDDIR26}/arch/arm/boot/j820/j820 j820-26
 
 modules26-compilation:
-	mkdir -p ${MODDIR26} && \
+	mkdir -p ${TARGETDIR26} && \
 	${MAKE} -C ${KBUILDDIR26} \
 		ARCH=arm \
 		CROSS_COMPILE=${CROSS_COMPILE} \
-		INSTALL_MOD_PATH=${MODDIR26} \
+		INSTALL_MOD_PATH=${TARGETDIR26} \
 		DEPMOD=true \
 		modules modules_install
 
@@ -376,133 +420,84 @@ modules: config depend do-modules
 do-modules: modules-compilation modules-tarbz2
 
 modules-tarbz2:
-	cd ${KBUILDDIR}/target && \
-	tar -jcf modules.tar.bz2 --owner 0 --group 0 lib/modules/ && \
-	ln -f modules.tar.bz2 ${TOPDIR}/ramdisk/modules.tar.bz2
+	cd ${TARGETDIR} && \
+	tar -jcf modules.tar.bz2 --owner 0 --group 0 lib/modules
 
 modules26: config26 do-modules26
 
-do-modules26: ramdisk/modules26.tar.bz2
+do-modules26: ${TARGET26}/modules.tar.bz2
 
 modules26-tarbz2:
-	cd ${KBUILDDIR26}/target && \
-	tar -jcf modules.tar.bz2 --owner 0 --group 0 lib/modules && \
-	ln -f modules.tar.bz2 ${TOPDIR}/ramdisk/modules26.tar.bz2
+	cd ${TARGETDIR26} && \
+	tar -jcf modules.tar.bz2 --owner 0 --group 0 lib/modules
 
 # ------------------- build ramdisk image ----------------------------------
 
 ramdisk: modules do-ramdisk
-do-ramdisk: ramdisk/ramdiskimage.gz
-ramdisk/ramdiskimage: ramdisk/cmdfile busybox pcmcia
-	cd ramdisk && \
-	dd if=/dev/zero of=ramdiskimage count=3072 bs=1024 && \
-	$(MKE2FS) -F ramdiskimage && \
-	$(DEBUGFS) -f cmdfile && \
-	$(E2FSCK) -f -y ramdiskimage ; :
-ramdisk/ramdiskimage.gz: ramdisk/ramdiskimage
+do-ramdisk: ${RAMDISKIMAGE}.gz
+${RAMDISKIMAGE}.gz: ${RAMDISKIMAGE}
 	gzip -9 < $< > $@
+${RAMDISKIMAGE}: ${CONFDIR}/mkcmdfile.sh busybox pcmcia
+	cd ramdisk && \
+	dd if=/dev/zero of=${RAMDISKIMAGE} count=3072 bs=1024 && \
+	$(MKE2FS) -F ${RAMDISKIMAGE} && \
+	sh $< ${RAMDISKIMAGE} ${RAMDISKDIR} ${BUILDDIR} ${TARGETDIR} | \
+	$(DEBUGFS) && \
+	$(E2FSCK) -f -y ${RAMDISKIMAGE} ; :
 
 ramdisk26: modules26 do-ramdisk26
-do-ramdisk26: ramdisk/ramdiskimage26.gz
-ramdisk/ramdiskimage26: ramdisk/cmdfile26 busybox pcmcia
+do-ramdisk26: ${RAMDISKIMAGE26}.gz
+${RAMDISKIMAGE26}: ${CONFDIR}/mkcmdfile.sh busybox pcmcia
 	cd ramdisk && \
-	dd if=/dev/zero of=ramdiskimage26 count=4096 bs=1024 && \
-	$(MKE2FS) -F ramdiskimage26 && \
-	$(DEBUGFS) -f cmdfile26 && \
-	$(E2FSCK) -f -y ramdiskimage26 ; :
-ramdiskimage26.gz: ramdisk/ramdiskimage26
+	dd if=/dev/zero of=${RAMDISKIMAGE26} count=4096 bs=1024 && \
+	$(MKE2FS) -F ${RAMDISKIMAGE26} && \
+	sh $< ${RAMDISKIMAGE26} ${RAMDISKDIR} ${BUILDDIR} ${TARGETDIR26} | \
+	$(DEBUGFS) && \
+	$(E2FSCK) -f -y ${RAMDISKIMAGE26} ; :
+${RAMDISKIMAGE26}.gz: ${RAMDISKIMAGE26}
 	gzip -9 < $< > $@
-
-# ----------------- ramdiskimage command file ------------------------------
-
-ramdisk/cmdfile: ramdisk/cmdfile.in
-	( echo open -w ramdiskimage ; \
-	cat ramdisk/cmdfile.in ; \
-	for d in `find etc -type d | grep -v CVS` ; do \
-	  echo "mkdir /$$d" ; \
-	done ; \
-	for f in `find etc -type f | grep -v CVS` ; do \
-	  dir=`dirname $$f`; \
-	  file=`basename $$f`; \
-	  echo "cd /$$dir" ; \
-	  echo "write $$f $$file" ; \
-	done ; \
-	echo "cd /" ; \
-	echo write modules.tar.bz2 modules.tar.bz2 ; \
-	) > $@
-	#for d in `find lib -type d` ; do \
-	#  echo "mkdir /$$d" ; \
-	#done
-	#for f in `find lib -type f | grep -vi cvs` ; do \
-	#  dir=`dirname $$f`; \
-	#  file=`basename $$f`; \
-	#  echo "cd /$$dir" ; \
-	#  echo "write $$f $$file" ; \
-	#done
-
-
-ramdisk/cmdfile26: ramdisk/cmdfile.in
-	( echo open -w ramdiskimage26 ; \
-	cat ramdisk/cmdfile.in ; \
-	echo "cd /" ; \
-	echo write modules26.tar.bz2 modules.tar.bz2 ; \
-	for d in `find etc -type d | grep -v CVS` ; do \
-	  echo "mkdir /$$d" ; \
-	done ; \
-	for f in `find etc -type f | grep -v CVS` ; do \
-	  dir=`dirname $$f`; \
-	  file=`basename $$f`; \
-	  echo "cd /$$dir" ; \
-	  echo "write $$f $$file" ; \
-	done ; \
-	echo "cd /" ) > $@
-
 
 # -----------------------  minimal userland binaries  ----------------------
 
-busybox:	ramdisk/busybox/busybox.bin
+busybox:	busybox-dir busybox-compile
 
-ramdisk/busybox/${BUSYBOXTAR}:
-	cd ramdisk/busybox/ && \
-	wget http://busybox.net/downloads/${BUSYBOXTAR}
+${DLDIR}/${BUSYBOXTAR}:
+	mkdir -p ${DLDIR} && cd ${DLDIR} && \
+	wget -c ${BUSYBOXURL}
 
 busybox-dir:
 	[ -d ${BUSYBOXDIR} ] || make do-busybox-dir
 
-do-busybox-dir: ramdisk/busybox/${BUSYBOXTAR}
-	cd ramdisk/busybox/ && \
-	rm -rf busybox ; \
-	tar jxf ${BUSYBOXTAR} && \
-	mv busybox-${BUSYBOXVER} busybox
+do-busybox-dir: ${DLDIR}/${BUSYBOXTAR}
+	rm -rf ${BUSYBOXDIR}
+	tar jxfC ${DLDIR}/${BUSYBOXTAR} ${BUILDDIR}
 
+# if using svn, then the BUSYBOXDIR parameter above
+# should be stripped from its a -version.number
 busybox-svn:
-	cd ramdisk/busybox/ && \
+	cd ${BUILDDIR} && \
 	svn co svn://busybox.net/trunk/busybox
 
-busybox-compile: ${BUSYBOXDIR}/_install/bin/busybox
-	cd ramdisk/busybox/ && \
+busybox-compile: ${BUILDDIR}/busybox.bin
+${BUILDDIR}/busybox.bin:
 	@cd ${BUSYBOXDIR} && \
-	cp _install/bin/busybox ../busybox.bin
-
-${BUSYBOXDIR}/_install/bin/busybox:
-	@cd ${BUSYBOXDIR} && \
-	cp ../busybox.cfg .config && \
+	cp ${TOPDIR}/ramdisk/busybox/busybox.cfg .config && \
 	${MAKE}	CROSS=${CROSS_COMPILE} oldconfig && \
 	${MAKE} CROSS=${CROSS_COMPILE} busybox && \
-	${MAKE} CROSS=${CROSS_COMPILE} install
-
-ramdisk/busybox/busybox.bin: busybox-dir busybox-compile
+	${MAKE} CROSS=${CROSS_COMPILE} install && \
+	cp ${BUSYBOXDIR}/_install/bin/busybox $@
 
 pcmcia:	pcmcia-install
 pcmcia-install: pcmcia-dir cardmgr cardctl
 pcmcia-dir:
 	[ -d ${PCMCIADIR} ] || make do-pcmcia-dir
-pcmcia-tar: ramdisk/pcmcia/${PCMCIATAR}
-ramdisk/pcmcia/${PCMCIATAR}:
-	cd ramdisk/pcmcia/ && \
-	wget http://pcmcia-cs.sourceforge.net/ftp/${PCMCIATAR}
-do-pcmcia-dir: ramdisk/pcmcia/${PCMCIATAR}
-	tar zxfC ${PCMCIATAR} ramdisk/pcmcia/
+pcmcia-tar: ${DLDIR}/${PCMCIATAR}
+${DLDIR}/${PCMCIATAR}:
+	mkdir -p ${DLDIR} && cd ${DLDIR} && \
+	wget -c ${PCMCIAURL}
+do-pcmcia-dir: ${DLDIR}/${PCMCIATAR}
+	rm -rf ${PCMCIADIR}
+	tar zxfC ${DLDIR}/${PCMCIATAR} ${BUILDDIR}
 
 PCMCIA_CFLAGS	= -Os -static -s \
 	-I../include/static -I../include -I../modules \
@@ -523,23 +518,24 @@ pcmcia-compile:
 GOALS = j820 j820-26
 DIRT = \
 	ramdisk/ramdiskimage* \
-	ramdisk/cmdfile ramdisk/cmdfile26 ramdisk/modules*.tar.bz2 \
+	ramdisk/cmdfile ramdisk/cmdfile26 ramdisk/modules*.tar.bz2
 OLDCRUFT = \
-	ramdisk/*/*-dir busybox/busybox-1.00 busybox/src
+	ramdisk/pcmcia/ ramdisk/busybox ramdisk/modules*.tar.bz2 \
+	ramdisk/ramdiskimage* ramdisk/cmdfile* ramdisk/lib
 
 localclean::
 	-${RM} ${DIRT}
 
 clean:: localclean kclean kclean26 bboxclean pcmciaclean
 kclean:
-	[ -d ${KBUILDDIR} ] && make -C ${KBUILDDIR} clean
+	[ -d ${KBUILDDIR} ] && make -C ${KBUILDDIR} clean ; :
 kclean26:
-	[ -d ${KBUILDDIR26} ] && make -C ${KBUILDDIR26} clean
+	[ -d ${KBUILDDIR26} ] && make -C ${KBUILDDIR26} clean ; :
 bboxclean:
-	[ -d ${BUSYBOXDIR} ] && make -C ${BUSYBOXDIR} clean
+	[ -d ${BUSYBOXDIR} ] && make -C ${BUSYBOXDIR} clean ; :
 	-${RM} ramdisk/busybox/busybox.bin
 pcmciaclean:
-	[ -d ${PCMCIADIR} ] && make -C ${PCMCIADIR} clean
+	[ -d ${PCMCIADIR} ] && make -C ${PCMCIADIR} clean ; :
 	-${RM} ramdisk/pcmcia/cardmgr ramdisk/pcmcia/cardctl
 
 # remove everything but the expensively downloaded files in upstream/
@@ -560,3 +556,17 @@ distclean:: mrproper nocruft
 just-j820-from-modules: \
 	modules-compilation modules-tarbz2 \
 	do-ramdisk just-j820
+
+
+
+
+
+
+
+
+
+
+
+
+
+
