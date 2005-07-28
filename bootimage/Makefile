@@ -31,7 +31,9 @@ KERNEL24_URL	= ${KERNEL_FTP}/v2.4/${KERNEL24_TB2}
 #ARM24PATCH_URL	= ${ARM_FTP}/v2.4/${ARM24PATCH}
 ARM24PATCH	= patch-2.4.31-j720-4.bz2
 ARM24PATCH_URL	= ${JORNADA7XX}/${ARM24PATCH}
-KERNEL26	= linux-2.6.12
+KVER26		= 2.6.12
+KERNEL26	= linux-${KVER26}
+KERNELVERSION26	= ${KVER26}${EXTRAVERSION}
 KERNEL26_TB2	= ${KERNEL26}.tar.bz2
 KERNEL26_URL	= ${KERNEL_FTP}/v2.6/${KERNEL26_TB2}
 #ARM26PATCH	= No need for a patch as ARM is well-integrated in kernel 2.6
@@ -416,7 +418,8 @@ do-modules: modules-compilation modules-tarbz2
 
 modules-tarbz2:
 	cd ${TARGETDIR} && \
-	tar -jcf modules.tar.bz2 --owner 0 --group 0 lib/modules
+	tar -jcf modules.tar.bz2 --owner 0 --group 0 \
+		lib/modules/${KERNELVERSION}
 
 modules26: config26 do-modules26
 
@@ -424,7 +427,8 @@ do-modules26: ${TARGET26}/modules.tar.bz2
 
 modules26-tarbz2:
 	cd ${TARGETDIR26} && \
-	tar -jcf modules.tar.bz2 --owner 0 --group 0 lib/modules
+	tar -jcf modules.tar.bz2 --owner 0 --group 0 \
+		lib/modules/${KERNELVERSION26}
 
 # ------------------- build ramdisk image ----------------------------------
 
