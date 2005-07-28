@@ -18,14 +18,8 @@
 
 #include "usb-ohci.h"
 
-#define SA1101_FAKE_PCIDEV ((struct pci_dev *) 1101)
+static struct pci_dev sa1101_ohci_dev;
 
-int __devinit
-hc_add_ohci(struct pci_dev *dev, int irq, void *membase, unsigned long flags,
-	    ohci_t **ohci, const char *name, const char *slot_name);
-extern void hc_remove_ohci(ohci_t *ohci);
-
-static ohci_t *sa1101_ohci;
 
 static void __init sa1101_ohci_configure(void)
 {
@@ -71,20 +65,20 @@ static int __init sa1101_ohci_init(void)
 	/*
 	 * Initialise the generic OHCI driver.
 	 */
-	ret = hc_add_ohci(SA1101_FAKE_PCIDEV, IRQ_SA1101_NIRQHCIM,
-			  (void *)0, 0, &sa1101_ohci,
-			  "usb-ohci", "sa1101");
-
+	ret = hc_add_ohci(&sa1101_ohci_dev, IRQ_SA1101_NIRQHCIM,
+                           (void *)0, 0,
+                           "usb-ohci", "sa1101");
 //	if (ret)
 //		release_mem_region(_USB_OHCI_OP_BASE, _USB_EXTENT);
-
 
 	return ret;
 }
 
 static void __exit sa1101_ohci_exit(void)
 {
-	hc_remove_ohci(sa1101_ohci);
+	ohci_t		*ohci = (ohci_t *) pci_get_drvdata(sa1101_ohci_dev);
+        
+	hc_remove_ohci(ohci);
 
 	/*
 	 * Put the USB host controller into reset.
