@@ -145,7 +145,7 @@ kbuildtree:: upstream-kernel
 	${MKDIR} ${KBUILDDIR}
 	cp -fal ${KUPSTREAMDIR}/. ${KBUILDDIR}/.
 	cp -fal ${KERNELDIR}/. ${KBUILDDIR}/.
-	perl -pi -e '${K24MAKEFILE_TRANS}' ${KBUILDIR}/Makefile
+	perl -pi -e '${K24MAKEFILE_TRANS}' ${KBUILDDIR}/Makefile
 
 ourtree:
 	cp -fal ${KERNELDIR}/. ${KBUILDDIR}/.
@@ -182,7 +182,7 @@ kbuildtree26:: upstream-kernel26
 	${MKDIR} ${KBUILDDIR26}
 	cp -fal ${KUPSTREAMDIR26}/. ${KBUILDDIR26}/.
 	cp -fal ${KERNELDIR26}/. ${KBUILDDIR26}/.
-	perl -pi -e '${K26MAKEFILE_TRANS}' ${KBUILDIR26}/Makefile
+	perl -pi -e '${K26MAKEFILE_TRANS}' ${KBUILDDIR26}/Makefile
 
 ourtree26:
 	cp -fal ${KERNELDIR26}/. ${KBUILDDIR26}/.
