@@ -474,11 +474,10 @@ busybox-svn:
 
 busybox-compile: ${BUILDDIR}/busybox.bin
 ${BUILDDIR}/busybox.bin:
-	@cd ${BUSYBOXDIR} && \
-	cp ${TOPDIR}/ramdisk/busybox/busybox.config .config && \
-	${MAKE}	CROSS=${CROSS_COMPILE} oldconfig && \
-	${MAKE} CROSS=${CROSS_COMPILE} busybox && \
-	${MAKE} CROSS=${CROSS_COMPILE} install && \
+	cp ${CONFDIR}/busybox.config ${BUSYBOXDIR}/.config
+	${MAKE}	-C ${BUSYBOXDIR} CROSS=${CROSS_COMPILE} oldconfig
+	${MAKE} -C ${BUSYBOXDIR} CROSS=${CROSS_COMPILE} busybox
+	${MAKE} -C ${BUSYBOXDIR} CROSS=${CROSS_COMPILE} install
 	cp ${BUSYBOXDIR}/_install/bin/busybox $@
 
 pcmcia:	pcmcia-install
