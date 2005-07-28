@@ -1,5 +1,0 @@
-config BR2_PACKAGE_LINUX
-        bool "linux"
-        default y
-        help
-	     The Linux kernel, as modified for use on the HP Jornada 820.
