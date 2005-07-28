@@ -168,12 +168,12 @@ linux24-dir: ${DLDIR}/${KERNEL24_TB2}
 	rm -rf ${KERNEL24}
 	tar jxfC ${DLDIR}/${KERNEL24_TB2} ${UPSTREAMDIR}
 ${DLDIR}/${KERNEL24_TB2}:
-	wget -c ${KERNEL24_URL}
+	cd ${DLDIR} && wget -c ${KERNEL24_URL}
 ${DLDIR}/${ARM24PATCH}:
-	wget -c ${ARM24PATCH_URL}
+	cd ${DLDIR} && wget -c ${ARM24PATCH_URL}
 get-kallsyms: ${DLDIR}/${KALLSYMS24PATCH}
 ${DLDIR}/${KALLSYMS24PATCH}:
-	wget -c ${KALLSYMS_URL}
+	cd ${DLDIR} && wget -c ${KALLSYMS_URL}
 
 
 # --------------------- kernel build tree, v2.6 ----------------------------
@@ -200,7 +200,7 @@ ${KUPSTREAMDIR26HH}/Makefile: ${KUPSTREAMDIR26HH}/CVS/Root
 
 linux26: ${DLDIR}/${KERNEL26_TB2}
 ${DLDIR}/${KERNEL26_TB2}:
-	wget -c ${KERNEL26_URL}
+	cd ${DLDIR} && wget -c ${KERNEL26_URL}
 linux26-dir: linux26
 	rm -rf ${KERNEL26}
 	tar jxfC ${DLDIR}/${KERNEL26_TB2} ${UPSTREAMDIR}
@@ -208,7 +208,7 @@ linux26-dir: linux26
 
 arm26patch: ${DLDIR}/${ARM26PATCH}
 ${DLDIR}/${ARM26PATCH}:
-	wget -c ${ARM26PATCH_URL}
+	cd ${DLDIR} && wget -c ${ARM26PATCH_URL}
 
 upstream-kernel26:
 	[ -f ${KUPSTREAMDIR26}/Makefile ] || make do-upstream-kernel26
@@ -457,7 +457,7 @@ ${RAMDISKIMAGE26}.gz: ${RAMDISKIMAGE26}
 busybox:	busybox-dir busybox-compile
 
 ${DLDIR}/${BUSYBOXTAR}:
-	wget -c ${BUSYBOXURL}
+	cd ${DLDIR} && wget -c ${BUSYBOXURL}
 
 busybox-dir:
 	[ -d ${BUSYBOXDIR} ] || make do-busybox-dir
@@ -487,7 +487,7 @@ pcmcia-dir:
 	[ -d ${PCMCIADIR} ] || make do-pcmcia-dir
 pcmcia-tar: ${DLDIR}/${PCMCIATAR}
 ${DLDIR}/${PCMCIATAR}:
-	wget -c ${PCMCIAURL}
+	cd ${DLDIR} && wget -c ${PCMCIAURL}
 do-pcmcia-dir: ${DLDIR}/${PCMCIATAR}
 	rm -rf ${PCMCIADIR}
 	tar zxfC ${DLDIR}/${PCMCIATAR} ${BUILDDIR}
