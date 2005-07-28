@@ -10,12 +10,11 @@
 #include <linux/interrupt.h>
 #include <linux/slab.h>
 #include <linux/usb.h>
-
+#include <linux/pci.h>
 #include <asm/irq.h>
 #include <asm/io.h>
 #include <asm/hardware.h>
 #include "../../../arch/arm/mach-sa1100/pcipool.h"
-
 #include "usb-ohci.h"
 
 static struct pci_dev sa1101_ohci_dev;
@@ -76,7 +75,7 @@ static int __init sa1101_ohci_init(void)
 
 static void __exit sa1101_ohci_exit(void)
 {
-	ohci_t		*ohci = (ohci_t *) pci_get_drvdata(sa1101_ohci_dev);
+	ohci_t		*ohci = (ohci_t *) sa1101_ohci_dev.driver_data;
         
 	hc_remove_ohci(ohci);
 
