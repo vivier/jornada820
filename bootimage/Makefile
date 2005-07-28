@@ -484,7 +484,7 @@ ${BUILDDIR}/busybox.bin:
 	cp ${BUSYBOXDIR}/_install/bin/busybox $@
 
 pcmcia:	pcmcia-install
-pcmcia-install: pcmcia-dir cardmgr cardctl
+pcmcia-install: pcmcia-dir pcmcia-compile
 pcmcia-dir:
 	[ -d ${PCMCIADIR} ] || make do-pcmcia-dir
 pcmcia-tar: ${DLDIR}/${PCMCIATAR}
@@ -498,7 +498,8 @@ PCMCIA_CFLAGS	= -Os -static -s \
 	-I../include/static -I../include -I../modules \
 	-I../../../../linux/kernel/include
 
-pcmcia-compile:
+pcmcia-compile: ${BUILDDIR}/cardctl ${BUILDDIR}/cardmgr
+${BUILDDIR}/cardctl ${BUILDDIR}/cardmgr:
 	@-cd ${PCMCIADIR}/include/linux && \
 	${LN} -s ../pcmcia/config.h . && \
 	${LN} -s ../pcmcia/config.h version.h && \
