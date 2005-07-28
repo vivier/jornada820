@@ -1,0 +1,8 @@
+# This is a configuration file for integrating the linux kernel
+# as a component of the uclibc buildroot system
+
+config BR2_PACKAGE_LINUX
+        bool "linux"
+        default y
+        help
+	     The Linux kernel, as modified for use on the HP Jornada 820.
