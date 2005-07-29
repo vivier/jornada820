@@ -32,6 +32,7 @@ cd /sbin
 write ${BUILDDIR}/cardmgr cardmgr
 write ${BUILDDIR}/cardctl cardctl
 
+cd /
 END
 
 cd ${RAMDISKDIR}
