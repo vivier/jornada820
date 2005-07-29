@@ -75,8 +75,6 @@ K24MAKEFILE_TRANS	:= ${KMAKEFILE_TRANS}
 K26PATCHES		:= ${DLDIR}/${ARM26PATCH}
 K26EXTENSIONS		:= 
 K26MAKEFILE_TRANS	:= ${KMAKEFILE_TRANS}
-KBUILD_EXTMOD		:=
-export KBUILD_EXTMOD
 
 BUSYBOXVER		= 1.00
 BUSYBOXTAR		= busybox-${BUSYBOXVER}.tar.bz2
@@ -88,7 +86,12 @@ PCMCIATAR		= pcmcia-cs-${PCMCIAVER}.tar.gz
 PCMCIAURL		= http://pcmcia-cs.sourceforge.net/ftp/${PCMCIATAR}
 PCMCIADIR		= ${BUILDDIR}/pcmcia-cs-${PCMCIAVER}
 
-#SCHEMIX_URL	= http://ftp.gnu.org/savannah/files/schemix/schemix.pkg/0.2.1/schemix-0.2.1.tar.gz
+SCHEMIX_TAR	= schemix-0.2.1.tar.gz
+SCHEMIX_URL	= http://ftp.gnu.org/savannah/files/schemix/schemix.pkg/0.2.1/${SCHEMIX_TAR}
+SCHEMIX_DIR	= ${UPSTREAMDIR}/schemix-0.2.1
+SCHEMIX_PATCH	= schemix-0.2.1-fare.patch.bz2
+SCHEMIX_PATCH_URL = http://jornada820.sourceforge.net/files/upstream/${SCHEMIX_PATCH}
+
 #KALLSYMS_ORIG	= http://www.atomicrocketturtle.com/kernels/2.4/linux-2.4.9-kallsyms.patch
 KALLSYMS24PATCH	= linux-2.4.31-kallsyms.patch.bz2
 KALLSYMS_URL	= http://jornada820.sourceforge.net/files/upstream/${KALLSYMS24PATCH}
@@ -125,36 +128,52 @@ all:: j820
 
 # --------------------- schemix (optional) ---------------------------------
 ifneq (${SCHEME},)
-K24PATCHES		:= ${K24PATCHES} ${DLDIR}/${KALLSYMS24PATCH} 
+K24PATCHES		:= ${K24PATCHES} ${DLDIR}/${KALLSYMS24PATCH}
 K24EXTENSIONS		:= ${K24EXTENSIONS} schemix-src
 K24MAKEFILE_TRANS	:= ${K24MAKEFILE_TRANS} \
-				s/^SUBDIRS\s*=(.*)$$/SUBDIRS =$$1 schemix/ ;
-#K26PATCHES		:= ${K26PATCHES} ${DLDIR}/${KALLSYMS24PATCH} 
+				s/^(SUBDIRS\s*=.*)$$/$$1 schemix/ ;
+#K26PATCHES		:= ${K26PATCHES} ${DLDIR}/${KALLSYMS24PATCH}
 K26EXTENSIONS		:= ${K26EXTENSIONS} schemix-src26
-#K26MAKEFILE_TRANS	:= ${K24MAKEFILE_TRANS}
+K26MAKEFILE_TRANS	:= ${K26MAKEFILE_TRANS} \
+				s/^(libs-y\s*:=.*)$$/$$1 schemix\// ;
+
 
 ####Uncomment this if/when you get schemix-compile26 to work...
-#KBUILD_EXTMOD		:= ${KBUILD_EXTMOD} schemix/
+KBUILD_EXTMOD		:= ${KBUILD_EXTMOD} schemix/
 
-schemix-dir:
+schemix-cvs-dir:
 	[ -f ${UPSTREAMDIR}/schemix/Makefile ] || make schemix-cvs
 schemix-cvs:
 	cd ${UPSTREAMDIR} && \
 	cvs -z3 -d:ext:anoncvs@savannah.nongnu.org:/cvsroot/schemix \
 		co schemix
+
+schemix-dir: ${DLDIR}/${SCHEMIX_TAR} ${DLDIR}/${SCHEMIX_PATCH}
+	[ -d ${SCHEMIX_DIR} ] || make do-schemix-dir
+do-schemix-dir:
+	${RM} -rf ${SCHEMIX_DIR}
+	tar zxfC ${DLDIR}/${SCHEMIX_TAR} ${UPSTREAMDIR}
+	cd ${SCHEMIX_DIR} && \
+	bzcat ${DLDIR}/${SCHEMIX_PATCH} | patch -p1 -E
+schemix-tar: ${DLDIR}/${SCHEMIX_TAR}
+${DLDIR}/${SCHEMIX_TAR}:
+	cd ${DLDIR} && wget -c ${SCHEMIX_URL}
+${DLDIR}/${SCHEMIX_PATCH}:
+	cd ${DLDIR} && wget -c ${SCHEMIX_PATCH_URL}
+
+
 schemix-src: schemix-dir
-	cp -fal ${UPSTREAMDIR}/schemix ${KUPSTREAMDIR}/
+	${MKDIR} ${KUPSTREAMDIR}/schemix
+	cp -fal ${SCHEMIX_DIR}/. ${KUPSTREAMDIR}/schemix/.
 	cd ${KUPSTREAMDIR}/schemix && \
 	${RM} schemix-init.c schemix-pre-init.c && \
-	echo '(load "schemix-make-init.scm")' | ${SCHEME} && \
-	( echo "obj-m := schemix.o" ; echo "include \$$(TOPDIR)/Rules.make" \
-	) > Makefile
+	echo '(load "schemix-make-init.scm")' | ${SCHEME}
 schemix-src26: schemix-dir
-	cp -fal ${UPSTREAMDIR}/schemix ${KUPSTREAMDIR26}/
+	${MKDIR} ${KUPSTREAMDIR26}/schemix
+	cp -fal ${SCHEMIX_DIR}/. ${KUPSTREAMDIR26}/schemix/.
 	cd ${KUPSTREAMDIR26}/schemix && \
 	${RM} schemix-init.c schemix-pre-init.c && \
-	echo '(load "schemix-make-init.scm")' | ${SCHEME} && \
-	( echo "obj-m += schemix.o" ) > Makefile
+	echo '(load "schemix-make-init.scm")' | ${SCHEME}
 schemix-compile: schemix-src kbuildtree
 	${MAKE} -C ${KBUILDDIR} \
 		SUBDIRS=schemix modules
@@ -428,7 +447,7 @@ modules-tarbz2:
 
 modules26: config26 do-modules26
 
-do-modules26: ${TARGET26}/modules.tar.bz2
+do-modules26: modules26-compilation modules26-tarbz2
 
 modules26-tarbz2:
 	cd ${TARGETDIR26} && \
