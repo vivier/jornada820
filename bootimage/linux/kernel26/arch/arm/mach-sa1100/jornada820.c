@@ -4,11 +4,12 @@
  * 2004/01/22 George Almasi (galmasi@optonline.net)
  * Modelled after the Jornada 720 code.
  * 
- * $Id: jornada820.c,v 1.14 2005/07/27 06:09:32 fare Exp $
+ * $Id: jornada820.c,v 1.15 2005/07/29 09:56:34 fare Exp $
  */
 
 #include <linux/init.h>
 #include <linux/mm.h>
+#include <linux/device.h>
 #include <asm/setup.h>
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
@@ -18,7 +19,6 @@
 #include <asm/hardware/sa1101.h>
 #include <asm/hardware/ssp.h>
 #include <asm/delay.h>
-#include <linux/device.h>
 #include "generic.h"
 
 
@@ -117,7 +117,7 @@ static int __init jornada820_init(void)
 
   TUCR = TUCR_3_6864MHz; /* */
 
-  sa1101_probe(SA1101_BASE);
+//  sa1101_probe(sa1101_device); // should be done by the device management
   sa1101_wake();
   sa1101_init_irq (GPIO_JORNADA820_SA1101_CHAIN_IRQ);
 
@@ -156,5 +156,5 @@ MACHINE_START(JORNADA820, "HP Jornada 820")
 //   .init_machine   = jornada820_init,
      .timer          = &sa1100_timer,
      SOFT_REBOOT
-     MAINTAINER(http://jornada820.sourceforge.net/)
+     MAINTAINER("http://jornada820.sourceforge.net/")
 MACHINE_END
