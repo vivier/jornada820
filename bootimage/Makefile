@@ -135,8 +135,7 @@ K24MAKEFILE_TRANS	:= ${K24MAKEFILE_TRANS} \
 #K26PATCHES		:= ${K26PATCHES} ${DLDIR}/${KALLSYMS24PATCH}
 K26EXTENSIONS		:= ${K26EXTENSIONS} schemix-src26
 K26MAKEFILE_TRANS	:= ${K26MAKEFILE_TRANS} \
-				s/^(libs-y\s*:=.*)$$/$$1 schemix\// ;
-
+				s/^(vmlinux-dirs\s*:=.*)\\$$/$$1 schemix\/ \\/ ;
 
 ####Uncomment this if/when you get schemix-compile26 to work...
 KBUILD_EXTMOD		:= ${KBUILD_EXTMOD} schemix/
@@ -154,7 +153,8 @@ do-schemix-dir:
 	${RM} -rf ${SCHEMIX_DIR}
 	tar zxfC ${DLDIR}/${SCHEMIX_TAR} ${UPSTREAMDIR}
 	cd ${SCHEMIX_DIR} && \
-	bzcat ${DLDIR}/${SCHEMIX_PATCH} | patch -p1 -E
+	bzcat ${DLDIR}/${SCHEMIX_PATCH} | patch -p1 -E && \
+	${RM} schemix-pre-init.c schemix-init.c
 schemix-tar: ${DLDIR}/${SCHEMIX_TAR}
 ${DLDIR}/${SCHEMIX_TAR}:
 	cd ${DLDIR} && wget -c ${SCHEMIX_URL}
