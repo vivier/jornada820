@@ -64,9 +64,9 @@ KUPSTREAMDIR26HH	= ${UPSTREAMDIR}/kernel26-hh
 # -------------- xxx ----------------------------------
 
 KMAKEFILE_TRANS	:= \
-		s/^EXTRAVERSION.*=.*$$/EXTRAVERSION = ${EXTRAVERSION}/ ; \
-		s/^ARCH\s*:= .*$$/ARCH := arm/ ; \
-		s/^\#?CROSS_COMPILE\s*=.*$$/CROSS_COMPILE = ${CROSS_COMPILE}/ ;
+		s/^EXTRAVERSION.*[?:]?=.*$$/EXTRAVERSION = ${EXTRAVERSION}/ ; \
+		s/^ARCH\s*[?:]?= .*$$/ARCH := arm/ ; \
+		s/^\#?CROSS_COMPILE\s*[?:]?=.*$$/CROSS_COMPILE = ${CROSS_COMPILE}/ ;
 
 K24PATCHES		:= ${DLDIR}/${ARM24PATCH}
 K24EXTENSIONS		:= 
@@ -74,7 +74,7 @@ K24MAKEFILE_TRANS	:= ${KMAKEFILE_TRANS}
 
 K26PATCHES		:= ${DLDIR}/${ARM26PATCH}
 K26EXTENSIONS		:= 
-K26MAKEFILE_TRANS	:= ${K26MAKEFILE_TRANS}
+K26MAKEFILE_TRANS	:= ${KMAKEFILE_TRANS}
 
 BUSYBOXVER		= 1.00
 BUSYBOXTAR		= busybox-${BUSYBOXVER}.tar.bz2
@@ -127,17 +127,35 @@ K24PATCHES		:= ${K24PATCHES} ${DLDIR}/${KALLSYMS24PATCH}
 K24EXTENSIONS		:= ${K24EXTENSIONS} schemix-src
 K24MAKEFILE_TRANS	:= ${K24MAKEFILE_TRANS} \
 				s/^SUBDIRS\s*=(.*)$$/SUBDIRS =$$1 schemix/ ;
+#K26PATCHES		:= ${K26PATCHES} ${DLDIR}/${KALLSYMS24PATCH} 
+K26EXTENSIONS		:= ${K26EXTENSIONS} schemix-src26
+#K26MAKEFILE_TRANS	:= ${K24MAKEFILE_TRANS}
 
-schemix-cvs: ${UPSTREAMDIR}/schemix/Makefile
-${UPSTREAMDIR}/schemix/Makefile:
+schemix-dir:
+	[ -f ${UPSTREAMDIR}/schemix/Makefile ] || make schemix-cvs
+schemix-cvs:
 	cd ${UPSTREAMDIR} && \
 	cvs -z3 -d:ext:anoncvs@savannah.nongnu.org:/cvsroot/schemix \
-		co schemix && \
-	cd schemix && \
-	echo '(load "schemix-make-init.scm")' | ${SCHEME}
-
-schemix-src: schemix-cvs
+		co schemix
+schemix-src: schemix-dir
 	cp -fal ${UPSTREAMDIR}/schemix ${KUPSTREAMDIR}/
+	cd ${KUPSTREAMDIR}/schemix && \
+	${RM} schemix-init.c schemix-pre-init.c && \
+	echo '(load "schemix-make-init.scm")' | ${SCHEME} && \
+	( echo "obj-m := schemix.o" ; echo "include \$$(TOPDIR)/Rules.make" \
+	) > Makefile
+schemix-src26: schemix-dir
+	cp -fal ${UPSTREAMDIR}/schemix ${KUPSTREAMDIR26}/
+	cd ${KUPSTREAMDIR26}/schemix && \
+	${RM} schemix-init.c schemix-pre-init.c && \
+	echo '(load "schemix-make-init.scm")' | ${SCHEME} && \
+	( echo "obj-m := schemix.o" ) > Makefile
+schemix-compile: schemix-src kbuildtree
+	${MAKE} -C ${KBUILDDIR} \
+		SUBDIRS=schemix modules
+schemix-compile26: schemix-src26 kbuildtree26
+	${MAKE} -C ${KBUILDDIR} \
+		SUBDIRS=schemix modules
 
 endif
 
@@ -167,7 +185,7 @@ upstream-kernel:
 do-upstream-kernel: linux24-dir ${K24EXTENSIONS} ${K24PATCHES}
 	bzcat ${K24PATCHES} | ( cd ${KUPSTREAMDIR} && patch -p1 -E )
 linux24-dir: ${DLDIR}/${KERNEL24_TB2}
-	rm -rf ${KERNEL24}
+	rm -rf ${UPSTREAMDIR}/${KERNEL24}
 	tar jxfC ${DLDIR}/${KERNEL24_TB2} ${UPSTREAMDIR}
 ${DLDIR}/${KERNEL24_TB2}:
 	cd ${DLDIR} && wget -c ${KERNEL24_URL}
@@ -204,7 +222,7 @@ linux26: ${DLDIR}/${KERNEL26_TB2}
 ${DLDIR}/${KERNEL26_TB2}:
 	cd ${DLDIR} && wget -c ${KERNEL26_URL}
 linux26-dir: linux26
-	rm -rf ${KERNEL26}
+	rm -rf ${UPSTREAMDIR}/${KERNEL26}
 	tar jxfC ${DLDIR}/${KERNEL26_TB2} ${UPSTREAMDIR}
 
 
@@ -308,24 +326,18 @@ all-compilation: ramdisk do-j820
 
 do-j820:
 	${MAKE} -C ${KBUILDDIR} \
-	    ARCH=arm \
-	    CROSS_COMPILE=${CROSS_COMPILE} \
 	    INITRD=${RAMDISKIMAGE} \
 	    zImage j820
 	cp ${KBUILDDIR}/arch/arm/boot/j820/j820 j820
 
 kernel-compilation:
 	${MAKE} -C {KBUILDDIR} \
-	    ARCH=arm \
-	    CROSS_COMPILE=${CROSS_COMPILE} \
 	    zImage
 
 modules-compilation:
 	${MKDIR} ${TARGETDIR}
 	${RM} -rf ${TARGETDIR}/lib/modules/${KERNELVERSION}
 	${MAKE} -C ${KBUILDDIR} \
-		ARCH=arm \
-		CROSS_COMPILE=${CROSS_COMPILE} \
 		INSTALL_MOD_PATH=${TARGETDIR} \
 		DEPMOD=true \
 		modules modules_install
@@ -336,8 +348,6 @@ all-kernel-compilation: \
 
 just-j820:
 	${MAKE} -C ${KBUILDDIR} \
-	    ARCH=arm \
-	    CROSS_COMPILE=${CROSS_COMPILE} \
 	    INITRD=${RAMDISKIMAGE} \
 	    SUBDIRS=arch/arm/boot \
 	    j820
@@ -346,8 +356,6 @@ just-j820:
 j820-26: config26 modules26 ramdisk26 do-j820-26
 do-j820-26:
 	${MAKE} -C ${KBUILDDIR26} \
-	    ARCH=arm \
-	    CROSS_COMPILE=${CROSS_COMPILE} \
 	    INITRD=${RAMDISKIMAGE26} \
 	    zImage j820
 	cp ${KBUILDDIR26}/arch/arm/boot/j820/j820 j820-26
@@ -356,8 +364,6 @@ modules26-compilation:
 	${MKDIR} ${TARGETDIR26}
 	${RM} -rf ${TARGETDIR}/lib/modules/${KERNELVERSION}
 	${MAKE} -C ${KBUILDDIR26} \
-		ARCH=arm \
-		CROSS_COMPILE=${CROSS_COMPILE} \
 		INSTALL_MOD_PATH=${TARGETDIR26} \
 		DEPMOD=true \
 		modules modules_install
@@ -369,8 +375,7 @@ do-config: ${KBUILDDIR}/.config
 ${KBUILDDIR}/.config: force
 	cd ${KBUILDDIR} && \
 	cp arch/arm/def-configs/jornada820 .config && \
-	${MAKE} ARCH=arm CROSS_COMPILE=${CROSS_COMPILE} \
-		oldconfig && \
+	${MAKE} oldconfig && \
 	( cmp -s .config arch/arm/def-configs/jornada820 || \
 	cat .config > arch/arm/def-configs/jornada820 )
 
@@ -378,24 +383,21 @@ menuconfig: kbuildtree do-menuconfig
 do-menuconfig: force
 	cd ${KBUILDDIR} && \
 	cp arch/arm/def-configs/jornada820 .config && \
-	${MAKE} ARCH=arm CROSS_COMPILE=${CROSS_COMPILE} \
-		menuconfig && \
-	${MAKE} ARCH=arm CROSS_COMPILE=${CROSS_COMPILE} \
-		oldconfig && \
+	${MAKE} menuconfig && \
+	${MAKE} oldconfig && \
 	( cmp -s .config arch/arm/def-configs/jornada820 || \
 	cat .config > arch/arm/def-configs/jornada820 )
 
 depend: config do-depend
 do-depend: ${KBUILDDIR}/.depend
 ${KBUILDDIR}/.depend: force
-	${MAKE} -C ${KBUILDDIR} ARCH=arm CROSS_COMPILE=${CROSS_COMPILE} depend
+	${MAKE} -C ${KBUILDDIR} depend
 
 menuconfig26: kbuildtree26 do-menuconfig26
 do-menuconfig26: force
 	cd ${KBUILDDIR26} && \
 	cp arch/arm/configs/jornada820_defconfig .config && \
-	${MAKE} ARCH=arm CROSS_COMPILE=${CROSS_COMPILE} \
-		menuconfig && \
+	${MAKE} menuconfig && \
 	( cmp -s .config arch/arm/configs/jornada820_defconfig || \
 	cat .config > arch/arm/configs/jornada820_defconfig )
 
@@ -404,8 +406,7 @@ do-config26: ${KBUILDDIR26}/.config
 ${KBUILDDIR26}/.config: force
 	cd ${KBUILDDIR26} && \
 	cp arch/arm/configs/jornada820_defconfig .config && \
-	${MAKE} ARCH=arm CROSS_COMPILE=${CROSS_COMPILE} \
-		oldconfig && \
+	${MAKE} oldconfig && \
 	( cmp -s .config arch/arm/configs/jornada820_defconfig || \
 	cat .config > arch/arm/configs/jornada820_defconfig )
 
