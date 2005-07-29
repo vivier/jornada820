@@ -5,7 +5,7 @@
  *
  * Based on rmk's sa1111ps2.c from 2.6 and galmasi's j820_keyb.c from 2.4
  *
- * $Id: sa1101ps2.c,v 1.4 2005/07/25 09:09:14 fare Exp $
+ * $Id: sa1101ps2.c,v 1.5 2005/07/29 10:24:05 fare Exp $
  */
 #include <linux/module.h>
 #include <linux/init.h>
@@ -251,7 +251,7 @@ static int __init ps2_probe(void) // struct sa1101_dev *dev
 	memset(ps2if, 0, sizeof(struct ps2if));
 	memset(serio, 0, sizeof(struct serio));
 
-	serio->type		= SERIO_8042;
+	serio->id.type		= SERIO_8042;
 	serio->write		= ps2_write;
 	serio->open		= ps2_open;
 	serio->close		= ps2_close;
@@ -261,6 +261,7 @@ static int __init ps2_probe(void) // struct sa1101_dev *dev
 //	serio->dev.parent	= &dev->dev;
 	ps2if->io		= serio;
 //	ps2if->dev		= dev;
+
 //	sa1101_set_drvdata(dev, ps2if);
 
 	spin_lock_init(&ps2if->lock);
