@@ -75,6 +75,8 @@ K24MAKEFILE_TRANS	:= ${KMAKEFILE_TRANS}
 K26PATCHES		:= ${DLDIR}/${ARM26PATCH}
 K26EXTENSIONS		:= 
 K26MAKEFILE_TRANS	:= ${KMAKEFILE_TRANS}
+KBUILD_EXTMOD		:=
+export KBUILD_EXTMOD
 
 BUSYBOXVER		= 1.00
 BUSYBOXTAR		= busybox-${BUSYBOXVER}.tar.bz2
@@ -131,6 +133,9 @@ K24MAKEFILE_TRANS	:= ${K24MAKEFILE_TRANS} \
 K26EXTENSIONS		:= ${K26EXTENSIONS} schemix-src26
 #K26MAKEFILE_TRANS	:= ${K24MAKEFILE_TRANS}
 
+####Uncomment this if/when you get schemix-compile26 to work...
+#KBUILD_EXTMOD		:= ${KBUILD_EXTMOD} schemix/
+
 schemix-dir:
 	[ -f ${UPSTREAMDIR}/schemix/Makefile ] || make schemix-cvs
 schemix-cvs:
@@ -149,13 +154,13 @@ schemix-src26: schemix-dir
 	cd ${KUPSTREAMDIR26}/schemix && \
 	${RM} schemix-init.c schemix-pre-init.c && \
 	echo '(load "schemix-make-init.scm")' | ${SCHEME} && \
-	( echo "obj-m := schemix.o" ) > Makefile
+	( echo "obj-m += schemix.o" ) > Makefile
 schemix-compile: schemix-src kbuildtree
 	${MAKE} -C ${KBUILDDIR} \
 		SUBDIRS=schemix modules
 schemix-compile26: schemix-src26 kbuildtree26
-	${MAKE} -C ${KBUILDDIR} \
-		SUBDIRS=schemix modules
+	${MAKE} -C ${KBUILDDIR26} \
+		M=schemix V=1 modules
 
 endif
 
