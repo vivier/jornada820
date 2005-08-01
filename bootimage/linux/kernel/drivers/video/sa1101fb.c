@@ -71,33 +71,33 @@ static struct fb_var_screeninfo sa1101fb_defined = {
 static struct display disp;
 static struct fb_info fb_info;
 static struct { u_short blue, green, red, pad; } palette[256];
-#if 0
-static union {
-#ifdef FBCON_HAS_CFB16
-    u16 cfb16[16];
-#endif
-#ifdef FBCON_HAS_CFB24
-    u32 cfb24[16];
-#endif
-#ifdef FBCON_HAS_CFB32
-    u32 cfb32[16];
-#endif
-} fbcon_cmap;
-#endif
-
-static int             inverse   = 0;
-static int	 vram __initdata = 0;	/* needed for vram boot option */
-static int             currcon   = 0;
-
-static int             ypan       = 0;  /* 0..nothing, 1..ypan, 2..ywrap */
+static int    inverse   = 0;
+static int	  vram __initdata = 0;	/* needed for vram boot option */
+static int    currcon   = 0;
+static int    ypan       = 1;  /* 0..nothing, 1..ypan, 2..ywrap */
 
 static struct display_switch sa1101fb_sw;
+
+static void sa1101_vga_init(int);
 
 /* --------------------------------------------------------------------- */
 
 static int sa1101fb_pan_display(struct fb_var_screeninfo *var, int con,
                               struct fb_info *info)
 {
+	int offset;
+	
+	if(!ypan)
+		return -EINVAL;
+    if (var->xoffset)
+        return -EINVAL;
+    if (var->yoffset > var->yres_virtual)
+		return -EINVAL;
+	
+	offset = (var->yoffset * video_linelength+3)& (~3);
+
+	VgaDBAR = offset;
+				
 	return 0;
 }
 
@@ -174,33 +174,9 @@ static void sa1101fb_set_disp(int con)
 		sw = &fbcon_cfb8;
 		break;
 #endif
-#ifdef FBCON_HAS_CFB16
-	case 15:
-	case 16:
-		sw = &fbcon_cfb16;
-		display->dispsw_data = fbcon_cmap.cfb16;
-		break;
-#endif
-#ifdef FBCON_HAS_CFB24
-	case 24:
-		sw = &fbcon_cfb24;
-		display->dispsw_data = fbcon_cmap.cfb24;
-		break;
-#endif
-#ifdef FBCON_HAS_CFB32
-	case 32:
-		sw = &fbcon_cfb32;
-		display->dispsw_data = fbcon_cmap.cfb32;
-		break;
-#endif
 	default:
-#ifdef FBCON_HAS_MAC
-		sw = &fbcon_mac;
-		break;
-#else
 		sw = &fbcon_dummy;
 		return;
-#endif
 	}
 	memcpy(&sa1101fb_sw, sw, sizeof(*sw));
 
@@ -218,24 +194,37 @@ static int sa1101fb_set_var(struct fb_var_screeninfo *var, int con,
 {
 	static int first = 1;
 
-	if (var->xres           != sa1101fb_defined.xres           ||
-	    var->yres           != sa1101fb_defined.yres           ||
-	    var->xres_virtual   != sa1101fb_defined.xres_virtual   ||
-	    var->yres_virtual   >  video_height_virtual          ||
-	    var->yres_virtual   <  video_height                  ||
-	    var->xoffset                                         ||
-	    var->bits_per_pixel != sa1101fb_defined.bits_per_pixel ||
-	    var->nonstd) {
-		if (first) {
-			printk(KERN_ERR "sa1101fb does not support changing the video mode\n");
-			first = 0;
-		}
+	if (var->bits_per_pixel != 8) {
+		printk(KERN_WARNING "sa1101fb: Only 8 bit modes supported.\n");
 		return -EINVAL;
 	}
-
+	
 	if ((var->activate & FB_ACTIVATE_MASK) == FB_ACTIVATE_TEST)
 		return 0;
+	
+	if (var->xres != sa1101fb_defined.xres ) {
+		if(var->xres>800) {
+			video_width=1024; 
+			video_height=768;
+		} else if(var->xres>640) {
+			video_width=800; 
+			video_height=600;
+		} else {
+			video_width=640;
+			video_height=480;
+		}
+	}
+	
+	video_linelength=video_width;
+	
+    sa1101_vga_init(video_width);
 
+    sa1101fb_defined.xres=video_width;
+    sa1101fb_defined.yres=video_height;
+    sa1101fb_defined.xres_virtual=video_width;
+    sa1101fb_defined.yres_virtual=video_size / video_linelength;
+    sa1101fb_defined.bits_per_pixel=8;
+						
 	if (ypan) {
 		if (sa1101fb_defined.yres_virtual != var->yres_virtual) {
 			sa1101fb_defined.yres_virtual = var->yres_virtual;
@@ -301,46 +290,6 @@ static int sa1101_setcolreg(unsigned regno, unsigned red, unsigned green,
 #ifdef FBCON_HAS_CFB8
 	case 8:
 		sa1101_setpalette(regno,red,green,blue);
-		break;
-#endif
-#ifdef FBCON_HAS_CFB16
-	case 15:
-	case 16:
-		if (sa1101fb_defined.red.offset == 10) {
-			/* 1:5:5:5 */
-			fbcon_cmap.cfb16[regno] =
-				((red   & 0xf800) >>  1) |
-				((green & 0xf800) >>  6) |
-				((blue  & 0xf800) >> 11);
-		} else {
-			/* 0:5:6:5 */
-			fbcon_cmap.cfb16[regno] =
-				((red   & 0xf800)      ) |
-				((green & 0xfc00) >>  5) |
-				((blue  & 0xf800) >> 11);
-		}
-		break;
-#endif
-#ifdef FBCON_HAS_CFB24
-	case 24:
-		red   >>= 8;
-		green >>= 8;
-		blue  >>= 8;
-		fbcon_cmap.cfb24[regno] =
-			(red   << sa1101fb_defined.red.offset)   |
-			(green << sa1101fb_defined.green.offset) |
-			(blue  << sa1101fb_defined.blue.offset);
-		break;
-#endif
-#ifdef FBCON_HAS_CFB32
-	case 32:
-		red   >>= 8;
-		green >>= 8;
-		blue  >>= 8;
-		fbcon_cmap.cfb32[regno] =
-			(red   << sa1101fb_defined.red.offset)   |
-			(green << sa1101fb_defined.green.offset) |
-			(blue  << sa1101fb_defined.blue.offset);
 		break;
 #endif
     }
@@ -460,8 +409,6 @@ static void sa1101fb_blank(int blank, struct fb_info *info)
 	}
 }
 
-static void sa1101_vga_init(void);
-
 int __init sa1101fb_init(void)
 {
 	int i,j;
@@ -481,8 +428,7 @@ int __init sa1101fb_init(void)
 #endif
 	video_linelength    = video_width;
 
-	/* remap memory according to videomode, multiply by 2 to get space for doublebuffering */
-	video_size          = 2*1024*1024;
+	video_size          = 1024*1024;
 
 	/* check that we don't remap more memory than old cards have */
 	video_visual = FB_VISUAL_PSEUDOCOLOR;
@@ -503,14 +449,12 @@ int __init sa1101fb_init(void)
 		return -EIO;
 	}
 
-//	video_vbase = (void *)0xf4400000;
-
 	printk(KERN_INFO "sa1101fb: framebuffer at 0x%lx, mapped to 0x%p, size %dk\n",
 	       video_base, video_vbase, video_size/1024);
 	printk(KERN_INFO "sa1101fb: mode is %dx%dx%d, linelength=%d\n",
 	       video_width, video_height, video_bpp, video_linelength);
 
-	sa1101_vga_init();
+	sa1101_vga_init(video_width);
 	
 	sa1101fb_defined.xres=video_width;
 	sa1101fb_defined.yres=video_height;
@@ -572,37 +516,42 @@ int __init sa1101fb_init(void)
 }
 
 
-static void sa1101_vga_init() {
+static void sa1101_vga_init(int x) {
 
 	int vc;
 
 	VideoControl = 0;
 	SKPCR &= ~0x08;
-#if X640
-	VgaTiming0      =0x7f17279c;
-	VgaTiming1      =0x1e0b09df;
-	VgaTiming2      =0x00000000;
-	vc = 0x1b41;
-	SKCDR &= ~0x180;
-	SKCDR |= 0x000;
-	UFCR = 0x30;
-#elif X800
-	VgaTiming0      =0x242d72c4;
-	VgaTiming1      =0x16001257;
-	VgaTiming2      =0x00000003;
-	vc = 0x1b41;
-	SKCDR &= ~0x180;
-	SKCDR |= 0x080;
-	UFCR = 0x28;
-#elif X1024
-	VgaTiming0      =0x641382fc;
-	VgaTiming1      =0x1c0216ff;
-	VgaTiming2      =0x00000000;
-	vc = 0x15a1;
-	SKCDR &= ~0x180;
-	SKCDR |= 0x100;
-	UFCR = 0x08;
-#endif
+	switch(x) {
+		case 640:
+			VgaTiming0      =0x7f17279c;
+			VgaTiming1      =0x1e0b09df;
+			VgaTiming2      =0x00000000;
+			vc = 0x1b41;
+			SKCDR &= ~0x180;
+			SKCDR |= 0x000;
+			UFCR = 0x30;
+			break;
+		case 800:
+			VgaTiming0      =0x242d72c4;
+			VgaTiming1      =0x16001257;
+			VgaTiming2      =0x00000003;
+			vc = 0x1b41;
+			SKCDR &= ~0x180;
+			SKCDR |= 0x080;
+			UFCR = 0x28;
+			break;
+		case 1024:
+		default:
+			VgaTiming0      =0x641382fc;
+			VgaTiming1      =0x1c0216ff;
+			VgaTiming2      =0x00000000;
+			vc = 0x15a1;
+			SKCDR &= ~0x180;
+			SKCDR |= 0x100;
+			UFCR = 0x08;
+	}
+	
 	VgaTiming3      =0x00000000;
 	VgaBorder       =0x00000000;
 	VgaDBAR         =0x00000000;

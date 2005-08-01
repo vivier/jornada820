@@ -180,6 +180,7 @@
 #include <linux/pm.h>
 #include <linux/init.h>
 #include <linux/cpufreq.h>
+#include <linux/proc_fs.h>
 
 #include <asm/hardware.h>
 #include <asm/io.h>
@@ -210,6 +211,86 @@
 
 void (*sa1100fb_blank_helper)(int blank);
 EXPORT_SYMBOL(sa1100fb_blank_helper);
+
+
+/* SA1101 mirroring support */
+#ifdef CONFIG_SA1100_JORNADA820
+#define MIRROR_SUPPORT 1
+static int mirror = 1;
+
+static void sa1101_mirror_init(unsigned long address) {
+
+    int vc;
+	
+	VideoControl = 0;
+	SKPCR &= ~0x08;
+	
+	VgaTiming0      =0x7f17279c;
+	VgaTiming1      =0x1e0b09df;
+	VgaTiming2      =0x00000000;
+	vc = 0x0b41;
+	SKCDR &= ~0x180;
+	SKCDR |= 0x000;
+	
+	VgaTiming3      =0x00000000;
+	VgaBorder       =0x00000000;
+	VgaDBAR         =address&0x1fffff;
+	SMCR = (SMCR&0x0f) | ((address>>16)&0x1e0);
+	VgaInterruptMask=0x00000000;
+	VgaTest         =0x00000000;
+	
+	VMCCR = 0;
+	SKPCR |= 0x08;
+	SNPR    = 0; /* Disable snooping */
+	DacControl |= 1;
+	PBDWR |= 2;
+	
+	VideoControl = vc;
+}
+
+static void sa1101_mirror_deinit(void) {
+    VideoControl=0;
+	SKPCR &= ~8;
+	DacControl=0;
+	PBDWR &= ~2;
+}	
+
+static struct proc_dir_entry *sa1101_mirror_proc_entry = NULL;
+
+static int sa1101_mirror_proc_read(char *page, char **start, off_t off,
+		        int count, int *eof, void *data) {
+    if (count < 3)
+		return -EINVAL;
+
+	return sprintf(page, "%d\n", mirror);
+
+}
+static int sa1101_mirror_proc_write(struct file *file,
+		        const char *buffer, unsigned long count, void *data) {
+	unsigned char char_value;
+	int value;
+	struct sa1100fb_info *fbi = (struct sa1100fb_info *)data;	
+	
+	if (count < 1) {
+		return -EINVAL;
+	}
+	
+	if (copy_from_user(&char_value, buffer, 1))
+		return -EFAULT;
+	
+	value = !!(char_value - '0');
+
+	if(value!=mirror) {
+		mirror=value;
+		if(value) {
+			sa1101_mirror_init(fbi->fb.fix.smem_start);
+		} else {
+			sa1101_mirror_deinit();
+		}	
+	}
+	return count;
+}
+#endif
 
 /*
  * IMHO this looks wrong.  In 8BPP, length should be 8.
@@ -970,6 +1051,12 @@ sa1100fb_setpalettereg(u_int regno, u_int red, u_int green, u_int blue,
 	struct sa1100fb_info *fbi = (struct sa1100fb_info *)info;
 	u_int val, ret = 1;
 
+#if MIRROR_SUPPORT 
+	if(mirror) {
+		*(volatile unsigned int *)SA1101_p2v(_VideoControl+0x40000 + 0x400*regno) =
+			((blue&0xff)<<16)|((green&0xff)<<8)|(red&0xff);
+	}
+#endif
 	if (regno < fbi->palette_size) {
 		val = ((red >> 4) & 0xf00);
 		val |= ((green >> 8) & 0x0f0);
@@ -1482,6 +1569,10 @@ static void sa1100fb_blank(int blank, struct fb_info *info)
 		sa1100fb_schedule_task(fbi, C_DISABLE);
 		if (sa1100fb_blank_helper)
 			sa1100fb_blank_helper(blank);
+#if MIRROR_SUPPORT
+		if(mirror)
+			VideoControl &= ~1;
+#endif
 		break;
 
 	case VESA_NO_BLANKING:
@@ -1491,6 +1582,10 @@ static void sa1100fb_blank(int blank, struct fb_info *info)
 		    fbi->fb.disp->visual == FB_VISUAL_STATIC_PSEUDOCOLOR)
 			fb_set_cmap(&fbi->fb.cmap, 1, sa1100fb_setcolreg, info);
 		sa1100fb_schedule_task(fbi, C_ENABLE);
+#if MIRROR_SUPPORT
+		if(mirror)
+			VideoControl |= 1;
+#endif
 	}
 }
 
@@ -2386,6 +2481,21 @@ int __init sa1100fb_init(void)
 	 */
 	set_ctrlr_state(fbi, C_ENABLE);
 
+#if MIRROR_SUPPORT 
+	if(mirror)
+		sa1101_mirror_init(fbi->fb.fix.smem_start);
+	
+	sa1101_mirror_proc_entry = create_proc_entry("mirror", 0444, &proc_root);
+	if (sa1101_mirror_proc_entry == NULL) {
+		printk(KERN_WARNING "Couldn't create the /proc entry for the mirror.\n");
+		return -EINVAL;
+	} else {
+		sa1101_mirror_proc_entry->read_proc = &sa1101_mirror_proc_read;
+		sa1101_mirror_proc_entry->write_proc = &sa1101_mirror_proc_write;
+		sa1101_mirror_proc_entry->data = fbi;
+	}
+#endif
+
 	/* This driver cannot be unloaded at the moment */
 	MOD_INC_USE_COUNT;
 
@@ -2438,5 +2548,9 @@ int __init sa1100fb_setup(char *options)
 	return 0;
 }
 
+#ifdef MIRROR_SUPPORT
+MODULE_PARM(mirror, "i");
+MODULE_PARM_DESC(mirror, "Mirror framebuffer to SA1101 VGA output. (default=1)");
+#endif
 MODULE_DESCRIPTION("StrongARM-1100/1110 framebuffer driver");
 MODULE_LICENSE("GPL");
