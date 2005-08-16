@@ -1,0 +1,283 @@
+! $Id: Xmodmap.j820k,v 1.1 2005/08/16 04:39:18 rstanchak Exp $
+!
+! key mapping for XFree86 (for Jornada 820 US keyboards).
+!
+! First, clear the modifiers
+!
+clear shift
+clear lock
+clear control
+clear mod1
+clear mod2
+clear mod3
+clear mod4
+clear mod5
+!
+! Set the mapping for each key
+!
+keycode   9 = Escape
+keycode  10 = 1 exclam abreve Abreve
+keycode  11 = 2 at acircumflex Acircumflex
+keycode  12 = 3 numbersign ecircumflex Ecircumflex
+keycode  13 = 4 dollar ocircumflex Ocircumflex
+keycode  14 = 5 percent dead_grave percent
+keycode  15 = 6 asciicircum dead_hook asciicircum
+keycode  16 = 7 ampersand dead_tilde ampersand
+keycode  17 = 8 asterisk dead_acute asterisk 
+keycode  18 = 9 parenleft dead_belowdot parenleft
+keycode  19 = 0 parenright dstroke Dstroke
+keycode  20 = minus underscore
+keycode  21 = equal plus
+keycode  22 = BackSpace
+keycode  23 = Tab
+keycode  24 = q Q
+keycode  25 = w W
+keycode  26 = e E
+keycode  27 = r R
+keycode  28 = t T
+keycode  29 = y Y
+keycode  30 = u U
+keycode  31 = i I
+keycode  32 = o O
+keycode  33 = p P
+keycode  34 = bracketleft braceleft uhorn Uhorn
+keycode  35 = bracketright braceright ohorn Ohorn
+keycode  36 = Return
+keycode  37 = Control_L
+keycode  38 = a A
+keycode  39 = s S
+keycode  40 = d D
+keycode  41 = f F
+keycode  42 = g G
+keycode  43 = h H
+keycode  44 = j J
+keycode  45 = k K
+keycode  46 = l L
+keycode  47 = semicolon colon
+keycode  48 = apostrophe quotedbl
+keycode  49 = grave asciitilde
+keycode  50 = Shift_L
+keycode  51 = backslash bar
+keycode  52 = z Z
+keycode  53 = x X
+keycode  54 = c C
+keycode  55 = v V
+keycode  56 = b B
+keycode  57 = n N
+keycode  58 = m M
+keycode  59 = comma less
+keycode  60 = period greater
+keycode  61 = slash question
+keycode  62 = Shift_R
+keycode  63 = KP_Multiply
+! the key labelled "Alt" is really Meta. Damn X!
+!keycode  64 = Alt_L Meta_L
+!keycode  64 = Alt_L
+keycode  64 = Meta_L
+keycode  65 = space
+keycode  66 = Caps_Lock
+keycode  67 = F1
+keycode  68 = F2
+keycode  69 = F3
+keycode  70 = F4
+keycode  71 = F5
+keycode  72 = F6
+keycode  73 = F7
+keycode  74 = F8
+keycode  75 = F9
+keycode  76 = F10
+
+
+keycode  77 = Num_Lock
+!keycode  78 = Scroll_Lock
+keycode  78 = Multi_key
+keycode  79 = KP_Home KP_7
+keycode  80 = KP_Up KP_8
+keycode  81 = KP_Prior KP_9
+keycode  82 = KP_Subtract
+keycode  83 = KP_Left KP_4
+keycode  84 = NoSymbol KP_5
+keycode  85 = KP_Right KP_6
+keycode  86 = KP_Add
+keycode  87 = KP_End KP_1
+keycode  88 = KP_Down KP_2
+keycode  89 = KP_Next KP_3
+keycode  90 = KP_Insert KP_0
+!keycode  91 = period Delete KP_Decimal Delete
+!keycode  92 = X386Sys_Req
+!keycode  93 =
+keycode  94 = less greater
+!keycode  95 = F11
+!keycode  96 = F12
+! keycodes 97-107 are not available on 84-key keyboards
+keycode  97 = Home
+keycode  98 = Up
+keycode  99 = Prior
+keycode 100 = Left
+keycode 101 = Begin
+keycode 102 = Right
+keycode 103 = End
+keycode 104 = Down
+keycode 105 = Next
+keycode 106 = Insert
+keycode 107 = Delete
+keycode 109 = Control_R
+
+keycode  91 = Delete
+keycode 108 = Alt_R
+! with keyboard driver:
+keycode 110 = Right
+keycode 111 = Up
+keycode 113 = Left
+! with kbd driver:
+keycode 114 = Right
+keycode 116 = Down
+keycode 134 = Alt_L
+keycode  95 = Multi_key
+keycode  96 = Break
+
+!!!Map all unused keycodes to F12
+keycode   8 = F12
+keycode  92 = F12
+keycode  93 = F12
+keycode 112 = F12
+keycode 115 = F12
+keycode 117 = F12
+keycode 118 = F12
+keycode 119 = F12
+keycode 121 = F12
+keycode 122 = F12
+keycode 123 = F12
+keycode 124 = F12
+keycode 125 = F12
+keycode 126 = F12
+keycode 127 = F12
+keycode 128 = F12
+keycode 129 = F12
+keycode 130 = F12
+keycode 131 = F12
+keycode 132 = F12
+keycode 133 = F12
+keycode 135 = F12
+keycode 136 = F12
+keycode 137 = F12
+keycode 138 = F12
+keycode 139 = F12
+keycode 140 = F12
+keycode 141 = F12
+keycode 142 = F12
+keycode 143 = F12
+keycode 145 = F12
+keycode 146 = F12
+keycode 147 = F12
+keycode 148 = F12
+keycode 149 = F12
+keycode 150 = F12
+keycode 151 = F12
+keycode 152 = F12
+keycode 153 = F12
+keycode 155 = F12
+keycode 156 = F12
+keycode 157 = F12
+keycode 158 = F12
+keycode 159 = F12
+keycode 160 = F12
+keycode 161 = F12
+keycode 162 = F12
+keycode 163 = F12
+keycode 165 = F12
+keycode 166 = F12
+keycode 167 = F12
+keycode 168 = F12
+keycode 169 = F12
+keycode 170 = F12
+keycode 171 = F12
+keycode 172 = F12
+keycode 173 = F12
+keycode 175 = F12
+keycode 176 = F12
+keycode 177 = F12
+keycode 178 = F12
+keycode 179 = F12
+keycode 180 = F12
+keycode 181 = F12
+keycode 182 = F12
+keycode 183 = F12
+keycode 185 = F12
+keycode 186 = F12
+keycode 187 = F12
+keycode 188 = F12
+keycode 189 = F12
+keycode 190 = F12
+keycode 191 = F12
+keycode 192 = F12
+keycode 193 = F12
+keycode 195 = F12
+keycode 196 = F12
+keycode 197 = F12
+keycode 198 = F12
+keycode 199 = F12
+keycode 200 = F12
+keycode 201 = F12
+keycode 202 = F12
+keycode 203 = F12
+keycode 205 = F12
+keycode 206 = F12
+keycode 207 = F12
+keycode 208 = F12
+keycode 209 = F12
+keycode 210 = F12
+keycode 211 = F12
+keycode 212 = F12
+keycode 213 = F12
+keycode 215 = F12
+keycode 216 = F12
+keycode 217 = F12
+keycode 218 = F12
+keycode 219 = F12
+keycode 220 = F12
+keycode 221 = F12
+keycode 222 = F12
+keycode 223 = F12
+keycode 225 = F12
+keycode 226 = F12
+keycode 227 = F12
+keycode 228 = F12
+keycode 229 = F12
+keycode 230 = F12
+keycode 231 = F12
+keycode 232 = F12
+keycode 233 = F12
+keycode 235 = F12
+keycode 236 = F12
+keycode 237 = F12
+keycode 238 = F12
+keycode 239 = F12
+keycode 240 = F12
+keycode 241 = F12
+keycode 242 = F12
+keycode 243 = F12
+keycode 245 = F12
+keycode 246 = F12
+keycode 247 = F12
+keycode 248 = F12
+keycode 249 = F12
+keycode 250 = F12
+keycode 251 = F12
+keycode 252 = F12
+keycode 253 = F12
+keycode 255 = F12
+
+
+!!!Modifiers
+add shift = Shift_L Shift_R
+!add lock = 
+add control = Control_L Control_R
+!! Some stupid programs (such as fvwm) are so sure that mod1=Meta mod2=Alt...
+add mod1 = Meta_L
+add mod2 = Alt_L
+add mod3 = Alt_R
+add mod4 = Mode_switch
+!add mod5 = Scroll_Lock
+
+pointer = 1 3 2 4 5
