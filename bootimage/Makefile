@@ -5,7 +5,12 @@ TOOLCHAINPATH	= ${BUILDROOT}/build_arm/staging_dir/bin
 PATH:=${TOOLCHAINPATH}:${PATH}
 export PATH
 
+# Customize your extraversion if you want
+ifeq ($(wildcard .extraversion),.extraversion)
+EXTRAVERSION	= $(shell cat .extraversion)
+else
 EXTRAVERSION	= -j820
+fi
 
 # We might have to pick a uclibc revision that works for us.
 # Last revision I was successful with is 10929, aka "{2005-07-27}".
@@ -463,20 +468,20 @@ ${RAMDISKIMAGE}.gz: ${RAMDISKIMAGE}
 ${RAMDISKIMAGE}: ${CONFDIR}/mkcmdfile.sh busybox pcmcia
 	cd ramdisk && \
 	dd if=/dev/zero of=${RAMDISKIMAGE} count=3072 bs=1024 && \
-	$(MKE2FS) -F ${RAMDISKIMAGE} && \
+	${MKE2FS} -F ${RAMDISKIMAGE} && \
 	sh $< ${RAMDISKIMAGE} ${RAMDISKDIR} ${BUILDDIR} ${TARGETDIR} | \
-	$(DEBUGFS) && \
-	$(E2FSCK) -f -y ${RAMDISKIMAGE} ; :
+	${DEBUGFS} && \
+	${E2FSCK} -f -y ${RAMDISKIMAGE} ; :
 
 ramdisk26: modules26 do-ramdisk26
 do-ramdisk26: ${RAMDISKIMAGE26}.gz
 ${RAMDISKIMAGE26}: ${CONFDIR}/mkcmdfile.sh busybox pcmcia
 	cd ramdisk && \
 	dd if=/dev/zero of=${RAMDISKIMAGE26} count=4096 bs=1024 && \
-	$(MKE2FS) -F ${RAMDISKIMAGE26} && \
+	${MKE2FS} -F ${RAMDISKIMAGE26} && \
 	sh $< ${RAMDISKIMAGE26} ${RAMDISKDIR} ${BUILDDIR} ${TARGETDIR26} | \
-	$(DEBUGFS) && \
-	$(E2FSCK) -f -y ${RAMDISKIMAGE26} ; :
+	${DEBUGFS} && \
+	${E2FSCK} -f -y ${RAMDISKIMAGE26} ; :
 ${RAMDISKIMAGE26}.gz: ${RAMDISKIMAGE26}
 	gzip -9 < $< > $@
 
@@ -531,8 +536,8 @@ ${BUILDDIR}/cardctl ${BUILDDIR}/cardmgr:
 	${LN} -s ../pcmcia/config.h compile.h
 	touch ${PCMCIADIR}/include/pcmcia/autoconf.h
 	cd ${PCMCIADIR}/cardmgr && \
-	$(CROSS_GCC) $(PCMCIA_CFLAGS) cardctl.c -o cardctl && \
-	$(CROSS_GCC) $(PCMCIA_CFLAGS) cardmgr.c lex_config.c yacc_config.c -o cardmgr && \
+	${CROSS_GCC} ${PCMCIA_CFLAGS} cardctl.c -o cardctl && \
+	${CROSS_GCC} ${PCMCIA_CFLAGS} cardmgr.c lex_config.c yacc_config.c -o cardmgr && \
 	cp cardctl cardmgr ../..
 
 # ----------------------- cleaning up --------------------------------------
@@ -567,7 +572,7 @@ mrproper:: localclean
 
 nocruft:
 	-${RM} -rf `find . -name '*~' -o -name '.#*'` \
-		$(OLDCRUFT)
+		${OLDCRUFT}
 
 distclean:: mrproper nocruft
 	-${RM} -rf ${BUILDROOT} linux/upstream \
