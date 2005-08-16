@@ -1,6 +1,7 @@
-! $Id: Xmodmap.j820k,v 1.1 2005/08/16 04:39:18 rstanchak Exp $
+! $Id: Xmodmap.j820k,v 1.2 2005/08/16 20:43:19 fare Exp $
 !
-! key mapping for XFree86 (for Jornada 820 US keyboards).
+! key mapping for XFree86 for Jornada 820
+! US keyboard in keycode mode (kbd_mode -k).
 !
 ! First, clear the modifiers
 !
@@ -73,7 +74,6 @@ keycode  63 = KP_Multiply
 ! the key labelled "Alt" is really Meta. Damn X!
 !keycode  64 = Alt_L Meta_L
 !keycode  64 = Alt_L
-keycode  64 = Meta_L
 keycode  65 = space
 keycode  66 = Caps_Lock
 keycode  67 = F1
@@ -120,21 +120,34 @@ keycode 103 = End
 keycode 104 = Down
 keycode 105 = Next
 keycode 106 = Insert
-keycode 107 = Delete
+!keycode 107 = Delete
 keycode 109 = Control_R
 
+
+!Left (blue) Alt is 64, mapped to Meta
+keycode  64 = Meta_L
+!Right (orange) AltGr is 108, mapped to Mode_switch
+keycode 108 = Mode_switch
+!Delete key is mapped to Delete (the one between keypad and main keyboard)
 keycode  91 = Delete
-keycode 108 = Alt_R
-! with keyboard driver:
+! with keyboard driver, Right arrow is 110
 keycode 110 = Right
+! with kbd driver, Right arrow is 114
+keycode 114 = Right
+! Up, Left and Down arrows
 keycode 111 = Up
 keycode 113 = Left
-! with kbd driver:
-keycode 114 = Right
 keycode 116 = Down
+!Windows key is 134, mapped to Alt
 keycode 134 = Alt_L
+!next to rightmost top key (F11, settings icon), mapped to Multi_key (Compose)
 keycode  95 = Multi_key
+!when it's not F11 but SysRq, it is 107
+keycode 107 = Multi_key
+!rightmost top key (F12, power icon), mapped to Break
 keycode  96 = Break
+!when it's not F12 but POWER, it is 124
+keycode 124 = Break
 
 !!!Map all unused keycodes to F12
 keycode   8 = F12
@@ -145,10 +158,10 @@ keycode 115 = F12
 keycode 117 = F12
 keycode 118 = F12
 keycode 119 = F12
+keycode 120 = F12
 keycode 121 = F12
 keycode 122 = F12
 keycode 123 = F12
-keycode 124 = F12
 keycode 125 = F12
 keycode 126 = F12
 keycode 127 = F12
@@ -269,6 +282,12 @@ keycode 253 = F12
 keycode 255 = F12
 
 
+!!!!Note: when in scancode mode, what we get is very different:
+!!!!the keycode is the kernel scancode+8, except that we have tremendous problems.
+!!!!with the "keyboard" driver, the escape key only ever sends a press event but when released;
+!!!!with the "kbd" driver, keys L O K I won't combine with control (!)
+
+
 !!!Modifiers
 add shift = Shift_L Shift_R
 !add lock = 
@@ -276,8 +295,9 @@ add control = Control_L Control_R
 !! Some stupid programs (such as fvwm) are so sure that mod1=Meta mod2=Alt...
 add mod1 = Meta_L
 add mod2 = Alt_L
-add mod3 = Alt_R
-add mod4 = Mode_switch
+add mod3 = Mode_switch
+!add mod4 = 
 !add mod5 = Scroll_Lock
 
+!exchange right button and emulated middle button, to make copy/pasting easier
 pointer = 1 3 2 4 5
