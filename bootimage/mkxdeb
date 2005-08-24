@@ -36,9 +36,73 @@ REMOTE_DIRS=(
 /var/lib/dpkg
 )
 
+### obtained by removing the --include statement from bootstrap () then
+### ./mkxdeb bootstrap |& tee zap
+### A=( $( cat zap | grep Extracting | cut -c 15- | sed -e 's/...$//' ) )
+BASE_DEBIAN_PACKAGES=(
+base-files
+base-passwd
+bash
+bsdutils
+coreutils
+debconf
+debconf-i18n
+debianutils
+diff
+dpkg
+e2fslibs
+e2fsprogs
+findutils
+gcc-3.3-base
+grep
+gzip
+hostname
+initscripts
+libacl1
+libattr1
+libblkid1
+libc6
+libcap1
+libcomerr2
+libdb1-compat
+libdb3
+libgcc1
+liblocale-gettext-perl
+libncurses5
+libnewt0.51
+libpam-modules
+libpam-runtime
+libpam0g
+libss2
+libstdc++5
+libtext-charwidth-perl
+libtext-iconv-perl
+libtext-wrapi18n-perl
+libuuid1
+login
+makedev
+mawk
+mount
+ncurses-base
+ncurses-bin
+passwd
+perl-base
+procps
+sed
+slang1a-utf8
+sysv-rc
+sysvinit
+tar
+util-linux
+zlib1g
+# Missing: libslang2
+)
 
 BASE_PACKAGES=(
-aptitude- fdutils-
+#$BASE_DEBIAN_PACKAGES
+apt
+#) ; FOO=(
+#aptitude- fdutils-
 
 less gnupg ksymoops
 ntpdate ntp
@@ -62,7 +126,7 @@ mount
 module-init-tools devfsd udev
 e2fsprogs
 # reiserfs-tools
-nfs-kernel-server nfs-client
+nfs-kernel-server nfs-common
 gpm
 
 pcmcia-cs wireless-tools
@@ -277,7 +341,7 @@ used_libs () {
   done | sort -u
 }
 
-make_qemu-arm () {
+make_qemu_arm () {
   cd $DEB_SOURCE
   apt-get source qemu
   cd ./qemu-*
@@ -288,7 +352,7 @@ make_qemu-arm () {
   cp /usr/local/bin/qemu-arm $TARGET/remote/
   ln -s ../../remote/qemu-arm $TARGET/usr/bin/
 }
-register_qemu-arm () {
+register_qemu_arm () {
   /bin/echo ':arm:M::\x7fELF\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfb\xff\xff\xff:/usr/bin/qemu-arm:' > /proc/sys/fs/binfmt_misc/register
 }
 
@@ -298,11 +362,13 @@ debootstrap
 	# --download-only
 	--foreign
 	--arch $TARGET_ARCH
-	# --include=${(pj:,:)BASE_PACKAGES}
+	--include=${(pj:,:)PACKAGES} # BASE_PACKAGES
+	--resolve-deps
 	$DEBIAN_DISTRIBUTION
 	$TARGET
 	$DEBIAN_MIRROR
-) ; $COMMAND
+) ; echo $COMMAND ;
+$COMMAND
 }
 
 extract-deb () {
@@ -319,12 +385,21 @@ setup_sources.list () {
 }
 
 setup_sources.list-sid () {
-  echo "deb http://ftp.us.debian.org/debian sid main" > ${TARGET0}/etc/apt/sources.list
+  echo "deb http://ftp.us.debian.org/debian sid main" > ${TARGET}/etc/apt/sources.list
 }
 
 APT_OPTIONS=(
 --option Dir::Etc::SourceList=$TARGET/etc/apt/sources.list --option Dir::State::Lists=$TARGET/var/lib/apt/lists --option Debug::Nolocking=true --option APT::Architecture=$TARGET_ARCH --option Dir::Cache::archives=$TARGET/var/cache/apt/archives --option APT::Get::Force-Yes=true --option APT::Get::Download-Only=true --option Dir::State::status=$TARGET/var/lib/dpkg/status --option Dir::Etc::Preferences=$TARGET/etc/preferences
 )
+
+DBG () {
+  print -r >&2 "$*"
+}
+abort () {
+  ERR=$1 ; shift
+  DBG "$*"
+  exit $ERR
+}
 
 cross-apt-get () {
   apt-get $APT_OPTIONS $@
@@ -346,10 +421,15 @@ mount-target-proc () {
   mount -t proc proc $TARGET/proc
 }
 
+install_packages () {
+  in-target apt-get -fuy --fix-missing install $PACKAGES
+}
+
 do_it () {
+  [ $UID = 0 ] || abort 2 "Must be root!"
+  [ -x /usr/local/bin/qemu-arm ] || make_qemu_arm
+  register_qemu_arm
   setup_directories
-  make_qemu-arm
-  register_qemu-arm
   bootstrap
   setup_sources.list
   mount-target-proc
@@ -359,6 +439,7 @@ do_it () {
   in-target apt-get update
   in-target apt-get -fuy --fix-missing dist-upgrade
   in-target apt-get -fuy --fix-missing install $PACKAGES
+  install_packages
   in-target localepurge
 }
 
