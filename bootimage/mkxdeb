@@ -145,8 +145,10 @@ fbset
 DEV_PACKAGES=(
 cruft
 
+apt-utils apt-file apt-cache
+
 diff patch wdiff cvs xdelta
-cvsutils apt-utils strace
+cvsutils strace
 make
 # ocaml
 )
@@ -435,8 +437,8 @@ do_it () {
   mount-target-proc
   in-target apt-get update
   in-target apt-get -fuy --fix-missing install
-  setup_sources.list-sid
-  in-target apt-get update
+# setup_sources.list-sid
+# in-target apt-get update
   in-target apt-get -fuy --fix-missing dist-upgrade
   in-target apt-get -fuy --fix-missing install $PACKAGES
   install_packages
