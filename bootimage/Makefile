@@ -10,7 +10,7 @@ ifeq ($(wildcard .extraversion),.extraversion)
 EXTRAVERSION	= $(shell cat .extraversion)
 else
 EXTRAVERSION	= -j820
-fi
+endif
 
 # We might have to pick a uclibc revision that works for us.
 # Last revision I was successful with is 10929, aka "{2005-07-27}".
@@ -19,13 +19,13 @@ fi
 # But revision 10941 did work with gcc 4.0.1 on a i386.
 # Note: kernel 2.4 contains gcc-isms and requires gcc 3.3, which itself
 # seems to not be compilable by a more recent gcc in a 64-bit safe way.
-# Try HEAD if you're adventurous, 10929 or 10941 if not.
+# Try HEAD if you're confident, 10929 or 10941 if not.
 # If you try anything more recent, please report what works for you.
 UCLIBC_SVN_REVISION = "HEAD"
 
 KERNEL_FTP	= ftp://ftp.bz2.de.kernel.org/pub/linux/kernel
 ARM_FTP		= ftp://ftp.arm.linux.org.uk/pub/armlinux/source/kernel-patches
-JORNADA7XX	= http://wwwcip.informatik.uni-erlangen.de/~simigern/jornada-7xx/linux-2.4.31-j720-4/
+JORNADA7XX	= http://wwwcip.informatik.uni-erlangen.de/~simigern/jornada-7xx
 
 KVER		= 2.4.31
 KERNEL24	= linux-${KVER}
@@ -35,16 +35,18 @@ KERNEL24_URL	= ${KERNEL_FTP}/v2.4/${KERNEL24_TB2}
 #ARM24PATCH	= patch-2.4.27-vrs1.bz2
 #ARM24PATCH_URL	= ${ARM_FTP}/v2.4/${ARM24PATCH}
 ARM24PATCH	= patch-2.4.31-j720-4.bz2
-ARM24PATCH_URL	= ${JORNADA7XX}/${ARM24PATCH}
+ARM24PATCH_URL	= ${JORNADA7XX}/linux-2.4.31-j720-4/${ARM24PATCH}
 KVER26		= 2.6.12
 KERNEL26	= linux-${KVER26}
 KERNELVERSION26	= ${KVER26}${EXTRAVERSION}
 KERNEL26_TB2	= ${KERNEL26}.tar.bz2
 KERNEL26_URL	= ${KERNEL_FTP}/v2.6/${KERNEL26_TB2}
+K26PATCH	= patch-2.6.12.5.bz2
+K26PATCH_URL	= ${KERNEL_FTP}/v2.6/${ARM26PATCH}
 #ARM26PATCH	= No need for a patch as ARM is well-integrated in kernel 2.6
 #ARM26PATCH_URL	= ${ARM_FTP}/v2.6/${ARM26PATCH}
-ARM26PATCH	= patch-2.6.12.3.bz2
-ARM26PATCH_URL	= ${KERNEL_FTP}/v2.6/${ARM26PATCH}
+J7XX26PATCH	= patch-2.6.12-2005-08-14
+J7XX26PATCH_URL	= ${JORNADA7XX}/linux-2.6/mainline/${J7XX26PATCH}
 
 # ------------- directories for source and build ----------------------------
 
@@ -77,7 +79,7 @@ K24PATCHES		:= ${DLDIR}/${ARM24PATCH}
 K24EXTENSIONS		:= 
 K24MAKEFILE_TRANS	:= ${KMAKEFILE_TRANS}
 
-K26PATCHES		:= ${DLDIR}/${ARM26PATCH}
+K26PATCHES		:= ${DLDIR}/${K26PATCH} ${DLDIR}/${J7XX26PATCH}.bz2
 K26EXTENSIONS		:= 
 K26MAKEFILE_TRANS	:= ${KMAKEFILE_TRANS}
 
@@ -247,27 +249,23 @@ ${KUPSTREAMDIR26HH}/CVS/Root ${KUPSTREAMDIR26HH}/CVS/Repository:
 ${KUPSTREAMDIR26HH}/Makefile: ${KUPSTREAMDIR26HH}/CVS/Root
 	cd ${KUPSTREAMDIR26HH} && cvs -z9 update -dfP && touch Makefile
 
-linux26: ${DLDIR}/${KERNEL26_TB2}
-${DLDIR}/${KERNEL26_TB2}:
-	cd ${DLDIR} && wget -c ${KERNEL26_URL}
-linux26-dir: linux26
-	rm -rf ${UPSTREAMDIR}/${KERNEL26}
-	tar jxfC ${DLDIR}/${KERNEL26_TB2} ${UPSTREAMDIR}
-
-
-arm26patch: ${DLDIR}/${ARM26PATCH}
-${DLDIR}/${ARM26PATCH}:
-	cd ${DLDIR} && wget -c ${ARM26PATCH_URL}
-
 upstream-kernel26:
 	[ -f ${KUPSTREAMDIR26}/Makefile ] || make do-upstream-kernel26
 do-upstream-kernel26: linux26-dir ${K26EXTENSIONS} ${K26PATCHES}
-	[ -f ${KUPSTREAMDIR26}/Makefile ] || ( \
-	cd ${UPSTREAMDIR} && \
-	tar jxf ${DLDIR}/${KERNEL26_TB2} && \
-	if [ -n "${ARM26PATCH}" ] ; then \
-	cd kernel26 && \
-	bzcat ../${ARM26PATCH} | patch -p1 -E ; fi )
+	bzcat ${K26PATCHES} | ( cd ${KUPSTREAMDIR26} && patch -p1 -E )
+linux26-dir: linux26
+	rm -rf ${UPSTREAMDIR}/${KERNEL26}
+	tar jxfC ${DLDIR}/${KERNEL26_TB2} ${UPSTREAMDIR}
+linux26: ${DLDIR}/${KERNEL26_TB2}
+${DLDIR}/${KERNEL26_TB2}:
+	cd ${DLDIR} && wget -c ${KERNEL26_URL}
+k26patch: ${DLDIR}/${K26PATCH}
+${DLDIR}/${K26PATCH}:
+	cd ${DLDIR} && wget -c ${K26PATCH_URL}
+j7xx26patch: ${DLDIR}/${J7XX26PATCH}.bz2
+${DLDIR}/${J7XX26PATCH}.bz2:
+	cd ${DLDIR} && wget -c ${J7XX26PATCH_URL} && \
+	bzip2 -f9 < ${J7XX26PATCH} > ${J7XX26PATCH}.bz2
 
 # ------------------ optional: build the toolchain -------------------------
 
