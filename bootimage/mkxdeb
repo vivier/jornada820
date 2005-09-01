@@ -16,7 +16,7 @@ PACKAGE_SELECTION () {
     $CONSOLE_PACKAGES
     $X11_PACKAGES
     $EDITOR_PACKAGES
-    $COMMON_LISP_PACKAGES
+    # COMMON_LISP_PACKAGES
     # $GAME_PACKAGES
     # $SOUND_PACKAGES
     # $USB_PACKAGES
@@ -98,10 +98,11 @@ zlib1g
 # Missing: libslang2
 )
 
-BASE_PACKAGES=(
+BOOTSTRAP_PACKAGES=(
 #$BASE_DEBIAN_PACKAGES
-apt
-#) ; FOO=(
+apt less debconf
+)
+BASE_PACKAGES=(
 #aptitude- fdutils-
 
 less gnupg ksymoops
@@ -114,7 +115,7 @@ w3m w3m-img # w3mmee w3mmee-img
 bzip2 gzip tar rsync
 
 dpkg
-dialog apt # aptitude
+dialog apt
 localeconf localepurge locales localization-config
 
 sudo m4
@@ -143,9 +144,11 @@ fbset
 # dvifb
 )
 DEV_PACKAGES=(
+units mtr-tiny subversion
+
 cruft
 
-apt-utils apt-file apt-cache
+apt-utils apt-file
 
 diff patch wdiff cvs xdelta
 cvsutils strace
@@ -351,43 +354,47 @@ make_qemu_arm () {
   make
   cp arm-user/qemu-arm /usr/local/bin/
   ln -s /usr/local/bin/qemu-arm /usr/bin/
+}
+install_qemu_arm () {
+  mkdir -p $TARGET/remote $TARGET/usr/bin/ $TARGET/usr/local/bin/
   cp /usr/local/bin/qemu-arm $TARGET/remote/
   ln -s ../../remote/qemu-arm $TARGET/usr/bin/
+  ln -s ../../../remote/qemu-arm $TARGET/usr/local/bin/
 }
+
 register_qemu_arm () {
+  if [ -f /proc/sys/fs/binfmt_misc/arm ] ; then
+    echo qemu-arm already registered to binfmt_misc
+    return 0
+  fi
   /bin/echo ':arm:M::\x7fELF\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfb\xff\xff\xff:/usr/bin/qemu-arm:' > /proc/sys/fs/binfmt_misc/register
 }
 
 bootstrap () {
-COMMAND=(
-debootstrap
-	# --download-only
+OPTS=(
+#	--download-only
 	--foreign
 	--arch $TARGET_ARCH
-	--include=${(pj:,:)PACKAGES} # BASE_PACKAGES
+	--include=${(pj:,:)BOOTSTRAP_PACKAGES} # BASE_PACKAGES
 	--resolve-deps
-	$DEBIAN_DISTRIBUTION
+	sarge # $DEBIAN_DISTRIBUTION
 	$TARGET
 	$DEBIAN_MIRROR
-) ; echo $COMMAND ;
-$COMMAND
+) ; echo debootstrap $@ $OPTS ;
+debootstrap $@ $OPTS
 }
 
-extract-deb () {
+extract_deb () {
   for i ; do
     dpkg-deb --extract $i $TARGET
   done
 }
-extract-downloaded-debs () {
-  extract-debs $TARGET/var/cache/apt/archives/*.deb
+extract_downloaded_debs () {
+  extract_deb $TARGET/var/cache/apt/archives/*.deb
 }
 
 setup_sources.list () {
-  echo "deb http://ftp.us.debian.org/debian etch main" > $TARGET/etc/apt/sources.list
-}
-
-setup_sources.list-sid () {
-  echo "deb http://ftp.us.debian.org/debian sid main" > ${TARGET}/etc/apt/sources.list
+  echo "deb http://ftp.us.debian.org/debian $DEBIAN_DISTRIBUTION main non-free" > $TARGET/etc/apt/sources.list
 }
 
 APT_OPTIONS=(
@@ -417,14 +424,14 @@ apt-install () {
   apt-get -fuy install $PACKAGES
 }
 
-in-target () { chroot $TARGET $@ }
+in_target () { chroot $TARGET $@ }
 
-mount-target-proc () {
+mount_target_proc () {
   mount -t proc proc $TARGET/proc
 }
 
 install_packages () {
-  in-target apt-get -fuy --fix-missing install $PACKAGES
+  in_target apt-get -fuy --fix-missing install $PACKAGES
 }
 
 do_it () {
@@ -432,25 +439,23 @@ do_it () {
   [ -x /usr/local/bin/qemu-arm ] || make_qemu_arm
   register_qemu_arm
   setup_directories
-  bootstrap
+  install_qemu_arm
+  bootstrap # --download-only
+  extract_downloaded_debs
+  mount_target_proc
+  in_target dpkg --configure -a
+  in_target apt-get update
+  in_target apt-get -fuy --fix-missing install
   setup_sources.list
-  mount-target-proc
-  in-target apt-get update
-  in-target apt-get -fuy --fix-missing install
-# setup_sources.list-sid
-# in-target apt-get update
-  in-target apt-get -fuy --fix-missing dist-upgrade
-  in-target apt-get -fuy --fix-missing install $PACKAGES
+  in_target apt-get update
+  in_target apt-get -fuy --fix-missing dist-upgrade
   install_packages
-  in-target localepurge
+  in_target localepurge
 }
 
 PACKAGE_SELECTION
 
-$@
-
-exit
-
+exec $@ ; exit
 
 
 ##### DOCUMENTATION BELOW #####
