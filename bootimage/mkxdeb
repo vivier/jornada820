@@ -23,6 +23,7 @@ PACKAGE_SELECTION () {
   )
 }
 REMOTE_DIRS=(
+/debootstrap
 /usr/doc
 /usr/info
 #/usr/man
@@ -32,6 +33,7 @@ REMOTE_DIRS=(
 /usr/src
 /var/cache/apt
 /var/cache/debconf
+/var/cache/localepurge
 /var/lib/apt
 /var/lib/dpkg
 )
@@ -100,7 +102,7 @@ zlib1g
 
 BOOTSTRAP_PACKAGES=(
 #$BASE_DEBIAN_PACKAGES
-apt less debconf
+apt less dialog debconf
 )
 BASE_PACKAGES=(
 #aptitude- fdutils-
@@ -137,22 +139,20 @@ CONSOLE_PACKAGES=(
 console-tools
 fbset
 # fbiterm
-# fbi
+fbi
 # fbgetty
 
 # microwindows-fb
 # dvifb
 )
 DEV_PACKAGES=(
-units mtr-tiny subversion
-
+units mtr-tiny tcpdump symlinks
 cruft
-
 apt-utils apt-file
-
-diff patch wdiff cvs xdelta
+diff patch wdiff cvs subversion xdelta
 cvsutils strace
 make
+imagemagick
 # ocaml
 )
 X11_PACKAGES=(
@@ -298,12 +298,6 @@ MY_CONFIG=(
 
 )
 
-
-ABORT () {
-  print -r "$*" >&2
-  exit 42
-}
-
 setup_remote_dirs () {
   for i ; do
     i=${i%/} ; i=${i#/}
@@ -385,12 +379,16 @@ debootstrap $@ $OPTS
 }
 
 extract_deb () {
+  cd $TARGET
   for i ; do
     dpkg-deb --extract $i $TARGET
   done
 }
+find_downloaded_debs () {
+  cut -d' ' -f2 $TARGET/debootstrap/debpaths
+}
 extract_downloaded_debs () {
-  extract_deb $TARGET/var/cache/apt/archives/*.deb
+  extract_deb $(find_downloaded_debs)
 }
 
 setup_sources.list () {
@@ -402,13 +400,17 @@ APT_OPTIONS=(
 )
 
 DBG () {
-  print -r >&2 "$*"
+  print -r -- >&2 "$*"
 }
 abort () {
   ERR=$1 ; shift
   DBG "$*"
   exit $ERR
 }
+ABORT () {
+  abort 42 "$*"
+}
+
 
 cross-apt-get () {
   apt-get $APT_OPTIONS $@
@@ -432,6 +434,19 @@ mount_target_proc () {
 
 install_packages () {
   in_target apt-get -fuy --fix-missing install $PACKAGES
+}
+install_lisp_packages () {
+  in_target apt-get -fuy --fix-missing install $COMMON_LISP_PACKAGES
+}
+
+wipe_installation () {
+  echo "Are you sure you want to erase the installation in ${TARGET} ?" > /dev/tty
+  read -q Y
+  [ y = $Y ] || ABORT "Not trying to erase anything without your confirmation."
+  cd ${TARGET} || ABORT "Could not change directory to ${TARGET}"
+
+  rm -rf bin boot debootstrap dev etc foo home initrd lib media mnt opt root sbin srv sys tmp usr var remote/usr remote/var/lib
+  DBG "Kept precious stuff in var/cache/apt/ and var/cache/debconf/"
 }
 
 do_it () {
