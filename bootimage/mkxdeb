@@ -7,6 +7,7 @@ DEBIAN_MIRROR=http://ftp.us.debian.org/debian
 #DEBIAN_DISTRIBUTION=sid
 DEBIAN_DISTRIBUTION=etch
 #DEBIAN_DISTRIBUTION=sarge
+MNT=/mnt
 
 PACKAGE_SELECTION () {
   PACKAGES=(
@@ -146,7 +147,8 @@ fbi
 # dvifb
 )
 DEV_PACKAGES=(
-units mtr-tiny tcpdump symlinks
+man # groff
+units mtr-tiny tcpdump symlinks traceroute
 cruft
 apt-utils apt-file
 diff patch wdiff cvs subversion xdelta
@@ -156,7 +158,7 @@ imagemagick
 # ocaml
 )
 X11_PACKAGES=(
-xserver-xfree86 #xserver-xorg
+xserver-xorg
 x-window-system-core
 xpdf
 xterm
@@ -164,7 +166,7 @@ xlibs-data
 qiv
 ratpoison
 ttf-bitstream-vera
-# xfonts-75dpi xfonts-100dpi xfonts-jmk 
+xfonts-base xfonts-75dpi xfonts-100dpi # xfonts-jmk
 # mlterm mlterm-tiny
 )
 EDITOR_PACKAGES=(
@@ -301,9 +303,9 @@ MY_CONFIG=(
 setup_remote_dirs () {
   for i ; do
     i=${i%/} ; i=${i#/}
-    b=$(dirname $i)
-    j=$(echo $b/ | sed -e 's,[^/]\+\/,..\/,g')
-    mkdir -p $b
+    b=$(dirname /$i)
+    j=$(echo $b | sed -e 's,/[^/]\+,..\/,g ; s,^[./]$,,')
+    mkdir -p ${TARGET}$b
     if [ -L $i ] ; then
       rm $i
       mkdir -p remote/$i
@@ -448,7 +450,22 @@ wipe_installation () {
   rm -rf bin boot debootstrap dev etc foo home initrd lib media mnt opt root sbin srv sys tmp usr var remote/usr remote/var/lib
   DBG "Kept precious stuff in var/cache/apt/ and var/cache/debconf/"
 }
-
+install_workarounds () {
+  touch $TARGET/etc/shadow # for chage used by ssh, etc.
+}
+transfer_installation () {
+  DIRS=( bin lib sbin usr var )
+  OTHER_DIRS=( media mnt dev initrd proc remote tmp sys
+		opt srv   etc home root boot )
+  [ -n "$MNT" ] || abort 2 "No target mount point \$MNT defined"
+  mount | grep "on $MNT type" > /dev/null || abort 2 "$MNT not mounted"
+  cd $MNT || abort 2 "Cannot change to $MNT"
+  mkdir -p $DIRS $OTHER_DIRS
+  [ -n "$TARGET" ] || abort 2 "No target installation \$TARGET defined"
+  cd $TARGET || abort 2 "Cannot change to $TARGET"
+  rsync -aH --delete --delete-before $DIRS $MNT/
+  echo "Don't forget to setup /etc. You may rsync -a $TARGET/etc $MNT/etc"
+}
 do_it () {
   [ $UID = 0 ] || abort 2 "Must be root!"
   [ -x /usr/local/bin/qemu-arm ] || make_qemu_arm
@@ -462,6 +479,7 @@ do_it () {
   in_target apt-get update
   in_target apt-get -fuy --fix-missing install
   setup_sources.list
+  install_workarounds
   in_target apt-get update
   in_target apt-get -fuy --fix-missing dist-upgrade
   install_packages
