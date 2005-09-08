@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.25 2005/07/25 09:09:15 fare Exp $
+# $Id: functions,v 1.26 2005/09/08 17:26:51 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -135,6 +135,27 @@ CHECK '[ -d dev ]' \
 CHECK '[ -c dev/console ]' \
       'mount devfs dev -t devfs' \
       "Cannot mount the $PWD/dev partition."
+}
+
+make_hda () {
+  cd /dev || return 1
+  if [ -b discs/disc0/disc ] ; then
+    ln -s discs/disc0/disc hda
+    for i in discs/disc0/part* ; do
+      ln -s $i hda$(echo $i|cut -c 17-)
+    done
+  else
+    mknod hda b 3 0
+    for i in 1 2 3 4 5 6 7 8 9 10 11 12 ; do
+      mknod hda$i b 3 $i
+    done
+  fi
+}
+
+ensure_dev_hda () {
+CHECK '[ -b dev/hda ]' \
+      'make_hda' \
+      "Cannot make $PWD/dev/hda* devices."
 }
 
 ensure_shm () {
@@ -391,7 +412,8 @@ try_pivot_root () {
   LOG "Let's pivot_root if we can."
   DO_T cd /
   DO_T umount -a -n
-  ensure_tmp ; ensure_proc ; ensure_dev # necessary for many things
+  ensure_tmp ; ensure_proc
+  ensure_dev ; ensure_dev_hda
   LOG "Checking for a CF memory card..."
   CHECK 'dd if=/dev/hda count=1 of=/dev/null 2> /dev/null' \
 	'cardmgr -o ; sleep 1' \
