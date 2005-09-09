@@ -1,7 +1,7 @@
-! $Id: Xmodmap.j820k,v 1.2 2005/08/16 20:43:19 fare Exp $
+! $Id: Xmodmap.j820k,v 1.3 2005/09/09 06:28:10 fare Exp $
 !
-! key mapping for XFree86 for Jornada 820
-! US keyboard in keycode mode (kbd_mode -k).
+! key mapping for Xorg for Jornada 820
+! US keyboard in keycode mode (kbd_mode -k), Xorg driver "keyboard"
 !
 ! First, clear the modifiers
 !
@@ -149,6 +149,18 @@ keycode  96 = Break
 !when it's not F12 but POWER, it is 124
 keycode 124 = Break
 
+! Xorg differences for
+! F11/SysRq (Multi_key), F12/POWER (Break), Windows (Alt_L), Orange (Mode_switch), Delete, arrows
+keycode 190 = Multi_key
+keycode 219 = Break
+keycode 133 = Alt_L
+keycode 191 = Mode_switch
+keycode 207 = Delete
+keycode 200 = Left
+keycode 204 = Down
+keycode 198 = Up
+keycode 201 = Right
+
 !!!Map all unused keycodes to F12
 keycode   8 = F12
 keycode  92 = F12
@@ -170,7 +182,6 @@ keycode 129 = F12
 keycode 130 = F12
 keycode 131 = F12
 keycode 132 = F12
-keycode 133 = F12
 keycode 135 = F12
 keycode 136 = F12
 keycode 137 = F12
@@ -221,22 +232,16 @@ keycode 186 = F12
 keycode 187 = F12
 keycode 188 = F12
 keycode 189 = F12
-keycode 190 = F12
-keycode 191 = F12
 keycode 192 = F12
 keycode 193 = F12
 keycode 195 = F12
 keycode 196 = F12
 keycode 197 = F12
-keycode 198 = F12
 keycode 199 = F12
-keycode 200 = F12
-keycode 201 = F12
 keycode 202 = F12
 keycode 203 = F12
 keycode 205 = F12
 keycode 206 = F12
-keycode 207 = F12
 keycode 208 = F12
 keycode 209 = F12
 keycode 210 = F12
