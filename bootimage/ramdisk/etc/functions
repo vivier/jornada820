@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.26 2005/09/08 17:26:51 fare Exp $
+# $Id: functions,v 1.27 2005/09/09 04:39:37 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -138,7 +138,7 @@ CHECK '[ -c dev/console ]' \
 }
 
 make_hda () {
-  cd /dev || return 1
+  ( cd dev || return 1
   if [ -b discs/disc0/disc ] ; then
     ln -s discs/disc0/disc hda
     for i in discs/disc0/part* ; do
@@ -149,13 +149,13 @@ make_hda () {
     for i in 1 2 3 4 5 6 7 8 9 10 11 12 ; do
       mknod hda$i b 3 $i
     done
-  fi
+  fi )
 }
 
 ensure_dev_hda () {
-CHECK '[ -b dev/hda ]' \
+CHECK '[ -e dev/hda ]' \
       'make_hda' \
-      "Cannot make $PWD/dev/hda* devices."
+      "Cannot make dev/hda* devices."
 }
 
 ensure_shm () {
@@ -281,7 +281,8 @@ change_root () {
 }
 
 exec_sh () {
-    exec /bin/busybox -sh < dev/vc/1 > dev/vc/1 2>&1 $@
+  exec /bin/busybox -sh < dev/vc/1 > dev/vc/1 2>&1 $@
+  exec /bin/busybox -sh $@
 }
 
 no_noautomount_p () {
