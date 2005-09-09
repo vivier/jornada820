@@ -1,6 +1,7 @@
 #!/bin/zsh -f
 
 DEB_SOURCE=/usr/src/DEB
+BOOTIMAGE=/usr/src/j820/bootimage
 TARGET=/usr/src/j820/deb
 TARGET_ARCH=arm
 DEBIAN_MIRROR=http://ftp.us.debian.org/debian
@@ -37,6 +38,7 @@ REMOTE_DIRS=(
 /var/cache/localepurge
 /var/lib/apt
 /var/lib/dpkg
+/etc/X11/xkb
 )
 
 ### obtained by removing the --include statement from bootstrap () then
@@ -455,6 +457,110 @@ wipe_installation () {
 install_workarounds () {
   touch $TARGET/etc/shadow # for chage used by ssh, etc.
 }
+fixup_etc () { (
+  setopt LOCAL_OPTIONS NULL_GLOB
+  cd $TARGET
+  BAD_FILES=(
+    etc/terminfo/*/
+    etc/X11/??/
+    etc/fdprm etc/fdmount.conf etc/mediaprm # floppy stuff
+    etc/**/*.dpkg-*
+  )
+  NEW_FILES=(
+    etc/issue "cLinux for Jornada 820 http://jornada820.sourceforge.net/    \\n \\l
+Software distribution by Faré based on Debian GNU/Linux ($DEBIAN_DISTRIBUTION)."
+    etc/issue.net "cLinux for Jornada 820 http://jornada820.sourceforge.net/    \\n \\l
+Software distribution by Faré based on Debian GNU/Linux ($DEBIAN_DISTRIBUTION)."
+    etc/syslog.conf "*.*	/dev/tty10"
+    etc/init.d/klogd "$(sed < etc/init.d/klogd -e 's/^KLOGD=.*$/KLOGD="-c 1"/')"
+    etc/pcmcia/config.opts "# Jornada 820 pcmcia configuration options"
+    etc/sudoers "ALL     ALL= NOPASSWD: /usr/bin/kbd_mode
+root    ALL=(ALL) ALL"
+    etc/fstab "/dev/hda2	/	ext2	noatime		1 0
+/dev/hda1	/1	vfat	shortname=winnt,umask=007,noatime	2 0
+/1/swapfile	none	swap	pri=42	0 0
+#none		/dev/pts devpts	defaults	0 0
+none		/proc	proc	defaults	0 0
+devfs		/dev	devfs	defaults	0 0
+tmpfs		/dev/shm tmpfs	defaults	0 0"
+    etc/default/rcS '#
+#	Defaults for the boot scripts in /etc/rcS.d
+#
+
+# Time files in /tmp are kept in days.
+TMPTIME=0
+# Set to yes if you want sulogin to be spawned on bootup
+SULOGIN=no
+# Set to no if you want to be able to login over telnet/rlogin
+# before system startup is complete (as soon as inetd is started)
+DELAYLOGIN=yes
+# Set UTC=yes if your system clock is set to UTC (GMT), and UTC=no if not.
+UTC=yes
+# Set VERBOSE to "no" if you would like a more quiet bootup.
+VERBOSE=yes
+# Set EDITMOTD to "no" if you don''t want /etc/motd to be editted automatically
+EDITMOTD=no
+# Set FSCKFIX to "yes" if you want to add "-y" to the fsck at startup.
+FSCKFIX=yes
+'
+    etc/default/dictd '
+# This file is sourced by /etc/init.d/dictd to obtain the value of
+# $DICTD_ARGS to be passed to dictd on startup.
+
+# Uncomment appropriate lines, change the text if desired, and/or add
+# new lines using the format of the sample lines.  (They must be legal
+# options, as shown in dictd(8).)
+
+DICTD_ARGS=""
+DICTD_ARGS="$DICTD_ARGS --locale=en_US.utf-8"
+#DICTD_ARGS="$DICTD_ARGS --facility=user"
+#DICTD_ARGS="$DICTD_ARGS --log=min"
+'
+    etc/X11/Xsession.d/25x11-j820-keyboard 'exec >> /tmp/xsession.log 2>&1 ; date +"%Y-%m-%d %H:%M:%S $USER $(tty) $DISPLAY x11-j820-keyboard" ; kbd_mode ; sudo kbd_mode -k ; xmodmap /etc/X11/Xmodmap ; date +"%Y-%m-%d %H:%M:%S done"'
+    etc/fb.modes '
+mode "640x480-11"
+    # D: 3.279 MHz, H: 5.068 kHz, V: 10.535 Hz
+    geometry 640 480 640 480 8
+    timings 305000 2 2 0 0 3 1
+    hsync high
+    vsync high
+    rgba 4/0,4/0,4/0,0/0
+endmode
+'
+  )
+  TO_COPY=(
+    conf/xorg.conf etc/X11/xorg.conf
+    conf/Xmodmap.j820k etc/X11/Xmodmap
+  )
+  TO_EDIT=(
+    etc/fstab
+    etc/hostname etc/hosts
+    etc/network/interfaces
+    etc/resolv.conf etc/nsswitch.conf etc/host.conf
+    etc/pcmcia/network.opts
+    etc/pcmcia/wireless.opts
+  )
+  echo "Do you really want to run this command? rm -rf $BAD_FILES"
+  read -q Y
+  [ y = $Y ] || ABORT "Not trying to erase anything without your confirmation."
+  rm -rf $BAD_FILES
+  set -- $NEW_FILES
+  while [ $# -gt 0 ] ; do
+    print -r -- > $1 $2
+    shift 2
+  done
+  set -- $TO_COPY
+  while [ $# -gt 0 ] ; do
+    cp -a $BOOTIMAGE/$1 $TARGET/$2
+    shift 2
+  done
+  echo "Do not forget to edit the following files to your convenience:"
+  echo "$TO_EDIT"
+  echo "And then there are all those files for various services you need,"
+  echo "You may run chroot $TARGET /bin/bash and mess around."
+  echo "Don't forget to create accounts for your users with adduser."
+  echo "Or you may want to merge this /etc with yours..."
+) }
 transfer_installation () {
   DIRS=( bin lib sbin usr var )
   OTHER_DIRS=( media mnt dev initrd proc remote tmp sys
@@ -486,6 +592,7 @@ do_it () {
   in_target apt-get -fuy --fix-missing dist-upgrade
   install_packages
   in_target localepurge
+  # fixup_etc
 }
 
 PACKAGE_SELECTION
