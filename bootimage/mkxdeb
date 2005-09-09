@@ -1,6 +1,6 @@
 #!/bin/zsh -f
 # mkxdeb -- script to create a cross-installation of debian
-# $Id: mkxdeb,v 1.17 2005/09/09 22:52:16 fare Exp $
+# $Id: mkxdeb,v 1.18 2005/09/09 22:58:20 fare Exp $
 # designed and configured for my jornada820 -- obviously YMMV so configure me!
 # Be sure to read the documentation at the end of the file
 
@@ -633,6 +633,7 @@ STEPS=(
  install_packages
  purgelocale
  fixup_etc
+ # install_lisp_packages
 )
 OCMDS=(
  wipe_installation
@@ -690,6 +691,12 @@ cat<<'EOF'
 
 ### REMAINING QUIRKS ###
 Many files must be still edited manually for a fully usable system.
+
+Moreover, clisp won't run properly with qemu-arm, so you'll have to
+interrupt the configuration of clisp with common-lisp-controller,
+retry to install_lisp_packages, which will skip this step, and run
+	/usr/sbin/register-common-lisp-implementation clisp
+manually on your actual machine to complete installation.
 
 ### HACKING TO SUIT YOUR TASTES ###
 Just edit at your leisure the configuration at the beginning of the file.
