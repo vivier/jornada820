@@ -1,14 +1,19 @@
 #!/bin/zsh -f
+# mkxdeb -- script to create a cross-installation of debian
+# $Id: mkxdeb,v 1.17 2005/09/09 22:52:16 fare Exp $
+# designed and configured for my jornada820 -- obviously YMMV so configure me!
+# Be sure to read the documentation at the end of the file
 
-DEB_SOURCE=/usr/src/DEB
-BOOTIMAGE=/usr/src/j820/bootimage
-TARGET=/usr/src/j820/deb
-TARGET_ARCH=arm
-DEBIAN_MIRROR=http://ftp.us.debian.org/debian
-#DEBIAN_DISTRIBUTION=sid
-DEBIAN_DISTRIBUTION=etch
-#DEBIAN_DISTRIBUTION=sarge
-MNT=/mnt
+DEB_SOURCE=/usr/src/DEB		# WHERE TO EXPAND & COMPILE SOURCES (for qemu)
+BOOTIMAGE=/usr/src/j820/bootimage # PATH TO EXISTING J820 SOURCES (for conf/)
+TARGET=/usr/src/j820/deb        # WHERE TO CREATE A DEBIAN INSTALLATION
+MACHINE=jornada820		# WHAT MACHINE WE'RE CONFIGURING FOR
+TARGET_ARCH=arm			# OUR TARGET ARCHITECTURE: ARM
+DEBIAN_MIRROR=http://ftp.us.debian.org/debian # OUR DEBIAN MIRROR
+DEBIAN_DISTRIBUTION=etch	# OUR DEBIAN DISTRIBUTION: sarge, etch, sid
+MNT=/mnt			# WHERE THE TARGET
+
+# You probably want to edit the PACKAGES definition right below, too.
 
 PACKAGE_SELECTION () {
   PACKAGES=(
@@ -103,12 +108,20 @@ zlib1g
 # Missing: libslang2
 )
 
+EXCLUDE_PACKAGES=(
+fdutils
+nano
+pppoe
+pppoeconf
+laptop-detect
+)
+
 BOOTSTRAP_PACKAGES=(
 #$BASE_DEBIAN_PACKAGES
 apt less dialog debconf
 )
 BASE_PACKAGES=(
-#aptitude- fdutils-
+#aptitude-
 
 less gnupg ksymoops
 ntpdate ntp
@@ -346,6 +359,9 @@ used_libs () {
   done | sort -u
 }
 
+ensure_qemu_arm () {
+  [ -x /usr/local/bin/qemu-arm ] || make_qemu_arm
+}
 make_qemu_arm () {
   cd $DEB_SOURCE
   apt-get source qemu
@@ -373,11 +389,12 @@ register_qemu_arm () {
 bootstrap () {
 OPTS=(
 #	--download-only
-	--foreign
+#	--foreign
 	--arch $TARGET_ARCH
-	--include=${(pj:,:)BOOTSTRAP_PACKAGES} # BASE_PACKAGES
+	--include=${(pj:,:)BOOTSTRAP_PACKAGES}
+	--exclude=${(pj:,:)EXCLUDE_PACKAGES}
 	--resolve-deps
-	sarge # $DEBIAN_DISTRIBUTION
+	$DEBIAN_DISTRIBUTION # sarge
 	$TARGET
 	$DEBIAN_MIRROR
 ) ; echo debootstrap $@ $OPTS ;
@@ -390,15 +407,18 @@ extract_deb () {
     dpkg-deb --extract $i $TARGET
   done
 }
-find_downloaded_debs () {
+find_bootstrap_packages () {
+  cut -d' ' -f1 $TARGET/debootstrap/debpaths
+}
+find_bootstrap_debs () {
   cut -d' ' -f2 $TARGET/debootstrap/debpaths
 }
-extract_downloaded_debs () {
-  extract_deb $(find_downloaded_debs)
+extract_bootstrap_debs () {
+  extract_deb $(find_bootstrap_debs)
 }
 
 setup_sources.list () {
-  echo "deb http://ftp.us.debian.org/debian $DEBIAN_DISTRIBUTION main non-free" > $TARGET/etc/apt/sources.list
+  echo "deb http://ftp.us.debian.org/debian $DEBIAN_DISTRIBUTION main contrib non-free" > $TARGET/etc/apt/sources.list
 }
 
 APT_OPTIONS=(
@@ -457,13 +477,13 @@ wipe_installation () {
 install_workarounds () {
   touch $TARGET/etc/shadow # for chage used by ssh, etc.
 }
-fixup_etc () { (
+configuration_jornada820 () {
   setopt LOCAL_OPTIONS NULL_GLOB
   cd $TARGET
   BAD_FILES=(
     etc/terminfo/*/
     etc/X11/??/
-    etc/fdprm etc/fdmount.conf etc/mediaprm # floppy stuff
+    # etc/fdprm etc/fdmount.conf etc/mediaprm # floppy stuff
     etc/**/*.dpkg-*
   )
   NEW_FILES=(
@@ -540,6 +560,11 @@ endmode
     etc/pcmcia/network.opts
     etc/pcmcia/wireless.opts
   )
+}
+fixup_etc () { (
+  cd $TARGET
+  configuration_$MACHINE ||
+    ABORT 2 "Cannot find configuration for machine $MACHINE"
   echo "Do you really want to run this command? rm -rf $BAD_FILES"
   read -q Y
   [ y = $Y ] || ABORT "Not trying to erase anything without your confirmation."
@@ -574,33 +599,115 @@ transfer_installation () {
   rsync -aH --delete --delete-before $DIRS $MNT/
   echo "Don't forget to setup /etc. You may rsync -a $TARGET/etc $MNT/etc"
 }
-do_it () {
+ensure_root () {
   [ $UID = 0 ] || abort 2 "Must be root!"
-  [ -x /usr/local/bin/qemu-arm ] || make_qemu_arm
-  register_qemu_arm
-  setup_directories
-  install_qemu_arm
-  bootstrap # --download-only
-  extract_downloaded_debs
-  mount_target_proc
+}
+configure_target () {
   in_target dpkg --configure -a
+}
+update_target () {
   in_target apt-get update
-  in_target apt-get -fuy --fix-missing install
-  setup_sources.list
-  install_workarounds
-  in_target apt-get update
+}
+fix_installation () {
+  in_target apt-get -fuy --fix-missing install $(find_bootstrap_packages)
+}
+upgrade_target () {
   in_target apt-get -fuy --fix-missing dist-upgrade
-  install_packages
+}
+purgelocale () {
   in_target localepurge
-  # fixup_etc
+}
+STEPS=(
+ ensure_qemu_arm
+ register_qemu_arm
+ setup_directories
+ install_qemu_arm
+ bootstrap
+ extract_bootstrap_debs
+ mount_target_proc
+ setup_sources.list
+ update_target
+ install_workarounds
+ fix_installation
+ upgrade_target
+ install_packages
+ purgelocale
+ fixup_etc
+)
+OCMDS=(
+ wipe_installation
+ transfer_installation
+)
+all () {
+  : from $FROM to $TO
+  ensure_root
+  for s in $STEPS ; do X $s ; done
+}
+help () {
+  echo "The steps to installation are:"
+  for i in $STEPS ; do print "   $i" ; done
+  echo "You can do it all with"
+  echo "   $PROG all"
+  echo "Or from one first step to some last step (included) with"
+  echo "   $PROG from FIRST_STEP to LAST_STEP"
+  echo "Other commands include:"
+  for i in $OCMDS ; do print "   $i" ; done
+  echo "You can run one with"
+  echo "   $PROG COMMAND_NAME"
+  echo "You need to be root to run this script"
+  echo "-- run it in a sandbox (e.g. user-mode-linux) if you don't trust"
+  echo "You MUST edit this script and edit its configuration for it to work"
+  echo "And you need stuff from jornada820 bootimage/conf for "
+  echo "UTSL for more information on what does what"
+}
+X () {
+ if [ -z "$ACTIVE" ] ; then
+   if [ "x$FROM" = "x$1" ] ; then
+     ACTIVE=y
+     $1
+   fi
+ else
+   $1
+   if [ "x$TO" = "x$1" ] ; then
+     ACTIVE=
+   fi
+ fi
+}
+from () {
+ FROM=$1 ACTIVE= ; shift ; ${@:-all}
+}
+to () {
+ TO=$1 ; shift ; ${@:-all}
 }
 
 PACKAGE_SELECTION
+FROM= TO= ACTIVE=y PROG=$0
+exec ${@:-help} ; exit
 
-exec $@ ; exit
-
+cat<<'EOF'
 
 ##### DOCUMENTATION BELOW #####
+
+### REMAINING QUIRKS ###
+Many files must be still edited manually for a fully usable system.
+
+### HACKING TO SUIT YOUR TASTES ###
+Just edit at your leisure the configuration at the beginning of the file.
+
+### INSTALLATION FROM A NON-DEBIAN MACHINE ###
+You can use debootstrap to install a minimal debian machine in a chroot.
+You can use mount --bind or mount --rbind to let the chroot see what it must.
+Or you can adapt this script to your environment.
+
+### PORTING TO ANOTHER MACHINE ###
+Not only the list of packages may change, but other things, too:
+* if the architecture changes, you'll have to hack all the bits that concern qemu,
+ replacing arm by whatever. Ouch.
+* you'll have to write a function configuration_MACHINE_NAME that suits your machine,
+ based on the jornada820 example.
+
+
+### BIBLIOGRAPHY ###
 
 ### See this page on the Wiki:
 http://jornada820.sourceforge.net/wiki/index.php/Debian%20on%20the%20Jornada%20820
@@ -628,3 +735,4 @@ cardmgr may oops if you keep the include lines that are included by default in
 /etc/pcmcia/config.opts
 Be sure to clear the content of this file.
 
+EOF
