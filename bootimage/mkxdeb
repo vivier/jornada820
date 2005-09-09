@@ -147,10 +147,11 @@ fbi
 # dvifb
 )
 DEV_PACKAGES=(
+elvis
 man # groff
 units mtr-tiny tcpdump symlinks traceroute
 cruft
-apt-utils apt-file
+apt-utils apt-file curl
 diff patch wdiff cvs subversion xdelta
 cvsutils strace
 make
@@ -159,7 +160,8 @@ imagemagick
 )
 X11_PACKAGES=(
 xserver-xorg
-x-window-system-core
+x-window-system-core # xprint
+# x-window-system
 xpdf
 xterm
 xlibs-data
