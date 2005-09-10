@@ -1,6 +1,6 @@
 #!/bin/zsh -f
 # mkxdeb -- script to create a cross-installation of debian
-# $Id: mkxdeb,v 1.19 2005/09/10 00:09:00 fare Exp $
+# $Id: mkxdeb,v 1.20 2005/09/10 01:15:00 fare Exp $
 # designed and configured for my jornada820 -- obviously YMMV so configure me!
 # Be sure to read the documentation at the end of the file
 
@@ -504,17 +504,26 @@ ABORT () {
 
 # Do things in the target directory (requires root privilege)
 in_target () { chroot $TARGET $@ }
+# Use apt-get in the target directory 
+target_apt_get () {
+  while ! in_target apt-get $@ &&
+   { echo "We were trying to run the following command chroot'ed in $TARGET:"
+     echo "apt-get $*"
+     echo "But it looks like apt-get failed. Do you want to try again? [y/N]" ;
+     read -q Y ; [ y = $Y ] }
+  do echo "OK, let's try again." ; done
+}
 # Mount proc under the target directory (requires root privilege)
 mount_target_proc () {
   mount -t proc proc $TARGET/proc
 }
 # Install all requested packages
 install_packages () {
-  in_target apt-get -fuy --fix-missing install $PACKAGES
+  target_apt_get -fuy --fix-missing install $PACKAGES
 }
 # Install Common Lisp packages (see caveat in documentation)
 install_lisp_packages () {
-  in_target apt-get -fuy --fix-missing install $COMMON_LISP_PACKAGES
+  target_apt_get -fuy --fix-missing install $COMMON_LISP_PACKAGES
 }
 # Wipe an existing installation, to start over in a cleaner way
 wipe_installation () {
@@ -587,20 +596,24 @@ configure_target () {
 }
 # as the name say
 update_target () {
-  in_target apt-get update
+  target_apt_get update
 }
 # Reinstall and reconfigure things properly with dpkg,
 # that weren't done properly by debootstrap
 fix_installation () {
-  in_target apt-get -fuy --fix-missing install $(find_bootstrap_packages)
+  target_apt_get -fuy --fix-missing install $(find_bootstrap_packages)
 }
 # Upgrade me!
 upgrade_target () {
-  in_target apt-get -fuy --fix-missing dist-upgrade
+  target_apt_get -fuy --fix-missing dist-upgrade
 }
 # Save some space
 purgelocale () {
   in_target localepurge
+}
+# Kill dangling processes (daemons) left over by the package installation
+kill_cross_daemons () {
+  fuser -v -k $TARGET/remote/qemu-arm
 }
 ### Those step to the completion of the installation
 STEPS=(
@@ -618,6 +631,7 @@ STEPS=(
  upgrade_target
  install_packages
  purgelocale
+ kill_cross_daemons
  fixup_etc
  # install_lisp_packages
 )
