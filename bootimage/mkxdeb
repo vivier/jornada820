@@ -1,24 +1,25 @@
 #!/bin/zsh -f
 # mkxdeb -- script to create a cross-installation of debian
-# $Id: mkxdeb,v 1.18 2005/09/09 22:58:20 fare Exp $
+# $Id: mkxdeb,v 1.19 2005/09/10 00:09:00 fare Exp $
 # designed and configured for my jornada820 -- obviously YMMV so configure me!
 # Be sure to read the documentation at the end of the file
 
-DEB_SOURCE=/usr/src/DEB		# WHERE TO EXPAND & COMPILE SOURCES (for qemu)
-BOOTIMAGE=/usr/src/j820/bootimage # PATH TO EXISTING J820 SOURCES (for conf/)
+DEBIAN_MIRROR=http://ftp.us.debian.org/debian # OUR DEBIAN MIRROR
+DEBIAN_DISTRIBUTION=etch	# OUR DEBIAN DISTRIBUTION: sarge, etch, sid...
 TARGET=/usr/src/j820/deb        # WHERE TO CREATE A DEBIAN INSTALLATION
 MACHINE=jornada820		# WHAT MACHINE WE'RE CONFIGURING FOR
 TARGET_ARCH=arm			# OUR TARGET ARCHITECTURE: ARM
-DEBIAN_MIRROR=http://ftp.us.debian.org/debian # OUR DEBIAN MIRROR
-DEBIAN_DISTRIBUTION=etch	# OUR DEBIAN DISTRIBUTION: sarge, etch, sid
-MNT=/mnt			# WHERE THE TARGET
+DEB_SOURCE=/usr/src/DEB		# WHERE TO EXPAND & COMPILE SOURCES (for qemu)
+BOOTIMAGE=/usr/src/j820/bootimage # PATH TO EXISTING J820 SOURCES (for conf/)
+MNT=/mnt			# MOUNT POINT WHERE TO rsync STUFF
 
-# You probably want to edit the PACKAGES definition right below, too.
+# Unless you have the same tastes as I do,
+# you probably want to edit the PACKAGES definition right below, too.
 
 PACKAGE_SELECTION () {
+### SELECT HERE WHICH PACKAGE SETS YOU WANT
   PACKAGES=(
     $BASE_PACKAGES
-#) FOO=(
     $DEV_PACKAGES
     $CONSOLE_PACKAGES
     $X11_PACKAGES
@@ -29,6 +30,10 @@ PACKAGE_SELECTION () {
     # $USB_PACKAGES
   )
 }
+### THESE ARE THE DIRECTORIES YOU WANT NOT TO BE INCLUDED IN THE IMAGE
+### THEY WILL BE PUT IN A remote/ HIERARCHY THAT YOU CAN EASILY NFS MOUNT
+### nfs configuration is site-specific and not included.
+### See exports(5) on the server, fstab(5) on the client.
 REMOTE_DIRS=(
 /debootstrap
 /usr/doc
@@ -46,68 +51,8 @@ REMOTE_DIRS=(
 /etc/X11/xkb
 )
 
-### obtained by removing the --include statement from bootstrap () then
-### ./mkxdeb bootstrap |& tee zap
-### A=( $( cat zap | grep Extracting | cut -c 15- | sed -e 's/...$//' ) )
-BASE_DEBIAN_PACKAGES=(
-base-files
-base-passwd
-bash
-bsdutils
-coreutils
-debconf
-debconf-i18n
-debianutils
-diff
-dpkg
-e2fslibs
-e2fsprogs
-findutils
-gcc-3.3-base
-grep
-gzip
-hostname
-initscripts
-libacl1
-libattr1
-libblkid1
-libc6
-libcap1
-libcomerr2
-libdb1-compat
-libdb3
-libgcc1
-liblocale-gettext-perl
-libncurses5
-libnewt0.51
-libpam-modules
-libpam-runtime
-libpam0g
-libss2
-libstdc++5
-libtext-charwidth-perl
-libtext-iconv-perl
-libtext-wrapi18n-perl
-libuuid1
-login
-makedev
-mawk
-mount
-ncurses-base
-ncurses-bin
-passwd
-perl-base
-procps
-sed
-slang1a-utf8
-sysv-rc
-sysvinit
-tar
-util-linux
-zlib1g
-# Missing: libslang2
-)
-
+### PUT HERE THE PACKAGES YOU DO *NOT* WANT TO INSTALL,
+### AMONGST THOSE THAT DEBOOTSTRAP WILL OTHERWISE INSTALL FOR YOU.
 EXCLUDE_PACKAGES=(
 fdutils
 nano
@@ -116,12 +61,16 @@ pppoeconf
 laptop-detect
 )
 
+### LET'S MAKE SURE THESE ARE AVAILABLE,
+### NO MATTER WHAT DEBOOTSTRAP THINKS IT CAN GET AWAY WITH.
 BOOTSTRAP_PACKAGES=(
-#$BASE_DEBIAN_PACKAGES
 apt less dialog debconf
 )
+
+### HERE ARE A FEW PACKAGE SETS DEFINED FOR CONVENIENCE.
+### CONFIGURE AT YOUR LEISURE TO SUIT YOUR NEEDS AND TASTES.
 BASE_PACKAGES=(
-#aptitude-
+#aptitude
 
 less gnupg ksymoops
 ntpdate ntp
@@ -292,30 +241,128 @@ SOUND_PACKAGES=(
 madplay sox aumix
 )
 
+### END OF EASY CONFIGURATION ###
+### Below this line, you're on your own.
+### No need to go there for easy configuration, but you'll have to do it
+### if you want to port mkxdeb to a new machine, etc.
+
+
+### CONFIGURATION FOR fixup_etc ON A jornada820 TARGET
+### You probably want to have a quick look there if your setup differs from mine.
+configuration_jornada820 () {
+  setopt LOCAL_OPTIONS NULL_GLOB
+  cd $TARGET
+  BAD_FILES=(
+    etc/terminfo/*/ ### this crap is now in /lib/terminfo
+    etc/X11/??/ ### if you care about some funny language, change that
+    # etc/fdprm etc/fdmount.conf etc/mediaprm ### floppy stuff, now skipped
+    etc/**/*.dpkg-* ### remove all signs of debian crappiness
+  )
+  NEW_FILES=(
+### You probably want to edit this file so it reflects your own CF partitioning
+### And server
+    etc/fstab "\
+/dev/hda2	/	ext2	noatime		1 0
+/dev/hda1	/1	vfat	shortname=winnt,umask=007,noatime	2 0
+/1/swapfile	none	swap	pri=42	0 0
+none		/dev/pts devpts	noauto	0 0
+none		/proc	proc	noauto	0 0
+devfs		/dev	devfs	noauto	0 0
+tmpfs		/dev/shm tmpfs	noauto	0 0
+server:$TARGET/remote /remote nfs noauto 0 0
+"
+### Greeting at the prompt
+    etc/issue "cLinux for Jornada 820 http://jornada820.sourceforge.net/    \\n \\l
+Software distribution by Faré based on Debian GNU/Linux ($DEBIAN_DISTRIBUTION)."
+    etc/issue.net "cLinux for Jornada 820 http://jornada820.sourceforge.net/    \\n \\l
+Software distribution by Faré based on Debian GNU/Linux ($DEBIAN_DISTRIBUTION)."
+### Logging everything to tty10, as little as possible to current console
+### You might also want to log remotely to your workstation.
+    etc/syslog.conf "*.*	/dev/tty10"
+    etc/init.d/klogd "$(sed < etc/init.d/klogd -e 's/^KLOGD=.*$/KLOGD="-c 1"/')"
+### Remote the i386-specific crap that Oopses pcmcia_cs
+    etc/pcmcia/config.opts "# Jornada 820 pcmcia configuration options"
+### Allow anyone to use kbd_mode, so that they may use X in kbd_mode -k (instead of -s)
+    etc/sudoers "ALL     ALL= NOPASSWD: /usr/bin/kbd_mode
+root    ALL=(ALL) ALL"
+### Make a few things more sensible for the j820 environment.
+    etc/default/rcS '#
+#	Defaults for the boot scripts in /etc/rcS.d
+#
+
+# Time files in /tmp are kept in days.
+TMPTIME=0
+# Set to yes if you want sulogin to be spawned on bootup
+SULOGIN=no
+# Set to no if you want to be able to login over telnet/rlogin
+# before system startup is complete (as soon as inetd is started)
+DELAYLOGIN=yes
+# Set UTC=yes if your system clock is set to UTC (GMT), and UTC=no if not.
+UTC=yes
+# Set VERBOSE to "no" if you would like a more quiet bootup.
+VERBOSE=yes
+# Set EDITMOTD to "no" if you don''t want /etc/motd to be editted automatically
+EDITMOTD=no
+# Set FSCKFIX to "yes" if you want to add "-y" to the fsck at startup.
+FSCKFIX=yes
+'
+### I use this package, and I *really* need the utf8 by default.
+    etc/default/dictd '
+# This file is sourced by /etc/init.d/dictd to obtain the value of
+# $DICTD_ARGS to be passed to dictd on startup.
+
+# Uncomment appropriate lines, change the text if desired, and/or add
+# new lines using the format of the sample lines.  (They must be legal
+# options, as shown in dictd(8).)
+
+DICTD_ARGS=""
+DICTD_ARGS="$DICTD_ARGS --locale=en_US.utf-8"
+#DICTD_ARGS="$DICTD_ARGS --facility=user"
+#DICTD_ARGS="$DICTD_ARGS --log=min"
+'
+### Untested. Use at your own risk. See xorg.conf for alternate recipe.
+    etc/X11/Xsession.d/25x11-j820-keyboard 'exec >> /tmp/xsession.log 2>&1 ; date +"%Y-%m-%d %H:%M:%S $USER $(tty) $DISPLAY x11-j820-keyboard" ; kbd_mode ; sudo kbd_mode -k ; xmodmap /etc/X11/Xmodmap ; date +"%Y-%m-%d %H:%M:%S done"'
+    etc/fb.modes '
+mode "640x480-11"
+    # D: 3.279 MHz, H: 5.068 kHz, V: 10.535 Hz
+    geometry 640 480 640 480 8
+    timings 305000 2 2 0 0 3 1
+    hsync high
+    vsync high
+    rgba 4/0,4/0,4/0,0/0
+endmode
+'
+  )
+  ### This assumes you have the whole j820 bootimage CVS source tree installed
+  ### from jornada820.sf.net
+  TO_COPY=(
+    conf/xorg.conf etc/X11/xorg.conf
+    conf/Xmodmap.j820k etc/X11/Xmodmap
+  )
+  ### Reminder for some essential files you'll have to handle manually, anyway
+  TO_EDIT=(
+    etc/fstab
+    etc/hostname etc/hosts
+    etc/network/interfaces
+    etc/resolv.conf etc/nsswitch.conf etc/host.conf
+    etc/pcmcia/network.opts
+    etc/pcmcia/wireless.opts
+    etc/passwd etc/group
+    etc/ssh/id*
+  )
+}
+
+### NOT CURRENTLY USED -- REMINDER OF FILES I'VE GOT TO INTEGRATE ABOVE...
 MY_CONFIG=(
-/etc/inittab		# save memory, don't open VTs
+/etc/inittab		# to save memory, don't open VTs
 /etc/gpm.conf		# configure the mouse
-/etc/X11/XF86Config-4	# got the mode with fbset -x; DontVTSwitch because it hoses the kbd_mode
 /etc/X11/vtinit.sh	# let X change kbd_mode -k
-/etc/X11/Xmodmap	# US modmap in -k mode. Plus exchange mouse buttons 2 and 3.
-/etc/fb.modes		# got the mode with fbset
-/etc/sudoers		# allow users to use kbd_mode
-/etc/syslog.conf	# log to vt10, not to precious small CF.
-/etc/init.d/klogd	# use flag -c 1 to avoid annoying messages
-/etc/pcmcia/config.opts	# remove the PC-specific crap
 # xinitrc		# xterm +sb -geometry 1x1 -e sudo kbd_mode -k ; xmodmap /etc/X11/Xmodmap
-
-#/etc/resolv.conf
-#/etc/hosts
-#/etc/hostname
-#/etc/issue
-#/etc/passwd
-#/etc/group
-#/etc/ssh/id*
-#/etc/default/dictd
-#/etc/network/interfaces
-
 )
+
+
+### NOW FOR THE ACTUAL CODE.
+### EDIT AT YOUR OWN RISK, PUBLISH AT EVERYONE'S BENEFIT
 
 setup_remote_dirs () {
   for i ; do
@@ -343,6 +390,7 @@ setup_directories () {
   mkdir -p remote/var/lib/apt/lists/partial
 }
 
+### Unused, should be salvaged somewhere else
 configure_xemacs () {
   ./configure --compiler='distcc arm-linux-gcc' --cflags="-Os -fomit-frame-pointer" --with-x11=no --with-sound=no --with-database=no --with-tty=yes --with-ipv6-cname=no --pdump=no --with-gnome=no --with-gtk=no --with-toolbars=no --with-wmcommand=no --with-menubars=no --with-scrollbars=no --with-dialogs=no --with-widgets=no --with-dragndrop=no --with-cde=no --with-offix=no --with-xmu=no --external-widget=no --with-ncurses --with-gpm --with-kerberos=no --with-pop=no --with-hesiod=no --with-workshop=no --with-socks=no --with-modules=no --with-netinstall=no --with-mule=no --with-xfs=no
 
@@ -359,9 +407,11 @@ used_libs () {
   done | sort -u
 }
 
+# Ensure a qemu-arm is available
 ensure_qemu_arm () {
   [ -x /usr/local/bin/qemu-arm ] || make_qemu_arm
 }
+# Make a static qemu-arm from source
 make_qemu_arm () {
   cd $DEB_SOURCE
   apt-get source qemu
@@ -371,13 +421,14 @@ make_qemu_arm () {
   cp arm-user/qemu-arm /usr/local/bin/
   ln -s /usr/local/bin/qemu-arm /usr/bin/
 }
+# Install qemu-arm to the target tree
 install_qemu_arm () {
   mkdir -p $TARGET/remote $TARGET/usr/bin/ $TARGET/usr/local/bin/
   cp /usr/local/bin/qemu-arm $TARGET/remote/
   ln -s ../../remote/qemu-arm $TARGET/usr/bin/
   ln -s ../../../remote/qemu-arm $TARGET/usr/local/bin/
 }
-
+# Make arm binaries executable by the kernel with qemu
 register_qemu_arm () {
   if [ -f /proc/sys/fs/binfmt_misc/arm ] ; then
     echo qemu-arm already registered to binfmt_misc
@@ -386,10 +437,11 @@ register_qemu_arm () {
   /bin/echo ':arm:M::\x7fELF\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfb\xff\xff\xff:/usr/bin/qemu-arm:' > /proc/sys/fs/binfmt_misc/register
 }
 
+# Fetch the initial packages
 bootstrap () {
 OPTS=(
-#	--download-only
-#	--foreign
+	--download-only
+	--foreign
 	--arch $TARGET_ARCH
 	--include=${(pj:,:)BOOTSTRAP_PACKAGES}
 	--exclude=${(pj:,:)EXCLUDE_PACKAGES}
@@ -400,31 +452,44 @@ OPTS=(
 ) ; echo debootstrap $@ $OPTS ;
 debootstrap $@ $OPTS
 }
-
+# Extract one package (requires root privilege)
 extract_deb () {
   cd $TARGET
   for i ; do
     dpkg-deb --extract $i $TARGET
   done
 }
+# Names of the packages debootstrap downloaded
 find_bootstrap_packages () {
   cut -d' ' -f1 $TARGET/debootstrap/debpaths
 }
+# Location of the package archives debootstrap downloaded
 find_bootstrap_debs () {
   cut -d' ' -f2 $TARGET/debootstrap/debpaths
 }
+# Extract all the required packages for a minimal installation
 extract_bootstrap_debs () {
   extract_deb $(find_bootstrap_debs)
 }
-
+# Setup which debian source we'll use
 setup_sources.list () {
-  echo "deb http://ftp.us.debian.org/debian $DEBIAN_DISTRIBUTION main contrib non-free" > $TARGET/etc/apt/sources.list
+  echo "deb $DEBIAN_MIRROR $DEBIAN_DISTRIBUTION main contrib non-free" > $TARGET/etc/apt/sources.list
 }
 
+### This is not used
+# APT options for cross-installation (unused)
 APT_OPTIONS=(
 --option Dir::Etc::SourceList=$TARGET/etc/apt/sources.list --option Dir::State::Lists=$TARGET/var/lib/apt/lists --option Debug::Nolocking=true --option APT::Architecture=$TARGET_ARCH --option Dir::Cache::archives=$TARGET/var/cache/apt/archives --option APT::Get::Force-Yes=true --option APT::Get::Download-Only=true --option Dir::State::status=$TARGET/var/lib/dpkg/status --option Dir::Etc::Preferences=$TARGET/etc/preferences
 )
+cross-apt-get () {
+  apt-get $APT_OPTIONS $@
+}
+cross-apt-install () {
+  # cross-apt-get clean
+  cross-apt-get -fuy install $PACKAGES
+}
 
+### Debugging macros
 DBG () {
   print -r -- >&2 "$*"
 }
@@ -437,34 +502,21 @@ ABORT () {
   abort 42 "$*"
 }
 
-
-cross-apt-get () {
-  apt-get $APT_OPTIONS $@
-}
-
-cross-apt-install () {
-  # cross-apt-get clean
-  cross-apt-get -fuy install $PACKAGES
-}
-
-apt-install () {
-  # cross-apt-get clean
-  apt-get -fuy install $PACKAGES
-}
-
+# Do things in the target directory (requires root privilege)
 in_target () { chroot $TARGET $@ }
-
+# Mount proc under the target directory (requires root privilege)
 mount_target_proc () {
   mount -t proc proc $TARGET/proc
 }
-
+# Install all requested packages
 install_packages () {
   in_target apt-get -fuy --fix-missing install $PACKAGES
 }
+# Install Common Lisp packages (see caveat in documentation)
 install_lisp_packages () {
   in_target apt-get -fuy --fix-missing install $COMMON_LISP_PACKAGES
 }
-
+# Wipe an existing installation, to start over in a cleaner way
 wipe_installation () {
   echo "Are you sure you want to erase the installation in ${TARGET} ?" > /dev/tty
   read -q Y
@@ -474,93 +526,11 @@ wipe_installation () {
   rm -rf bin boot debootstrap dev etc foo home initrd lib media mnt opt root sbin srv sys tmp usr var remote/usr remote/var/lib
   DBG "Kept precious stuff in var/cache/apt/ and var/cache/debconf/"
 }
+# Install ugly stuff that should not be required but it.
 install_workarounds () {
   touch $TARGET/etc/shadow # for chage used by ssh, etc.
 }
-configuration_jornada820 () {
-  setopt LOCAL_OPTIONS NULL_GLOB
-  cd $TARGET
-  BAD_FILES=(
-    etc/terminfo/*/
-    etc/X11/??/
-    # etc/fdprm etc/fdmount.conf etc/mediaprm # floppy stuff
-    etc/**/*.dpkg-*
-  )
-  NEW_FILES=(
-    etc/issue "cLinux for Jornada 820 http://jornada820.sourceforge.net/    \\n \\l
-Software distribution by Faré based on Debian GNU/Linux ($DEBIAN_DISTRIBUTION)."
-    etc/issue.net "cLinux for Jornada 820 http://jornada820.sourceforge.net/    \\n \\l
-Software distribution by Faré based on Debian GNU/Linux ($DEBIAN_DISTRIBUTION)."
-    etc/syslog.conf "*.*	/dev/tty10"
-    etc/init.d/klogd "$(sed < etc/init.d/klogd -e 's/^KLOGD=.*$/KLOGD="-c 1"/')"
-    etc/pcmcia/config.opts "# Jornada 820 pcmcia configuration options"
-    etc/sudoers "ALL     ALL= NOPASSWD: /usr/bin/kbd_mode
-root    ALL=(ALL) ALL"
-    etc/fstab "/dev/hda2	/	ext2	noatime		1 0
-/dev/hda1	/1	vfat	shortname=winnt,umask=007,noatime	2 0
-/1/swapfile	none	swap	pri=42	0 0
-#none		/dev/pts devpts	defaults	0 0
-none		/proc	proc	defaults	0 0
-devfs		/dev	devfs	defaults	0 0
-tmpfs		/dev/shm tmpfs	defaults	0 0"
-    etc/default/rcS '#
-#	Defaults for the boot scripts in /etc/rcS.d
-#
-
-# Time files in /tmp are kept in days.
-TMPTIME=0
-# Set to yes if you want sulogin to be spawned on bootup
-SULOGIN=no
-# Set to no if you want to be able to login over telnet/rlogin
-# before system startup is complete (as soon as inetd is started)
-DELAYLOGIN=yes
-# Set UTC=yes if your system clock is set to UTC (GMT), and UTC=no if not.
-UTC=yes
-# Set VERBOSE to "no" if you would like a more quiet bootup.
-VERBOSE=yes
-# Set EDITMOTD to "no" if you don''t want /etc/motd to be editted automatically
-EDITMOTD=no
-# Set FSCKFIX to "yes" if you want to add "-y" to the fsck at startup.
-FSCKFIX=yes
-'
-    etc/default/dictd '
-# This file is sourced by /etc/init.d/dictd to obtain the value of
-# $DICTD_ARGS to be passed to dictd on startup.
-
-# Uncomment appropriate lines, change the text if desired, and/or add
-# new lines using the format of the sample lines.  (They must be legal
-# options, as shown in dictd(8).)
-
-DICTD_ARGS=""
-DICTD_ARGS="$DICTD_ARGS --locale=en_US.utf-8"
-#DICTD_ARGS="$DICTD_ARGS --facility=user"
-#DICTD_ARGS="$DICTD_ARGS --log=min"
-'
-    etc/X11/Xsession.d/25x11-j820-keyboard 'exec >> /tmp/xsession.log 2>&1 ; date +"%Y-%m-%d %H:%M:%S $USER $(tty) $DISPLAY x11-j820-keyboard" ; kbd_mode ; sudo kbd_mode -k ; xmodmap /etc/X11/Xmodmap ; date +"%Y-%m-%d %H:%M:%S done"'
-    etc/fb.modes '
-mode "640x480-11"
-    # D: 3.279 MHz, H: 5.068 kHz, V: 10.535 Hz
-    geometry 640 480 640 480 8
-    timings 305000 2 2 0 0 3 1
-    hsync high
-    vsync high
-    rgba 4/0,4/0,4/0,0/0
-endmode
-'
-  )
-  TO_COPY=(
-    conf/xorg.conf etc/X11/xorg.conf
-    conf/Xmodmap.j820k etc/X11/Xmodmap
-  )
-  TO_EDIT=(
-    etc/fstab
-    etc/hostname etc/hosts
-    etc/network/interfaces
-    etc/resolv.conf etc/nsswitch.conf etc/host.conf
-    etc/pcmcia/network.opts
-    etc/pcmcia/wireless.opts
-  )
-}
+# Do machine-specific hacks to make the image usable on the target machine.
 fixup_etc () { (
   cd $TARGET
   configuration_$MACHINE ||
@@ -587,36 +557,52 @@ fixup_etc () { (
   echo "Or you may want to merge this /etc with yours..."
 ) }
 transfer_installation () {
+  ### ATTENTION: IF YOU MERGE INSTALLATION TO AN EXISTING DISK RATHER THAN
+  ### TRANSFER TO NEW BLANK DISK, ANYTHING IN THE CONCERNED DIRECTORIES
+  ### ON THE EXISTING DISK WILL BE WIPED AND REPLACED BY CURRENT CONTENT.
+  ### IF YOU WANT TO PRESERVE ANYTHING, PUT IT SOMEWHERE ELSE (e.g. /opt)
+  ### AND RE-CREATE A SYMLINK TO IT FROM /usr/local OR WHEREVER AFTER TRANSFER.
+  ### FOR THIS REASON, WE ONLY COPY /etc IF IT DOESN'T ALREADY EXIST
+  ### IF IT DOES, YOU'RE ON YOUR OWN AS FOR MERGING.
   DIRS=( bin lib sbin usr var )
   OTHER_DIRS=( media mnt dev initrd proc remote tmp sys
 		opt srv   etc home root boot )
   [ -n "$MNT" ] || abort 2 "No target mount point \$MNT defined"
   mount | grep "on $MNT type" > /dev/null || abort 2 "$MNT not mounted"
   cd $MNT || abort 2 "Cannot change to $MNT"
+  [ -d etc ] || DIRS=($DIRS etc) ### This is for /etc
   mkdir -p $DIRS $OTHER_DIRS
   [ -n "$TARGET" ] || abort 2 "No target installation \$TARGET defined"
   cd $TARGET || abort 2 "Cannot change to $TARGET"
   rsync -aH --delete --delete-before $DIRS $MNT/
   echo "Don't forget to setup /etc. You may rsync -a $TARGET/etc $MNT/etc"
 }
+# Bug out if we're not root
 ensure_root () {
   [ $UID = 0 ] || abort 2 "Must be root!"
 }
+# Mostly not needed
 configure_target () {
   in_target dpkg --configure -a
 }
+# as the name say
 update_target () {
   in_target apt-get update
 }
+# Reinstall and reconfigure things properly with dpkg,
+# that weren't done properly by debootstrap
 fix_installation () {
   in_target apt-get -fuy --fix-missing install $(find_bootstrap_packages)
 }
+# Upgrade me!
 upgrade_target () {
   in_target apt-get -fuy --fix-missing dist-upgrade
 }
+# Save some space
 purgelocale () {
   in_target localepurge
 }
+### Those step to the completion of the installation
 STEPS=(
  ensure_qemu_arm
  register_qemu_arm
@@ -635,15 +621,12 @@ STEPS=(
  fixup_etc
  # install_lisp_packages
 )
+# Other commands to advertise to the user
 OCMDS=(
  wipe_installation
  transfer_installation
 )
-all () {
-  : from $FROM to $TO
-  ensure_root
-  for s in $STEPS ; do X $s ; done
-}
+# explanations
 help () {
   echo "The steps to installation are:"
   for i in $STEPS ; do print "   $i" ; done
@@ -655,11 +638,17 @@ help () {
   for i in $OCMDS ; do print "   $i" ; done
   echo "You can run one with"
   echo "   $PROG COMMAND_NAME"
+  echo "UTSL -- Read the source of a function for more documentation on it."
   echo "You need to be root to run this script"
-  echo "-- run it in a sandbox (e.g. user-mode-linux) if you don't trust"
-  echo "You MUST edit this script and edit its configuration for it to work"
-  echo "And you need stuff from jornada820 bootimage/conf for "
-  echo "UTSL for more information on what does what"
+  echo "-- run it in a sandbox (e.g. user-mode-linux) if you don't trust it."
+  echo "You MUST edit this script and customize its configuration"
+  echo "Otherwise don't be surprised that it won't work for you."
+}
+### Infrastructure to allow to execute only an interval of steps
+all () {
+  : from $FROM to $TO
+  ensure_root
+  for s in $STEPS ; do X $s ; done
 }
 X () {
  if [ -z "$ACTIVE" ] ; then
@@ -680,7 +669,7 @@ from () {
 to () {
  TO=$1 ; shift ; ${@:-all}
 }
-
+### Main dispatch loop
 PACKAGE_SELECTION
 FROM= TO= ACTIVE=y PROG=$0
 exec ${@:-help} ; exit
