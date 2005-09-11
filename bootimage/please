@@ -57,10 +57,10 @@ do_operate_on_file () {
   rel=${file#$base}
   linux=${rel%%/*}
   sub=${rel#*/}
-  upstream=$TOPDIR/linux/upstream/$rel
-  hh=$TOPDIR/linux/upstream/${linux}-hh/$sub
+  upstream=$TOPDIR/upstream/$rel
+  hh=$TOPDIR/upstream/${linux}-hh/$sub
   work=$TOPDIR/linux/$rel
-  build=$TOPDIR/linux/build/$rel
+  build=$TOPDIR/work/$rel
   $COMMAND
 }
 create () {
@@ -90,42 +90,42 @@ diff24 () {
   fi
 }
 diffhv () {
-  h=$TOPDIR/linux/upstream/kernel-hh/$sub
-  v=$TOPDIR/linux/upstream/kernel/$sub
+  h=$TOPDIR/upstream/kernel-hh/$sub
+  v=$TOPDIR/upstream/kernel/$sub
   diff -uN $h $v
 }
 diffm () {
-  m=$TOPDIR/linux/upstream/kernel24matan/$sub
+  m=$TOPDIR/upstream/kernel24matan/$sub
   w=$TOPDIR/linux/kernel/$sub
   diff -uN $m $w
 }
 diffh () {
-  m=$TOPDIR/linux/upstream/kernel-hh/$sub
+  m=$TOPDIR/upstream/kernel-hh/$sub
   w=$TOPDIR/linux/kernel/$sub
   diff -uN $m $w
 }
 diffv () {
-  m=$TOPDIR/linux/upstream/kernel/$sub
+  m=$TOPDIR/upstream/kernel/$sub
   w=$TOPDIR/linux/kernel/$sub
   diff -uabEN $m $w
 }
 tpatchhv () {
-  h=$TOPDIR/linux/upstream/kernel-hh/$sub
-  v=$TOPDIR/linux/upstream/kernel/$sub
+  h=$TOPDIR/upstream/kernel-hh/$sub
+  v=$TOPDIR/upstream/kernel/$sub
   w=$work
   ( cd $(dirname $v) ; diff -uN $h $(basename $v) ) |
   patch --dry-run -d $(dirname $work) -p0
 }
 tpatchhv2 () {
-  h=$TOPDIR/linux/upstream/kernel-hh/$sub
-  v=$TOPDIR/linux/upstream/kernel/$sub
+  h=$TOPDIR/upstream/kernel-hh/$sub
+  v=$TOPDIR/upstream/kernel/$sub
   w=$work
   ( cd $(dirname $w) ; diff -uN $h $(basename $w) ) |
   patch --dry-run -d $(dirname $v) -p0
 }
 dopatchhv () {
-  h=$TOPDIR/linux/upstream/kernel-hh/$sub
-  v=$TOPDIR/linux/upstream/kernel/$sub
+  h=$TOPDIR/upstream/kernel-hh/$sub
+  v=$TOPDIR/upstream/kernel/$sub
   w=$work
   ( cd $(dirname $v) ; diff -uN $h $(basename $v) ) |
   patch -d $(dirname $work) -p0
@@ -207,8 +207,13 @@ compile () {
 cross-execution () {
   /bin/echo ':arm:M::\x7fELF\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfb\xff\xff\xff:/usr/local/bin/qemu-arm:' > /proc/sys/fs/binfmt_misc/register
 }
-
 run () {
   /usr/local/bin/qemu-arm $@
 }
-op $@
+make_patch () {
+  setopt LOCAL_OPTIONS EXTENDED_GLOB NULL_GLOB
+  cd ${TOPDIR}/linux/kernel
+  op diffv **/*~**CVS**(.)
+}
+
+$@
