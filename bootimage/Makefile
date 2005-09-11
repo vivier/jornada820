@@ -34,8 +34,8 @@ KERNEL24_TB2	= ${KERNEL24}.tar.bz2
 KERNEL24_URL	= ${KERNEL_FTP}/v2.4/${KERNEL24_TB2}
 #ARM24PATCH	= patch-2.4.27-vrs1.bz2
 #ARM24PATCH_URL	= ${ARM_FTP}/v2.4/${ARM24PATCH}
-ARM24PATCH	= patch-2.4.31-j720-4.bz2
-ARM24PATCH_URL	= ${JORNADA7XX}/linux-2.4.31-j720-4/${ARM24PATCH}
+ARM24PATCH	= patch-2.4.31-j720-5.bz2
+ARM24PATCH_URL	= ${JORNADA7XX}/linux-2.4.31-j720-5/${ARM24PATCH}
 KVER26		= 2.6.12
 KERNEL26	= linux-${KVER26}
 KERNELVERSION26	= ${KVER26}${EXTRAVERSION}
@@ -213,7 +213,7 @@ ${KUPSTREAMDIRHH}/Makefile: ${KUPSTREAMDIRHH}/CVS/Root
 
 upstream-kernel:
 	[ -f ${KUPSTREAMDIR}/Makefile ] || make do-upstream-kernel
-do-upstream-kernel: linux24-dir ${K24EXTENSIONS} ${K24PATCHES}
+do-upstream-kernel: ${K24EXTENSIONS} ${K24PATCHES} linux24-dir
 	bzcat ${K24PATCHES} | ( cd ${KUPSTREAMDIR} && patch -p1 -E )
 linux24-dir: ${DLDIR}/${KERNEL24_TB2}
 	rm -rf ${UPSTREAMDIR}/${KERNEL24}
@@ -251,7 +251,7 @@ ${KUPSTREAMDIR26HH}/Makefile: ${KUPSTREAMDIR26HH}/CVS/Root
 
 upstream-kernel26:
 	[ -f ${KUPSTREAMDIR26}/Makefile ] || make do-upstream-kernel26
-do-upstream-kernel26: linux26-dir ${K26EXTENSIONS} ${K26PATCHES}
+do-upstream-kernel26: ${K26EXTENSIONS} ${K26PATCHES} linux26-dir
 	bzcat ${K26PATCHES} | ( cd ${KUPSTREAMDIR26} && patch -p1 -E )
 linux26-dir: linux26
 	rm -rf ${UPSTREAMDIR}/${KERNEL26}
