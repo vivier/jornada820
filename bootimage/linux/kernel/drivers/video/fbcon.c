@@ -58,11 +58,6 @@
 
 #undef FBCONDEBUG
 
-#ifdef CONFIG_SA1100_JORNADA720
-/* we'll use this to set brightness and contrast in Jornada 720 */
-#include "jornada720.h"
-#endif
-
 #include <linux/config.h>
 #include <linux/module.h>
 #include <linux/types.h>
@@ -108,6 +103,12 @@
 #include <video/fbcon.h>
 #include <video/fbcon-mac.h>	/* for 6x11 font on mac */
 #include <video/font.h>
+
+#ifdef CONFIG_SA1100_JORNADA720
+/* we'll use this to set brightness and contrast in Jornada 720 */
+#include "jornada720.h"
+#endif
+
 
 #ifdef FBCONDEBUG
 #  define DPRINTK(fmt, args...) printk(KERN_DEBUG "%s: " fmt, __FUNCTION__ , ## args)
