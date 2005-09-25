@@ -1,6 +1,6 @@
 #!/bin/zsh -f
 # mkxdeb -- script to create a cross-installation of debian
-# $Id: mkxdeb,v 1.20 2005/09/10 01:15:00 fare Exp $
+# $Id: mkxdeb,v 1.21 2005/09/25 11:44:27 fare Exp $
 # designed and configured for my jornada820 -- obviously YMMV so configure me!
 # Be sure to read the documentation at the end of the file
 
@@ -96,6 +96,7 @@ e2fsprogs
 # reiserfs-tools
 nfs-kernel-server nfs-common
 gpm
+sfs-client sfs-server
 
 pcmcia-cs wireless-tools
 # irda-utils gpsman cu ppp xawtv-tools xawtv
@@ -116,7 +117,7 @@ man # groff
 units mtr-tiny tcpdump symlinks traceroute
 cruft
 apt-utils apt-file curl
-diff patch wdiff cvs subversion xdelta
+diff patch wdiff cvs subversion xdelta monotone xxdiff
 cvsutils strace
 make
 imagemagick
@@ -140,7 +141,7 @@ xemacs21
 dict dictd
 dict-foldoc dict-gcide dict-wn dict-moby-thesaurus
 dict-freedict-eng-fra dict-freedict-fra-eng
-aspell aspell-bin aspell-fr aspell-en
+# aspell aspell-bin aspell-fr aspell-en
 ispell
 )
 
@@ -151,17 +152,18 @@ clisp common-lisp-controller
 cl-ppcre
 cl-pdf
 
+cl-ironclad # ???
 cl-acl-compat
-cl-aima
-cl-ansi-tests
+#cl-aima
+#cl-ansi-tests
 cl-asdf
 cl-aserve
 cl-base64
 cl-binary-types
-cl-blowfish
+#cl-blowfish
 cl-ftp
 cl-gd
-cl-getopt
+#cl-getopt
 cl-htmlgen
 cl-inflate
 cl-interpol
@@ -227,9 +229,10 @@ cl-metering
 #cltl
 )
 GAME_PACKAGES=(
-fortune-mod fortune-min
+fortune-mod
+fortunes fortunes-min
 doom-wad-shareware doomlegacy-sdl
-# prboom lxdoom
+prboom # lxdoom
 # recompile: rocks-n-diamonds
 # gnuboy
 # vice
