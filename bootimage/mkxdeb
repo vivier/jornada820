@@ -1,6 +1,6 @@
 #!/bin/zsh -f
 # mkxdeb -- script to create a cross-installation of debian
-# $Id: mkxdeb,v 1.21 2005/09/25 11:44:27 fare Exp $
+# $Id: mkxdeb,v 1.22 2005/09/27 18:13:16 fare Exp $
 # designed and configured for my jornada820 -- obviously YMMV so configure me!
 # Be sure to read the documentation at the end of the file
 
@@ -24,7 +24,7 @@ PACKAGE_SELECTION () {
     $CONSOLE_PACKAGES
     $X11_PACKAGES
     $EDITOR_PACKAGES
-    # COMMON_LISP_PACKAGES
+    # $COMMON_LISP_PACKAGES
     # $GAME_PACKAGES
     # $SOUND_PACKAGES
     # $USB_PACKAGES
@@ -96,7 +96,7 @@ e2fsprogs
 # reiserfs-tools
 nfs-kernel-server nfs-common
 gpm
-sfs-client sfs-server
+# sfs-client sfs-server
 
 pcmcia-cs wireless-tools
 # irda-utils gpsman cu ppp xawtv-tools xawtv
@@ -112,8 +112,9 @@ fbi
 # dvifb
 )
 DEV_PACKAGES=(
+gcc libc-dev
 elvis
-man # groff
+man-db # groff
 units mtr-tiny tcpdump symlinks traceroute
 cruft
 apt-utils apt-file curl
@@ -148,16 +149,12 @@ ispell
 COMMON_LISP_PACKAGES=(
 clisp common-lisp-controller
 #gcl
-
 cl-ppcre
 cl-pdf
-
 cl-ironclad # ???
-cl-acl-compat
 #cl-aima
 #cl-ansi-tests
 cl-asdf
-cl-aserve
 cl-base64
 cl-binary-types
 #cl-blowfish
@@ -172,12 +169,12 @@ cl-irc-logger
 cl-jpeg
 cl-kmrcl
 cl-lml2
-cl-md5
+#cl-md5
 cl-memoization
 cl-meta
 cl-menusystem
 cl-net-telent-date
-cl-paip
+#cl-paip
 cl-parse-number
 cl-pipes
 cl-plus
@@ -204,7 +201,6 @@ cl-rsm-rand
 cl-rsm-string
 cl-rss
 cl-screamer
-cl-scribble
 cl-split-sequence
 cl-ssl
 cl-syslog
@@ -212,15 +208,13 @@ cl-ubf
 cl-uffi
 cl-units
 cl-unit
-cl-webactions
 cl-who
 cl-xlunit
 cl-xptest
 cl-xmls
-
 #cl-faq
 #cl-infix
-cl-metering
+#cl-metering
 #lush
 #lush-library
 # maxima
@@ -231,8 +225,8 @@ cl-metering
 GAME_PACKAGES=(
 fortune-mod
 fortunes fortunes-min
-doom-wad-shareware doomlegacy-sdl
-prboom # lxdoom
+prboom doomlegacy-sdl # lxdoom
+doom-wad-shareware freedoom
 # recompile: rocks-n-diamonds
 # gnuboy
 # vice
@@ -255,12 +249,16 @@ madplay sox aumix
 configuration_jornada820 () {
   setopt LOCAL_OPTIONS NULL_GLOB
   cd $TARGET
+  DBG "Using the configuration of a jornada820"
   BAD_FILES=(
     etc/terminfo/*/ ### this crap is now in /lib/terminfo
     etc/X11/??/ ### if you care about some funny language, change that
     # etc/fdprm etc/fdmount.conf etc/mediaprm ### floppy stuff, now skipped
     etc/**/*.dpkg-* ### remove all signs of debian crappiness
   )
+  DBG $BAD_FILES
+  ISSUE="cLinux for Jornada 820 http://jornada820.sourceforge.net/    \\n \\l
+Software distribution by Faré based on Debian GNU/Linux ($DEBIAN_DISTRIBUTION)."
   NEW_FILES=(
 ### You probably want to edit this file so it reflects your own CF partitioning
 ### And server
@@ -275,10 +273,8 @@ tmpfs		/dev/shm tmpfs	noauto	0 0
 server:$TARGET/remote /remote nfs noauto 0 0
 "
 ### Greeting at the prompt
-    etc/issue "cLinux for Jornada 820 http://jornada820.sourceforge.net/    \\n \\l
-Software distribution by Faré based on Debian GNU/Linux ($DEBIAN_DISTRIBUTION)."
-    etc/issue.net "cLinux for Jornada 820 http://jornada820.sourceforge.net/    \\n \\l
-Software distribution by Faré based on Debian GNU/Linux ($DEBIAN_DISTRIBUTION)."
+    etc/issue $ISSUE
+    etc/issue.net $ISSUE
 ### Logging everything to tty10, as little as possible to current console
 ### You might also want to log remotely to your workstation.
     etc/syslog.conf "*.*	/dev/tty10"
@@ -357,9 +353,9 @@ endmode
 
 ### NOT CURRENTLY USED -- REMINDER OF FILES I'VE GOT TO INTEGRATE ABOVE...
 MY_CONFIG=(
-/etc/inittab		# to save memory, don't open VTs
-/etc/gpm.conf		# configure the mouse
-/etc/X11/vtinit.sh	# let X change kbd_mode -k
+etc/inittab		# to save memory, don't open VTs
+etc/gpm.conf		# configure the mouse
+# etc/X11/vtinit.sh	# let X change kbd_mode -k
 # xinitrc		# xterm +sb -geometry 1x1 -e sudo kbd_mode -k ; xmodmap /etc/X11/Xmodmap
 )
 
@@ -528,6 +524,10 @@ install_packages () {
 install_lisp_packages () {
   target_apt_get -fuy --fix-missing install $COMMON_LISP_PACKAGES
 }
+# Install games packages (see caveat in documentation)
+install_game_packages () {
+  target_apt_get -fuy --fix-missing install $GAME_PACKAGES
+}
 # Wipe an existing installation, to start over in a cleaner way
 wipe_installation () {
   echo "Are you sure you want to erase the installation in ${TARGET} ?" > /dev/tty
@@ -547,10 +547,12 @@ fixup_etc () { (
   cd $TARGET
   configuration_$MACHINE ||
     ABORT 2 "Cannot find configuration for machine $MACHINE"
-  echo "Do you really want to run this command? rm -rf $BAD_FILES"
-  read -q Y
-  [ y = $Y ] || ABORT "Not trying to erase anything without your confirmation."
-  rm -rf $BAD_FILES
+  if [ -n "$BAD_FILES" ] ; then
+    echo "Do you really want to run this command? rm -rf ${BAD_FILES}"
+    read -q Y
+    [ y = $Y ] || ABORT "Not trying to erase anything without your confirmation."
+    rm -rf $BAD_FILES
+  fi
   set -- $NEW_FILES
   while [ $# -gt 0 ] ; do
     print -r -- > $1 $2
@@ -572,10 +574,12 @@ transfer_installation () {
   ### ATTENTION: IF YOU MERGE INSTALLATION TO AN EXISTING DISK RATHER THAN
   ### TRANSFER TO NEW BLANK DISK, ANYTHING IN THE CONCERNED DIRECTORIES
   ### ON THE EXISTING DISK WILL BE WIPED AND REPLACED BY CURRENT CONTENT.
-  ### IF YOU WANT TO PRESERVE ANYTHING, PUT IT SOMEWHERE ELSE (e.g. /opt)
-  ### AND RE-CREATE A SYMLINK TO IT FROM /usr/local OR WHEREVER AFTER TRANSFER.
-  ### FOR THIS REASON, WE ONLY COPY /etc IF IT DOESN'T ALREADY EXIST
-  ### IF IT DOES, YOU'RE ON YOUR OWN AS FOR MERGING.
+  ### The list of concerned directories is defined by variable $DIRS below.
+  ###
+  ### If you want to preserve anything, put it somewhere else (e.g. /opt)
+  ### and re-create a symlink to it from /usr/local or wherever after transfer.
+  ### For this reason, we only copy /etc if it doesn't already exist
+  ### If it does, you're on your own regarding merging.
   DIRS=( bin lib sbin usr var )
   OTHER_DIRS=( media mnt dev initrd proc remote tmp sys
 		opt srv   etc home root boot )
@@ -611,8 +615,9 @@ upgrade_target () {
   target_apt_get -fuy --fix-missing dist-upgrade
 }
 # Save some space
-purgelocale () {
+clean_locale () {
   in_target localepurge
+  in_target locale-gen
 }
 # Kill dangling processes (daemons) left over by the package installation
 kill_cross_daemons () {
@@ -633,15 +638,16 @@ STEPS=(
  fix_installation
  upgrade_target
  install_packages
- purgelocale
+ clean_locale
  kill_cross_daemons
  fixup_etc
- # install_lisp_packages
 )
 # Other commands to advertise to the user
 OCMDS=(
  wipe_installation
  transfer_installation
+ install_lisp_packages
+ install_game_packages
 )
 # explanations
 help () {
