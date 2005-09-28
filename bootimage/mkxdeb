@@ -1,8 +1,9 @@
 #!/bin/zsh -f
 # mkxdeb -- script to create a cross-installation of debian
-# $Id: mkxdeb,v 1.23 2005/09/28 15:58:53 fare Exp $
-# designed and configured for my jornada820 -- obviously YMMV so configure me!
-# Be sure to read the documentation at the end of the file
+# $Id: mkxdeb,v 1.24 2005/09/28 16:16:24 fare Exp $
+# This script was designed and configured for my jornada820
+# -- obviously YMMV so configure it!
+# There is some documentation at the end of the file
 
 DEBIAN_MIRROR=http://ftp.us.debian.org/debian # OUR DEBIAN MIRROR
 DEBIAN_DISTRIBUTION=etch	# OUR DEBIAN DISTRIBUTION: sarge, etch, sid...
@@ -332,6 +333,19 @@ mode "640x480-11"
     rgba 4/0,4/0,4/0,0/0
 endmode
 '
+    etc/locale.gen 'en_US ISO-8859-1
+en_US UTF-8'
+    etc/locale.nopurge 'DONTBOTHERNEWLOCALE
+en
+en_US
+en_US.ISO-8859-1
+en_US.UTF-8'
+    etc/gpm.conf 'device=/dev/psaux
+responsiveness=
+repeat_type=ms3
+type=ps2
+append=
+sample_rate='
   )
   ### This assumes you have the whole j820 bootimage CVS source tree installed
   ### from jornada820.sf.net
@@ -355,7 +369,6 @@ endmode
 ### NOT CURRENTLY USED -- REMINDER OF FILES I'VE GOT TO INTEGRATE ABOVE...
 MY_CONFIG=(
 etc/inittab		# to save memory, don't open VTs
-etc/gpm.conf		# configure the mouse
 # etc/X11/vtinit.sh	# let X change kbd_mode -k
 # xinitrc		# xterm +sb -geometry 1x1 -e sudo kbd_mode -k ; xmodmap /etc/X11/Xmodmap
 )
@@ -552,7 +565,7 @@ wipe_installation () {
 }
 # Install ugly stuff that should not be required but it.
 install_workarounds () {
-  touch $TARGET/etc/shadow # for chage used by ssh, etc.
+  touch $TARGET/etc/shadow # a few packages (including ssh) use chage with wants a shadow.
 }
 # Do machine-specific hacks to make the image usable on the target machine.
 fixup_etc () { (
@@ -628,6 +641,7 @@ upgrade_target () {
 }
 # Save some space
 clean_locale () {
+  # We need have configured before
   in_target localepurge
   in_target locale-gen
 }
