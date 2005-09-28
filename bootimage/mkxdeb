@@ -1,6 +1,6 @@
 #!/bin/zsh -f
 # mkxdeb -- script to create a cross-installation of debian
-# $Id: mkxdeb,v 1.22 2005/09/27 18:13:16 fare Exp $
+# $Id: mkxdeb,v 1.23 2005/09/28 15:58:53 fare Exp $
 # designed and configured for my jornada820 -- obviously YMMV so configure me!
 # Be sure to read the documentation at the end of the file
 
@@ -87,7 +87,7 @@ localeconf localepurge locales localization-config
 
 sudo m4
 
-procps psmisc
+procps psmisc lsof
 
 pump
 mount
@@ -122,6 +122,7 @@ diff patch wdiff cvs subversion xdelta monotone xxdiff
 cvsutils strace
 make
 imagemagick
+detachtty
 # ocaml
 )
 X11_PACKAGES=(
@@ -471,8 +472,19 @@ extract_bootstrap_debs () {
   extract_deb $(find_bootstrap_debs)
 }
 # Setup which debian source we'll use
-setup_sources.list () {
-  echo "deb $DEBIAN_MIRROR $DEBIAN_DISTRIBUTION main contrib non-free" > $TARGET/etc/apt/sources.list
+setup_apt () {
+  # configure apt: select packages must come from sid.
+  # man source.list ; man apt.conf ; man apt_preferences ;
+  cat <<EOF > $TARGET/etc/apt/sources.list
+deb $DEBIAN_MIRROR $DEBIAN_DISTRIBUTION main contrib non-free
+deb $DEBIAN_MIRROR sid main contrib non-free
+EOF
+  echo > /etc/apt/apt.conf "APT::Default-Release \"$DEBIAN_DISTRIBUTION\";"
+  cat <<EOF > /etc/apt/preferences
+Package: common-lisp-controller clisp sbcl cl-* monotone user-mode-linux
+Pin: release a=unstable
+Pin-Priority: 1000
+EOF
 }
 
 ### This is not used
@@ -632,7 +644,7 @@ STEPS=(
  bootstrap
  extract_bootstrap_debs
  mount_target_proc
- setup_sources.list
+ setup_apt
  update_target
  install_workarounds
  fix_installation
