@@ -1,7 +1,9 @@
 #!/bin/sh
-# $Id: functions,v 1.27 2005/09/09 04:39:37 fare Exp $
+# $Id: functions,v 1.28 2005/09/30 18:35:11 fare Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
+
+LOG=/tmp/log
 
 localfunctions () {
   [ -f /etc/functions.local ] && . /etc/functions.local
@@ -37,28 +39,35 @@ cursor () {
   echo -ne "\\033[?${1:-2}c"
 }
 
-
 LOG () {
+  # Log to tmp/log, log to console
   LOG_T "$@" ; LOG_C "$@"
 }
 LOG_C () {
+  case "$1" in
+    +h) noheader=t ; shift ;;
+  esac
   echo "$@" >&2
 }
 LOG_T () {
-  opts=""
+  opts="" noheader=""
   case "$1" in
+    +h) noheader=t ;;
     -*) opts="$1" ; shift ;;
   esac
-  echo $opts "$$ $(date +'%Y-%m-%d %H:%M:%S'): $@" >> /tmp/log
+  if [ -n "$noheader" ] ; then
+    header="$$ $(date +'%Y-%m-%d %H:%M:%S'): "
+  fi
+  echo $opts "$header$*" >> $LOG
 }
 DO () {
-  LOG "$@" ; "$@" 2>&1 | tee -a /tmp/log
+  LOG "$@" ; "$@" 2>&1 | tee -a $LOG
 }
 DO_C () {
   LOG_C "$@" ; "$@"
 }
 DO_T () {
-  LOG_T "$@" ; "$@" >> /tmp/log 2>&1 
+  LOG_T "$@" ; "$@" >> $LOG 2>&1 
 }
 ABORT () {
   if [ -n "$1" ] ; then
@@ -76,10 +85,10 @@ CHECK () {
 Stopping before we do a big mistake."
   LOG_T -n "Checking: $1 ... "
   if eval "$1" ; then
-    LOG_T "ok"
+    LOG_T +h "ok"
   else
     if [ -n "$2" ] ; then
-      LOG_T -n "failed. Taking a corrective measure: "
+      LOG_T +h "failed. Taking a corrective measure: "
       eval "DO_T $2"
       eval "$1" ||
       ABORT "$ERR" ${4:-42}
@@ -162,7 +171,7 @@ ensure_shm () {
 CHECK '[ -d dev/shm ]' \
       'mkdir -p dev/shm' \
       "Cannot make a $PWD/dev/shm directory node."
-CHECK "grep -q $PWD/dev/shm /proc/mounts" \
+CHECK "mountedp dev/shm" \
       "mount tmpfs dev/shm -t tmpfs" \
       "Cannot mount the $PWD/dev/shm partition."
 DO_T mkdir -p dev/shm/tmp dev/shm/var dev/shm/var/run dev/shm/var/lock
@@ -175,8 +184,8 @@ ensure_shm_tmp () {
 }
 
 my_linuxrc () {
-  echo "We're in my_linuxrc! PID=$$" >> /tmp/log
-  ps >> /tmp/log
+  echo "We're in my_linuxrc! PID=$$" >> $LOG
+  ps >> $LOG
 
   DO_T cd /
   DO_T mkdir -p /tmp
@@ -238,6 +247,17 @@ nameserver () { (
   for i in $2 ; do echo search $i ; done
   for i in $1 ; do echo nameserver $i ; done
  ) > /etc/resolv.conf
+}
+
+mountedp () {
+  [ -d "$1" ] &&
+  grep -q "$(cd "$1" ; pwd)" /proc/mounts
+}
+
+unmount () {
+  if [ ! -e /proc/mounts ] || mountedp "$*" ; then
+    umount "$1"
+  fi
 }
 
 nonet0 () {
@@ -328,7 +348,7 @@ ensure_linuxpartition () {
   CHECK '[ -d /mnt/linux ]' \
 	'mkdir -p /mnt/linux' \
 	'Cannot make /mnt/linux directory.'
-  CHECK "grep -q '$PART /mnt/linux' /proc/mounts" \
+  CHECK "mountedp '$PART /mnt/linux'" \
 	"mount $PART /mnt/linux -o noatime,ro" \
 	"Cannot mount the target partition $PART to /mnt/linux."
   PARTNUM="$(echo $PART | cut -c9-)"
@@ -339,13 +359,14 @@ try_fsck () {
   FSTYPE="$(< /proc/mounts grep $PART | cut -d' ' -f 3)"
   cd /mnt/linux
   FSCK=sbin/fsck.$FSTYPE
+  FSCK=echo
   ensure_dev
   ensure_proc
   if [ -x ./$FSCK ] ; then
     LOG chroot $PWD /$FSCK -y $PART
     chroot $PWD /$FSCK -y $PART
   fi
-  umount dev
+  unmount dev
   umount proc
   cd /
   umount $PART
@@ -412,7 +433,6 @@ try_pivot_root () {
 
   LOG "Let's pivot_root if we can."
   DO_T cd /
-  DO_T umount -a -n
   ensure_tmp ; ensure_proc
   ensure_dev ; ensure_dev_hda
   LOG "Checking for a CF memory card..."
@@ -433,20 +453,11 @@ try_pivot_root () {
 
 do_pivot_root () {
   if [ 1 = $$ ] ; then
-    ensure_proc
-    ensure_dev
-    ensure_shm
-    ensure_shm_tmp
-    LOG_T "Changing current I/O to new /dev"
-    exec < dev/console > dev/console 2>&1
-    LOG_T "Switching log file"
-    mv /tmp/log tmp/log
-    ln -s ../$PWD/tmp/log /tmp/log
     LOG "Switching root partition..."
     pivot_root . initrd
+    LOG=/initrd/tmp/log
     LOG_T "Jumping to the other side"
-    exec chroot . ./bin/sh ./etc/please pivot_root_part2 \
-	< dev/console > dev/console 2>&1
+    exec chroot . ./bin/sh ./etc/please pivot_root_part2
   else
     DO_T cd /
     DO_T umount /mnt/linux
@@ -456,13 +467,27 @@ do_pivot_root () {
 }
 
 pivot_root_part2 () {
+
+  # Undo what previous versions of pivot_root (part1) did.
+  if [ -d dev/shm/tmp ] ; then
+    mv /dev/shm/tmp/log /initrd/tmp/log
+  fi
+  umount dev/shm 2> /dev/null
+  umount dev 2> /dev/null
+  umount proc 2> /dev/null
+
+  LOG=/initrd/tmp/log
   LOG "Made it to the other side!"
-  LOG "Ensuring dev and proc"
-  ensure_dev ; ensure_proc
-  LOG "Cleaning filedescriptors"
   DO_T cd /
+  LOG "Mounting essential partitions"
+  ensure_dev ; ensure_proc
+  ensure_shm ; ensure_shm_tmp
+  LOG_T "Changing current I/O to new /dev"
   export TERM=linux
   exec < dev/console > dev/console 2>&1
+  LOG_T "Switching log file"
+  mv $LOG /tmp/log
+  LOG=/tmp/log
   DO_T cat /proc/mounts
   DO_T ps
   LOG "Unmounting dev and proc from initrd"
@@ -532,3 +557,11 @@ umnt () {
   umount /mnt
 }
 up () { cd .. ; }
+IS () { if "$@" ; then echo yes ; else echo no ; fi ;}
+less () {
+  if which less > /dev/null 2>&1 ; then
+    command less "$@" ;
+  else
+    vi -R "$@"
+  fi
+}
