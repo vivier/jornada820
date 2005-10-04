@@ -403,7 +403,7 @@ ${KBUILDDIR}/.config: force
 	cd ${KBUILDDIR} && \
 	cp arch/arm/def-configs/jornada820 .config && \
 	${MAKE} oldconfig && \
-	./please update_config ${TOPDIR} kernel def-configs/jornada820
+	cd ${TOPDIR} && ./please update_config kernel def-configs/jornada820
 
 menuconfig: kbuildtree do-menuconfig
 do-menuconfig: force
@@ -411,7 +411,7 @@ do-menuconfig: force
 	cp arch/arm/def-configs/jornada820 .config && \
 	${MAKE} menuconfig && \
 	${MAKE} oldconfig && \
-	./please update_config ${TOPDIR} kernel def-configs/jornada820
+	cd ${TOPDIR} && ./please update_config kernel def-configs/jornada820
 
 depend: config do-depend
 do-depend: ${KBUILDDIR}/.depend
@@ -423,7 +423,7 @@ do-menuconfig26: force
 	cd ${KBUILDDIR26} && \
 	cp arch/arm/configs/jornada820_defconfig .config && \
 	${MAKE} menuconfig && \
-	./please update_config ${TOPDIR} kernel26 configs/jornada820_defconfig
+	cd ${TOPDIR} && ./please update_config kernel26 configs/jornada820_defconfig
 
 config26: kbuildtree26 do-config26
 do-config26: ${KBUILDDIR26}/.config
@@ -431,7 +431,7 @@ ${KBUILDDIR26}/.config: force
 	cd ${KBUILDDIR26} && \
 	cp arch/arm/configs/jornada820_defconfig .config && \
 	${MAKE} oldconfig && \
-	./please update_config ${TOPDIR} kernel26 configs/jornada820_defconfig
+	cd ${TOPDIR} && ./please update_config kernel26 configs/jornada820_defconfig
 
 # ------------------- package loadable modules -----------------------------
 
