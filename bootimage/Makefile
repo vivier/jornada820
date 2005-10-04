@@ -23,7 +23,7 @@ endif
 # If you try anything more recent, please report what works for you.
 UCLIBC_SVN_REVISION = "HEAD"
 
-KERNEL_FTP	= ftp://ftp.bz2.de.kernel.org/pub/linux/kernel
+KERNEL_FTP	= ftp://ftp.bz2.us.kernel.org/pub/linux/kernel
 ARM_FTP		= ftp://ftp.arm.linux.org.uk/pub/armlinux/source/kernel-patches
 JORNADA7XX	= http://wwwcip.informatik.uni-erlangen.de/~simigern/jornada-7xx
 
@@ -41,8 +41,8 @@ KERNEL26	= linux-${KVER26}
 KERNELVERSION26	= ${KVER26}${EXTRAVERSION}
 KERNEL26_TB2	= ${KERNEL26}.tar.bz2
 KERNEL26_URL	= ${KERNEL_FTP}/v2.6/${KERNEL26_TB2}
-K26PATCH	= patch-2.6.13.1.bz2
-K26PATCH_URL	= ${KERNEL_FTP}/v2.6/${ARM26PATCH}
+K26PATCH	= patch-2.6.13.3.bz2
+K26PATCH_URL	= ${KERNEL_FTP}/v2.6/${K26PATCH}
 #ARM26PATCH	= No need for a patch as ARM is well-integrated in kernel 2.6
 #ARM26PATCH_URL	= ${ARM_FTP}/v2.6/${ARM26PATCH}
 J7XX26PATCH	= patch-2.6.13-2005-09-04
@@ -403,8 +403,7 @@ ${KBUILDDIR}/.config: force
 	cd ${KBUILDDIR} && \
 	cp arch/arm/def-configs/jornada820 .config && \
 	${MAKE} oldconfig && \
-	( cmp -s .config arch/arm/def-configs/jornada820 || \
-	cat .config > arch/arm/def-configs/jornada820 )
+	./please update_config ${TOPDIR} kernel def-configs/jornada820
 
 menuconfig: kbuildtree do-menuconfig
 do-menuconfig: force
@@ -412,8 +411,7 @@ do-menuconfig: force
 	cp arch/arm/def-configs/jornada820 .config && \
 	${MAKE} menuconfig && \
 	${MAKE} oldconfig && \
-	( cmp -s .config arch/arm/def-configs/jornada820 || \
-	cat .config > arch/arm/def-configs/jornada820 )
+	./please update_config ${TOPDIR} kernel def-configs/jornada820
 
 depend: config do-depend
 do-depend: ${KBUILDDIR}/.depend
@@ -425,8 +423,7 @@ do-menuconfig26: force
 	cd ${KBUILDDIR26} && \
 	cp arch/arm/configs/jornada820_defconfig .config && \
 	${MAKE} menuconfig && \
-	( cmp -s .config arch/arm/configs/jornada820_defconfig || \
-	cat .config > arch/arm/configs/jornada820_defconfig )
+	./please update_config ${TOPDIR} kernel26 configs/jornada820_defconfig
 
 config26: kbuildtree26 do-config26
 do-config26: ${KBUILDDIR26}/.config
@@ -434,8 +431,7 @@ ${KBUILDDIR26}/.config: force
 	cd ${KBUILDDIR26} && \
 	cp arch/arm/configs/jornada820_defconfig .config && \
 	${MAKE} oldconfig && \
-	( cmp -s .config arch/arm/configs/jornada820_defconfig || \
-	cat .config > arch/arm/configs/jornada820_defconfig )
+	./please update_config ${TOPDIR} kernel26 configs/jornada820_defconfig
 
 # ------------------- package loadable modules -----------------------------
 

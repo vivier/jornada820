@@ -215,5 +215,13 @@ make_patch () {
   cd ${TOPDIR}/linux/kernel
   op diffv **/*~**CVS**(.)
 }
+update_config () {
+  TOPDIR=$1 K=$2 C=$3
+  DPAT='^# ... ... .. ..:..:.. ....'
+  cd $TOPDIR
+  CF=work/$K/.config XX=linux/$K/arch/arm/$C
+  grep -v $DPAT < $CF | cmp -s - $XX ||
+  grep -v $DPAT < $CF > $XX
+}
 
 $@
