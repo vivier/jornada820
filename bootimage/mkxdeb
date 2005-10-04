@@ -1,6 +1,6 @@
 #!/bin/zsh -f
 # mkxdeb -- script to create a cross-installation of debian
-# $Id: mkxdeb,v 1.25 2005/09/28 23:36:14 fare Exp $
+# $Id: mkxdeb,v 1.26 2005/10/04 11:36:50 fare Exp $
 # This script was designed and configured for my jornada820
 # -- obviously YMMV so configure it!
 # There is some documentation at the end of the file
@@ -113,12 +113,13 @@ fbi
 # dvifb
 )
 DEV_PACKAGES=(
-gcc libc-dev
+gcc libc6-dev
+netcat
 elvis
 man-db # groff
 units mtr-tiny tcpdump symlinks traceroute
 cruft
-apt-utils apt-file curl
+apt-utils apt-file # curl
 diff patch wdiff cvs subversion xdelta monotone xxdiff
 cvsutils strace
 make
@@ -494,7 +495,7 @@ deb $DEBIAN_MIRROR sid main contrib non-free
 EOF
   echo > $TARGET/etc/apt/apt.conf "APT::Default-Release \"$DEBIAN_DISTRIBUTION\";"
   cat <<EOF > $TARGET/etc/apt/preferences
-Package: common-lisp-controller clisp sbcl cl-* monotone user-mode-linux
+Package: common-lisp-controller clisp sbcl cl-* monotone user-mode-linux fbi
 Pin: release a=unstable
 Pin-Priority: 1000
 EOF
