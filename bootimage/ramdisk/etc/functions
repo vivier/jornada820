@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: functions,v 1.28 2005/09/30 18:35:11 fare Exp $
+# $Id: functions,v 1.29 2005/10/19 03:17:23 rstanchak Exp $
 # Shell functions to ease your life at the initrd debug command prompt
 # Use the shell script /etc/please
 
@@ -250,8 +250,7 @@ nameserver () { (
 }
 
 mountedp () {
-  [ -d "$1" ] &&
-  grep -q "$(cd "$1" ; pwd)" /proc/mounts
+  grep -q $1 /proc/mounts
 }
 
 unmount () {
