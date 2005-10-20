@@ -1,6 +1,6 @@
 #!/bin/zsh -f
 # mkxdeb -- script to create a cross-installation of debian
-# $Id: mkxdeb,v 1.26 2005/10/04 11:36:50 fare Exp $
+# $Id: mkxdeb,v 1.27 2005/10/20 20:39:30 fare Exp $
 # This script was designed and configured for my jornada820
 # -- obviously YMMV so configure it!
 # There is some documentation at the end of the file
@@ -80,8 +80,10 @@ screen zsh ssh gnutls-bin telnet
 recode
 lynx ca-certificates
 w3m w3m-img # w3mmee w3mmee-img
+# elinks links2
+ascii
 bzip2 gzip tar rsync
-
+# dillo
 dpkg
 dialog apt
 localeconf localepurge locales localization-config
@@ -120,12 +122,14 @@ man-db # groff
 units mtr-tiny tcpdump symlinks traceroute
 cruft
 apt-utils apt-file # curl
-diff patch wdiff cvs subversion xdelta monotone xxdiff
+diff patch wdiff cvs subversion xdelta xxdiff
+monotone/unstable
 cvsutils strace
 make
 imagemagick
 detachtty
 # ocaml
+distcc
 )
 X11_PACKAGES=(
 xserver-xorg
@@ -154,7 +158,7 @@ clisp common-lisp-controller
 #gcl
 cl-ppcre
 cl-pdf
-cl-ironclad # ???
+#cl-ironclad # ???
 #cl-aima
 #cl-ansi-tests
 cl-asdf
@@ -228,7 +232,7 @@ cl-xmls
 GAME_PACKAGES=(
 fortune-mod
 fortunes fortunes-min
-prboom doomlegacy-sdl # lxdoom
+prboom # doomlegacy-sdl lxdoom
 doom-wad-shareware freedoom
 # recompile: rocks-n-diamonds
 # gnuboy
@@ -511,7 +515,7 @@ cross-apt-get () {
 }
 cross-apt-install () {
   # cross-apt-get clean
-  cross-apt-get -fuy install $PACKAGES
+  cross-apt-get -fu install $PACKAGES
 }
 
 ### Debugging macros
@@ -544,15 +548,15 @@ mount_target_proc () {
 }
 # Install all requested packages
 install_packages () {
-  target_apt_get -fuy --fix-missing install $PACKAGES
+  target_apt_get -fu --fix-missing install $PACKAGES
 }
 # Install Common Lisp packages (see caveat in documentation)
 install_lisp_packages () {
-  target_apt_get -fuy --fix-missing install $COMMON_LISP_PACKAGES
+  target_apt_get -fu --fix-missing install $COMMON_LISP_PACKAGES
 }
 # Install games packages (see caveat in documentation)
 install_game_packages () {
-  target_apt_get -fuy --fix-missing install $GAME_PACKAGES
+  target_apt_get -fu --fix-missing install $GAME_PACKAGES
 }
 # Wipe an existing installation, to start over in a cleaner way
 wipe_installation () {
@@ -634,11 +638,11 @@ update_target () {
 # Reinstall and reconfigure things properly with dpkg,
 # that weren't done properly by debootstrap
 fix_installation () {
-  target_apt_get -fuy --fix-missing install $(find_bootstrap_packages)
+  target_apt_get -fu --fix-missing install $(find_bootstrap_packages)
 }
 # Upgrade me!
 upgrade_target () {
-  target_apt_get -fuy --fix-missing dist-upgrade
+  target_apt_get -fu --fix-missing dist-upgrade
 }
 # Save some space
 clean_locale () {
