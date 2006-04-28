@@ -1,0 +1,4 @@
+
+NAME	COREDLL.dll
+EXPORTS
+GetSystemPowerStatusEx2 @1358

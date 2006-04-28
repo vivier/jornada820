@@ -1,0 +1,15 @@
+
+NAME	WINSOCK.dll
+EXPORTS
+WSACleanup @1
+WSAStartup @3
+recv @24
+send @27
+closesocket @8
+inet_ntoa  @19
+accept     @6
+listen     @21
+bind       @7
+inet_addr  @18
+htons @17
+socket @32

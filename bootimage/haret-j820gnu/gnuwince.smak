@@ -1,0 +1,68 @@
+# Submakefile for building for WindowsCE
+
+O = .o
+E = $(COMPILEDATE).exe
+
+.SUFFIXES: $E .o .res
+
+vpath %.asm src src/$(TARGET)
+vpath %.rc src/$(TARGET)
+
+# The directory where your gcc for ARM and the SDK is installed.
+#BASE ?= /tmp/drive_d/evc4/wce420
+BASE ?= /usr/local/wince/cross-tools
+
+# Set some env vars
+#export INCLUDE = $(BASE)/include
+#export LIB = $(BASE)/lib
+
+INCLUDE = /usr/local/wince/cross-tools/include
+
+#CXX = ~/WINE/wine-0.9/wine  $(BASE)/bin/clarm.exe -c
+#CXX = $(BASE)/bin/arm-wince-pe-g++ -c
+CXX = $(BASE)/bin/arm-wince-pe-gcc -c
+
+#CXXFLAGS.DEF = -DARM -DUNICODE -D_WIN32_WCE=0x0420 -DNDEBUG  -D__NO_CTYPE_INLINES #-DWINCEOEM=1
+CXXFLAGS.DEF = -DARM -DUNICODE -D_WIN32_WCE=0x0211 -DNDEBUG -D__try="" -D__NO_CTYPE_INLINES #-DWINCEOEM=1
+
+#CXXFLAGS.INC = -Iinclude -I/tmp/drive_d/evc4/wce420/PPC2003/Include/Armv4 -Iimg
+CXXFLAGS.INC = -Iinclude -Iimg -I$(INCLUDE)
+
+CXXFLAGS = $(CXXFLAGS.DEF) $(CXXFLAGS.INC) -Wall
+
+AS = $(BASE)/bin/arm-wince-pe-as
+ASFLAGS = 
+
+RC = $(BASE)/bin/arm-wince-pe-windres
+RCFLAGS = -r -l 0x409 $(CXXFLAGS.DEF) $(CXXFLAGS.INC)
+
+DLLTOOL = $(BASE)/bin/arm-wince-pe-dlltool
+DLLTOOLFLAGS =
+
+LD = $(BASE)/bin/arm-wince-pe-g++
+#LD = $(BASE)/bin/arm-wince-pe-ld
+
+#LDFLAGS = -L$(BASE)/lib -e WinMainCRTStartup
+LDFLAGS = -L$(BASE)/lib -e WinMainCRTStartup -Wl,--major-subsystem-version=2,--minor-subsystem-version=0,--major-image-version=0
+
+#LIBS = -LIBPATH:"/tmp/drive_d/evc4/wce420/PPC2003/Lib/Armv4" gx.lib winsock.lib
+#LIBS = $(OUT)toolhelp.lib
+
+LINK = $(LD) $(LDFLAGS) -o $@ $^ $(LIBS) && $(BASE)/bin/arm-wince-pe-strip $@
+
+#================================================================= Rules ======#
+
+$(OUT)%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -o $@ $<
+
+$(OUT)%.o: src/wince/%.cpp
+	$(CXX) $(CXXFLAGS) -o $@ $<
+
+$(OUT)%.o: src/wince/%.S
+	$(AS) $(ASFLAGS) -o $@ $<
+
+$(OUT)%.o: src/wince/%.rc
+	$(RC) $(RCFLAGS) -o $@ -i $<
+
+$(OUT)%.lib: src/wince/%.def
+	$(DLLTOOL) $(DLLTOOLFLAGS) -l $@ -d $<

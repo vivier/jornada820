@@ -1,0 +1,12 @@
+Welcome.
+
+This is HaRET, the Handheld Reverse Engineering Tool. For a detailed description
+see the files in the docs/ directory. This file documents how to build and
+install it.
+
+First, HaRET is a WinCE application, so get the arm-wince-pe
+crosscompile toolchain as described here
+https://trac.videolan.org/vlc/browser/trunk/INSTALL.wince
+and install it.
+
+Now type 'make'. 
