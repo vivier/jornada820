@@ -1,11 +1,7 @@
 #include <windows.h>
 #include "resource.h"
 
-IDI_APPICON ICON DISCARDABLE "img/haret.ico"
-IDB_LOGO	BITMAP DISCARDABLE "img/penguin.bmp"
-IDB_THERMORED	BITMAP DISCARDABLE "img/thermored.bmp"
-IDB_THERMOBLUE	BITMAP DISCARDABLE "img/thermoblue.bmp"
-IDB_EYES	BITMAP DISCARDABLE "img/eyes.bmp"
+IDI_APPICON ICON DISCARDABLE "img/tux-underground.ico"
 
 DLG_HaRET DIALOG 10, 20, 160, 170
 STYLE DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU

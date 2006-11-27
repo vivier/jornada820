@@ -19,8 +19,6 @@
 #include "cpu.h"
 #include "resource.h"
 
-#pragma warning(4:4509)
-
 extern "C" int LockPages(void *,int32,uint32 *,int32);
 extern "C" int UnlockPages(void *,int32);
 

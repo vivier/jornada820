@@ -58,7 +58,7 @@ void gpioSetAlt (int num, int altfn)
 uint32 gpioGetAlt (int num)
 {
   if (num > GPIO_MAX)
-    return -1;
+    return 0xffffffff;
 
   uint32 *gafr = (uint32 *)memPhysMap (GAFR);
 
@@ -199,7 +199,7 @@ uint32 gpioScrGPLR (bool setval, uint32 *args, uint32 val)
   if (args [0] > GPIO_MAX)
   {
     Output (L"Valid GPIO indexes are 0..%d, not %d", args [0], GPIO_MAX);
-    return -1;
+    return 0xffffffff;
   }
 
   if (setval)
@@ -216,7 +216,7 @@ uint32 gpioScrGPDR (bool setval, uint32 *args, uint32 val)
   if (args [0] > GPIO_MAX)
   {
     Output (L"Valid GPIO indexes are 0..%d, not %d", args [0],GPIO_MAX);
-    return -1;
+    return 0xffffffff;
   }
 
   if (setval)
@@ -233,7 +233,7 @@ uint32 gpioScrGAFR (bool setval, uint32 *args, uint32 val)
   if (args [0] > GPIO_MAX)
   {
     Output (L"Valid GPIO indexes are 0..%d, not %d", args [0],GPIO_MAX);
-    return -1;
+    return 0xffffffff;
   }
 
   if (setval)

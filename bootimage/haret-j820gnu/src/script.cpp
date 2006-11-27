@@ -22,7 +22,6 @@
 #include "cpu.h"
 #include "gpio.h"
 #include "linboot.h"
-#include "bench.h"
 #include "irq.h"
 
 //
