@@ -1,12 +1,12 @@
 #!/bin/zsh -f
 # mkxdeb -- script to create a cross-installation of debian
-# $Id: mkxdeb,v 1.27 2005/10/20 20:39:30 fare Exp $
+# $Id: mkxdeb,v 1.28 2007/07/19 20:38:11 fare Exp $
 # This script was designed and configured for my jornada820
 # -- obviously YMMV so configure it!
 # There is some documentation at the end of the file
 
 DEBIAN_MIRROR=http://ftp.us.debian.org/debian # OUR DEBIAN MIRROR
-DEBIAN_DISTRIBUTION=etch	# OUR DEBIAN DISTRIBUTION: sarge, etch, sid...
+DEBIAN_DISTRIBUTION=lenny	# OUR DEBIAN DISTRIBUTION: sarge, etch, lenny, sid...
 TARGET=/usr/src/j820/deb        # WHERE TO CREATE A DEBIAN INSTALLATION
 MACHINE=jornada820		# WHAT MACHINE WE'RE CONFIGURING FOR
 TARGET_ARCH=arm			# OUR TARGET ARCHITECTURE: ARM
@@ -79,14 +79,14 @@ ntpdate ntp
 screen zsh ssh gnutls-bin telnet
 recode
 lynx ca-certificates
-w3m w3m-img # w3mmee w3mmee-img
+w3m # w3mmee w3mmee-img # w3m-img # lenny has library dep problems 2007-07-18
 # elinks links2
 ascii
 bzip2 gzip tar rsync
 # dillo
 dpkg
 dialog apt
-localeconf localepurge locales localization-config
+localepurge locales localization-config # localeconf
 
 sudo m4
 
@@ -94,7 +94,7 @@ procps psmisc lsof
 
 pump
 mount
-module-init-tools devfsd udev
+module-init-tools udev # devfsd
 e2fsprogs
 # reiserfs-tools
 nfs-kernel-server nfs-common
@@ -122,8 +122,8 @@ man-db # groff
 units mtr-tiny tcpdump symlinks traceroute
 cruft
 apt-utils apt-file # curl
-diff patch wdiff cvs subversion xdelta xxdiff
-monotone/unstable
+diff patch wdiff cvs subversion # xdelta xxdiff
+monotone
 cvsutils strace
 make
 imagemagick
@@ -132,13 +132,13 @@ detachtty
 distcc
 )
 X11_PACKAGES=(
-xserver-xorg
+xserver-xorg-core xserver-xorg-input-evdev xserver-xorg-input-kbd xserver-xorg-input-mouse
 x-window-system-core # xprint
 # x-window-system
 xpdf
 xterm
 xlibs-data
-qiv
+# qiv # lenny has library dep problems 2007-07-18
 ratpoison
 ttf-bitstream-vera
 xfonts-base xfonts-75dpi xfonts-100dpi # xfonts-jmk
@@ -432,9 +432,10 @@ ensure_qemu_arm () {
 # Make a static qemu-arm from source
 make_qemu_arm () {
   cd $DEB_SOURCE
-  apt-get source qemu
+  command apt-get source qemu
   cd ./qemu-*
-  ./configure --static --target-list=arm-user
+  #./configure --static --target-list=arm-user # for 0.7.2
+  ./configure --static --target-list=arm-linux-user,arm-softmmu # for 0.9.0
   make
   cp arm-user/qemu-arm /usr/local/bin/
   ln -s /usr/local/bin/qemu-arm /usr/bin/
@@ -499,7 +500,8 @@ deb $DEBIAN_MIRROR sid main contrib non-free
 EOF
   echo > $TARGET/etc/apt/apt.conf "APT::Default-Release \"$DEBIAN_DISTRIBUTION\";"
   cat <<EOF > $TARGET/etc/apt/preferences
-Package: common-lisp-controller clisp sbcl cl-* monotone user-mode-linux fbi
+Package: common-lisp-controller clisp sbcl cl-* user-mode-linux fbi
+# monotone
 Pin: release a=unstable
 Pin-Priority: 1000
 EOF
@@ -515,7 +517,7 @@ cross-apt-get () {
 }
 cross-apt-install () {
   # cross-apt-get clean
-  cross-apt-get -fu install $PACKAGES
+  cross-apt-get -fuy install $PACKAGES
 }
 
 ### Debugging macros
@@ -548,15 +550,15 @@ mount_target_proc () {
 }
 # Install all requested packages
 install_packages () {
-  target_apt_get -fu --fix-missing install $PACKAGES
+  target_apt_get -fuy --fix-missing install $PACKAGES
 }
 # Install Common Lisp packages (see caveat in documentation)
 install_lisp_packages () {
-  target_apt_get -fu --fix-missing install $COMMON_LISP_PACKAGES
+  target_apt_get -fuy --fix-missing install $COMMON_LISP_PACKAGES
 }
 # Install games packages (see caveat in documentation)
 install_game_packages () {
-  target_apt_get -fu --fix-missing install $GAME_PACKAGES
+  target_apt_get -fuy --fix-missing install $GAME_PACKAGES
 }
 # Wipe an existing installation, to start over in a cleaner way
 wipe_installation () {
@@ -570,7 +572,10 @@ wipe_installation () {
 }
 # Install ugly stuff that should not be required but it.
 install_workarounds () {
-  touch $TARGET/etc/shadow # a few packages (including ssh) use chage with wants a shadow.
+  # a few packages (including ssh) use chage with wants a shadow
+  shadowconfig on
+  # coreutils.deb wants diversions to exist
+  touch $TARGET/var/lib/dpkg/diversions
 }
 # Do machine-specific hacks to make the image usable on the target machine.
 fixup_etc () { (
@@ -638,11 +643,11 @@ update_target () {
 # Reinstall and reconfigure things properly with dpkg,
 # that weren't done properly by debootstrap
 fix_installation () {
-  target_apt_get -fu --fix-missing install $(find_bootstrap_packages)
+  target_apt_get -fuy --fix-missing install $(find_bootstrap_packages | grep -v '^lib')
 }
 # Upgrade me!
 upgrade_target () {
-  target_apt_get -fu --fix-missing dist-upgrade
+  target_apt_get -fuy --fix-missing dist-upgrade
 }
 # Save some space
 clean_locale () {
